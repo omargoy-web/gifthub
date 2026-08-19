@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+data/normalized/raw_dump/
+data/raw/recorridos-ebv-sicm.html

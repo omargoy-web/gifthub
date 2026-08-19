@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0f1c17">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SICM ELE">
+<meta name="format-detection" content="telephone=no">
+<title>SICM-ELE · Mantenimiento Predictivo Eléctrico · Refinería Olmeca</title>
+<style>
+:root{
+ --verde:#006341;--verde-dark:#0f1c17;--guinda:#9a1b30;
+ --bg:#eef1ef;--panel:#fff;--line:#d3dad6;--line-strong:#b6c0bb;
+ --ink:#16201c;--ink-soft:#566460;--ink-faint:#8a958f;
+ --ok:#1f7a4d;--warn:#cf6a1f;--alarm:#c1272d;
+ --shadow:0 1px 2px rgba(15,28,23,.06),0 6px 18px rgba(15,28,23,.07);
+ --mono:"SFMono-Regular",ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace;
+ --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;
+ -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%;
+ overscroll-behavior-y:contain;padding-bottom:calc(env(safe-area-inset-bottom) + 60px)}
+input,select,textarea{-webkit-user-select:text;user-select:text}
+
+header.app{position:sticky;top:0;z-index:40;background:var(--verde-dark);color:#eef1ef;
+ padding:calc(env(safe-area-inset-top) + 12px) 14px 12px;border-bottom:3px solid var(--verde)}
+.hrow{display:flex;align-items:center;gap:11px;max-width:1200px;margin:0 auto}
+.mark{width:36px;height:36px;flex:0 0 auto;border-radius:7px;background:linear-gradient(150deg,var(--verde),#003d28);
+ display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#fff;border:1px solid rgba(255,255,255,.12)}
+.htext h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.2px}
+.htext p{margin:1px 0 0;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:#8fb6a5}
+.stats{margin-left:auto;text-align:right;font-size:11px;color:#a9c5b9}
+.stats b{font-family:var(--mono);color:#fff}
+
+nav.tabs{position:sticky;top:0;z-index:35;background:#fff;border-bottom:1px solid var(--line);
+ padding:0;display:flex;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs .max{max-width:1200px;margin:0 auto;display:flex;width:100%}
+nav.tabs button{flex:0 0 auto;background:none;border:0;padding:11px 15px;font:inherit;color:var(--ink-soft);
+ border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-weight:600;font-size:13px}
+nav.tabs button:hover{color:var(--verde)}
+nav.tabs button.active{color:var(--verde);border-bottom-color:var(--verde)}
+
+main{padding:16px;max-width:1200px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.card-title{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:11px;font-weight:700;letter-spacing:1.1px;
+ text-transform:uppercase;color:var(--ink-soft);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.card-title .n{width:20px;height:20px;border-radius:5px;background:var(--verde-dark);color:#fff;
+ display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--mono)}
+.card-title .right{margin-left:auto;font-weight:700;color:var(--ink-soft)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.kpi{background:linear-gradient(180deg,#f8fbf9,#fff);border:1px solid var(--line);border-radius:10px;padding:14px}
+.kpi .lbl{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.kpi .val{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--verde-dark);line-height:1}
+.kpi .sub{margin-top:6px;font-size:11px;color:var(--ink-soft)}
+
+.sector-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.sector-tile{background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px;cursor:pointer;transition:.12s}
+.sector-tile:hover{border-color:var(--verde)}
+.sector-tile .sh{display:flex;justify-content:space-between;align-items:baseline}
+.sector-tile .name{font-weight:700;font-size:13px}
+.sector-tile .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.sector-tile .bar{height:6px;background:#eaeee9;border-radius:3px;overflow:hidden;margin-top:6px;display:flex}
+.sector-tile .bar span{display:block;height:100%}
+
+.field{margin-bottom:13px}.field:last-child{margin-bottom:0}
+label{display:block;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}
+label .req,.req{color:var(--guinda)}
+input,select,textarea{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);background:#fbfcfb;
+ border:1px solid var(--line-strong);border-radius:8px;padding:11px 12px;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--verde);background:#fff;box-shadow:0 0 0 3px rgba(0,99,65,.12)}
+textarea{resize:vertical;min-height:54px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.mono{font-family:var(--mono)}
+.hint{font-size:11px;color:var(--ink-soft);margin-top:4px}
+
+.btn{background:var(--verde);color:#fff;border:0;font-weight:700;font-size:14px;padding:12px 18px;border-radius:9px;
+ cursor:pointer;transition:.12s;letter-spacing:.3px}
+.btn:hover{background:var(--verde-dark)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--verde);border:1px solid var(--verde)}
+.btn-ghost:hover{background:var(--verde);color:#fff}
+.btn-danger{background:var(--guinda)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:11px;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+.badge.ok{background:#e5f4ec;color:var(--ok)}
+.badge.warn{background:#fff2e2;color:var(--warn)}
+.badge.alarm{background:#fde5e6;color:var(--alarm)}
+.badge.gray{background:#eef1ef;color:var(--ink-soft)}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+table th{text-align:left;font-weight:700;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-soft);
+ border-bottom:1px solid var(--line);padding:8px 6px}
+table td{border-bottom:1px solid var(--line);padding:8px 6px;vertical-align:top}
+table tr:hover td{background:#fafcfa}
+
+.tag{font-family:var(--mono);font-size:12px;color:var(--verde-dark);font-weight:600}
+
+/* Chart SVGs */
+svg.chart{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+svg text{font-family:var(--sans);font-size:10px;fill:var(--ink-soft)}
+
+.result-box{margin-top:12px;padding:14px;border-radius:9px;border:1px solid var(--line)}
+.result-box.ok{background:#eef8f2;border-color:#b8dcc7}
+.result-box.warn{background:#fff5e8;border-color:#e8c496}
+.result-box.alarm{background:#fdeaeb;border-color:#e6a1a4}
+.result-box h4{margin:0 0 8px;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.result-box .rows{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
+.result-box .rows dt{font-weight:600;color:var(--ink-soft)}
+.result-box .rows dd{margin:0}
+
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filterbar input,.filterbar select{width:auto;flex:1;min-width:150px;font-size:13px;padding:9px 10px}
+.pill{display:inline-block;background:#eef1ef;padding:2px 8px;border-radius:9px;font-size:10px;color:var(--ink-soft);letter-spacing:.4px;text-transform:uppercase;font-weight:700}
+.hide{display:none!important}
+
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:11px;color:var(--ink-soft)}
+.legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.sw.ok{background:var(--ok)}.sw.warn{background:var(--warn)}.sw.alarm{background:var(--alarm)}
+
+footer.foot{text-align:center;padding:22px 12px;color:var(--ink-faint);font-size:11px;letter-spacing:.4px}
+footer.foot b{color:var(--ink-soft)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--verde-dark);color:#fff;
+ padding:11px 18px;border-radius:24px;font-size:13px;box-shadow:0 6px 22px rgba(0,0,0,.28);z-index:100;
+ opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+
+@media (max-width:640px){
+ .grid2{grid-template-columns:1fr}
+ .stats{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="app">
+ <div class="hrow">
+  <div class="mark">SICM<br>ELE</div>
+  <div class="htext">
+   <h1>SICM-ELE · Mantenimiento Predictivo Eléctrico</h1>
+   <p>Refinería Olmeca · PEMEX Transformación Industrial</p>
+  </div>
+  <div class="stats">
+   <div><b id="stat-equipos">—</b> equipos</div>
+   <div><b id="stat-mediciones">—</b> mediciones</div>
+  </div>
+ </div>
+</header>
+
+<nav class="tabs">
+ <div class="max">
+  <button data-tab="dashboard" class="active">Panel</button>
+  <button data-tab="capturar">Capturar medición</button>
+  <button data-tab="diagnostico">Diagnóstico</button>
+  <button data-tab="vida">Vida remanente</button>
+  <button data-tab="tendencias">Tendencias</button>
+  <button data-tab="censo">Censo</button>
+  <button data-tab="ventanas">Ventanas operativas</button>
+  <button data-tab="config">Datos y respaldo</button>
+ </div>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<section id="view-dashboard">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Indicadores clave</div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Condición por sector <span class="right" id="sector-legend">(último dictamen por equipo)</span></div>
+  <div class="sector-tiles" id="sector-tiles"></div>
+  <div class="legend"><span><span class="sw ok"></span>Normal</span><span><span class="sw warn"></span>Alerta</span><span><span class="sw alarm"></span>Alarma</span><span><span class="sw" style="background:#c5cdc8"></span>Sin dictamen</span></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Últimas 8 mediciones</div>
+  <div id="ultimas-mediciones"></div>
+ </div>
+</section>
+
+<!-- CAPTURAR -->
+<section id="view-capturar" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Datos del equipo</div>
+  <div class="grid2">
+   <div class="field"><label>TAG del equipo <span class="req">*</span></label>
+    <input id="cap-tag" list="lst-tags" autocomplete="off" placeholder="Buscar por TAG…">
+    <datalist id="lst-tags"></datalist>
+    <div class="hint" id="cap-tag-info">—</div>
+   </div>
+   <div class="field"><label>Actividad predictiva <span class="req">*</span></label>
+    <select id="cap-act"></select>
+    <div class="hint" id="cap-act-info">—</div>
+   </div>
+  </div>
+  <div class="grid2">
+   <div class="field"><label>Fecha de medición</label><input id="cap-fecha" type="datetime-local"></div>
+   <div class="field"><label>Operario / cabo</label><input id="cap-operario" placeholder="Nombre"></div>
+  </div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Lecturas <span class="right">(deje en blanco lo que no aplique)</span></div>
+  <div class="grid3">
+   <div class="field"><label>Corriente F1 (A)</label><input id="cap-i1" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>Corriente F2 (A)</label><input id="cap-i2" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>Corriente F3 (A)</label><input id="cap-i3" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>V L1-L2 (V)</label><input id="cap-v12" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>V L2-L3 (V)</label><input id="cap-v23" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>V L3-L1 (V)</label><input id="cap-v31" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>Temp. máxima (°C)</label><input id="cap-tmax" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>Δ T (°C referencia)</label><input id="cap-dt" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>R aislamiento (MΩ)</label><input id="cap-r" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>IP</label><input id="cap-ip" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>DAR</label><input id="cap-dar" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>THD V (%)</label><input id="cap-thdv" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>THD I (%)</label><input id="cap-thdi" type="number" step="0.1" inputmode="decimal"></div>
+   <div class="field"><label>Vib. RMS (mm/s)</label><input id="cap-vibrms" type="number" step="0.01" inputmode="decimal"></div>
+   <div class="field"><label>Vib. pico (mm/s)</label><input id="cap-vibpk" type="number" step="0.01" inputmode="decimal"></div>
+  </div>
+  <div class="field"><label>Observaciones</label><textarea id="cap-obs" rows="3" placeholder="Notas de campo, condición aparente…"></textarea></div>
+  <div class="btn-row">
+   <button class="btn" id="btn-guardar">Guardar medición y diagnosticar</button>
+   <button class="btn btn-ghost" id="btn-limpiar">Limpiar</button>
+  </div>
+  <div id="cap-result"></div>
+ </div>
+</section>
+
+<!-- DIAGNOSTICO (manual) -->
+<section id="view-diagnostico" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Motor de diagnóstico basado en reglas normativas</div>
+  <p class="hint" style="margin-top:0;line-height:1.55">Ejecuta el motor sobre cualquier medición histórica o una lectura ad-hoc para obtener: estado (Normal/Alerta/Alarma), modo de falla probable, acción recomendada y norma sustentante. La lógica está en <span class="mono">reglas de decisión</span> — no ML.</p>
+  <div class="field"><label>Medición existente (para re-dictaminar)</label>
+   <select id="diag-med"></select>
+  </div>
+  <div class="btn-row">
+   <button class="btn" id="btn-diag-run">Ejecutar diagnóstico</button>
+  </div>
+  <div id="diag-result"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Matriz FMEA (extracto)</div>
+  <div id="fmea-table"></div>
+ </div>
+</section>
+
+<!-- VIDA REMANENTE -->
+<section id="view-vida" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Vida remanente estimada por extrapolación lineal</div>
+  <p class="hint" style="margin-top:0;line-height:1.55"><b>Aviso explícito de honestidad:</b> con el volumen actual de datos, esto es una <b>proyección de tendencia</b> (regresión lineal simple sobre los puntos históricos). No es predicción por ML. Para migrar a modelos predictivos reales se requieren decenas de muestras por equipo, etiquetado de fallas y frecuencia de muestreo consistente.</p>
+  <div class="field"><label>TAG</label><input id="vida-tag" list="lst-tags" placeholder="Buscar equipo…"></div>
+  <div class="btn-row">
+   <button class="btn" id="btn-vida-run">Estimar vida remanente</button>
+  </div>
+  <div id="vida-result"></div>
+ </div>
+</section>
+
+<!-- TENDENCIAS -->
+<section id="view-tendencias" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Tendencia temporal por parámetro</div>
+  <div class="filterbar">
+   <input id="trend-tag" list="lst-tags" placeholder="TAG del equipo">
+   <select id="trend-param">
+    <option value="temp_max_c">Temperatura máxima (°C)</option>
+    <option value="delta_t_c">Δ T termográfico (°C)</option>
+    <option value="R_aislamiento_MOhm">R aislamiento (MΩ)</option>
+    <option value="IP">Índice de polarización</option>
+    <option value="THD_V_pct">THD V (%)</option>
+    <option value="THD_I_pct">THD I (%)</option>
+    <option value="vibracion_rms_mms">Vibración RMS (mm/s)</option>
+    <option value="desbalance_i_pct">Desbalance de corriente (%)</option>
+    <option value="desbalance_v_pct">Desbalance de tensión (%)</option>
+   </select>
+   <button class="btn" id="btn-trend">Trazar</button>
+  </div>
+  <div id="trend-out"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Mapa de calor: condición por sector × familia</div>
+  <div id="heat-out"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Pareto de hallazgos</div>
+  <div id="pareto-out"></div>
+ </div>
+</section>
+
+<!-- CENSO -->
+<section id="view-censo" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Censo de activos <span class="right" id="censo-count">—</span></div>
+  <div class="filterbar">
+   <input id="censo-q" placeholder="Buscar por TAG, denominación, planta…">
+   <select id="censo-familia"><option value="">Todas las familias</option></select>
+   <select id="censo-sector"><option value="">Todos los sectores</option></select>
+  </div>
+  <div id="censo-table"></div>
+  <div class="hint" style="margin-top:10px">Mostrando primeros 300 resultados. Ajuste filtros para acotar.</div>
+ </div>
+</section>
+
+<!-- VENTANAS OPERATIVAS -->
+<section id="view-ventanas" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Ventanas normativas codificadas</div>
+  <p class="hint" style="margin-top:0">Cada regla del motor de diagnóstico cita la norma que sustenta su umbral. Toda banda amarillo/rojo se puede rastrear a IEEE, ISO, ASTM, NEMA, NFPA, o NRF-PEMEX.</p>
+  <div id="lim-table"></div>
+ </div>
+</section>
+
+<!-- CONFIG -->
+<section id="view-config" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Respaldo, exportación e importación</div>
+  <p class="hint" style="margin-top:0">Los datos se guardan localmente en el navegador (IndexedDB, sin dependencia de red). Genere respaldos periódicos.</p>
+  <div class="btn-row">
+   <button class="btn" id="btn-export">Exportar respaldo (JSON)</button>
+   <label class="btn btn-ghost" style="cursor:pointer">Importar respaldo<input type="file" id="fin-restore" accept=".json" hidden></label>
+   <label class="btn btn-ghost" style="cursor:pointer">Importar recorridos SICM-INS<input type="file" id="fin-recorridos" accept=".json" hidden></label>
+   <button class="btn btn-danger" id="btn-purge">Vaciar mediciones</button>
+  </div>
+  <div id="cfg-status" class="hint" style="margin-top:10px"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Acerca de SICM-ELE</div>
+  <p style="margin-top:0;font-size:13px;line-height:1.6">Sistema complementario a la PWA <b>recorridos-ebv-sicm</b> (SICM-INS, instrumentos) para consolidar mediciones eléctricas, aplicar ventanas normativas, diagnosticar por reglas y estimar vida remanente. Diseñado para operar sin conexión a Internet en red PEMEX restringida.</p>
+  <p style="font-size:12px;color:var(--ink-soft);line-height:1.55">Fase 1 · Base de conocimiento: <span id="cfg-versions"></span></p>
+ </div>
+</section>
+
+</main>
+
+<footer class="foot">
+ <b>SICM · Refinería Olmeca</b> · Coordinación de Mantenimiento Eléctrico ·
+ Basado en NFPA 70/70B/70E, IEEE 43/519/C57, ISO 14224/20816-3, NEMA MG-1, NRF-048/011/097-PEMEX
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================================================================
+   SICM-ELE · Datos embebidos + motor de diagnóstico + UI
+   ======================================================================== */
+
+const LIMITES = __LIMITES__;
+const ACTIVIDADES = __ACTIVIDADES__;
+const EQUIPOS = __EQUIPOS__;
+
+/* ---------- IndexedDB simple ---------- */
+const IDB_NAME="sicm_ele_idb", IDB_STORE="kv";
+let _idb=null;
+function idbOpen(){return _idb?Promise.resolve(_idb):new Promise((res,rej)=>{
+ const r=indexedDB.open(IDB_NAME,1);
+ r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(IDB_STORE))r.result.createObjectStore(IDB_STORE)};
+ r.onsuccess=()=>{_idb=r.result;res(_idb)};r.onerror=()=>rej(r.error);
+})}
+function idbGet(k){return idbOpen().then(db=>new Promise((res,rej)=>{const q=db.transaction(IDB_STORE,"readonly").objectStore(IDB_STORE).get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}))}
+function idbSet(k,v){return idbOpen().then(db=>new Promise((res,rej)=>{const t=db.transaction(IDB_STORE,"readwrite");t.objectStore(IDB_STORE).put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>rej(t.error)}))}
+
+const KEY_MED="sicm_ele_mediciones_v1";
+let MEDICIONES=[];
+
+async function cargarDatos(){
+ try{MEDICIONES = (await idbGet(KEY_MED)) || [];}catch(e){MEDICIONES=[]}
+ refreshHeader();
+}
+async function guardarDatos(){
+ try{await idbSet(KEY_MED, MEDICIONES);}catch(e){toast("Error al guardar. Exporte respaldo.");}
+ refreshHeader();
+}
+
+/* ---------- Helpers ---------- */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const nowIsoLocal=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600)}
+function fmt(v,d=2){if(v==null||v==='')return '—';const n=Number(v);return isNaN(n)?String(v):n.toFixed(d)}
+function pct(a,b){if(!a||!b)return null;return (Math.abs(a-b)/b)*100}
+
+/* ---------- Cálculos normativos ---------- */
+// Desbalance NEMA MG-1 § 14.35: (desviación máxima al promedio / promedio) * 100
+function nemaUnbalancePct(...vals){
+ vals = vals.filter(v=>v!=null && !isNaN(v) && v>0);
+ if(vals.length<3) return null;
+ const avg = vals.reduce((a,b)=>a+b)/vals.length;
+ const maxDev = Math.max(...vals.map(v=>Math.abs(v-avg)));
+ return (maxDev/avg)*100;
+}
+
+function computeDerived(m){
+ const d={};
+ d.desbalance_i_pct = nemaUnbalancePct(m.I_F1, m.I_F2, m.I_F3);
+ d.desbalance_v_pct = nemaUnbalancePct(m.V_L1L2, m.V_L2L3, m.V_L3L1);
+ const currents=[m.I_F1,m.I_F2,m.I_F3].filter(v=>v!=null&&v>0);
+ d.corriente_avg = currents.length? currents.reduce((a,b)=>a+b)/currents.length : null;
+ return d;
+}
+
+/* ---------- Motor de diagnóstico (Fase 4) ---------- */
+const REGLAS = [
+ // Termografía
+ {id:"R-TE-01", cond:m=>m.delta_t_c!=null && m.delta_t_c>15,
+  estado:"alarma", modo:"Conexión eléctrica con calentamiento severo (deficiencia mayor)",
+  accion:"Intervención inmediata: apagar el circuito, apretar/reemplazar conexión, verificar con ductor.",
+  norma:"NFPA 70B; NETA MTS Tbl 100.18 (ΔT>15°C sobre similar cargado)"},
+ {id:"R-TE-02", cond:m=>m.delta_t_c!=null && m.delta_t_c>3 && m.delta_t_c<=15,
+  estado:"alerta", modo:"Conexión con calentamiento anómalo",
+  accion:"Programar reapriete/limpieza en próxima ventana de mantenimiento; repetir termografía a 30 días.",
+  norma:"NFPA 70B (ΔT 4-15°C reparar en corto plazo)"},
+
+ // Temperatura devanado motor MT clase F
+ {id:"R-TM-01", cond:m=>m.temp_max_c!=null && m.temp_max_c>=155,
+  estado:"alarma", modo:"Sobretemperatura devanados motor MT clase F (disparo)",
+  accion:"Verificar carga, ventilación, obstrucciones. Bajar carga o parar hasta enfriar. Revisar RTDs.",
+  norma:"Ajuste temperatura motores R1 (disparo 155°C RTD)"},
+ {id:"R-TM-02", cond:m=>m.temp_max_c!=null && m.temp_max_c>=120 && m.temp_max_c<155,
+  estado:"alerta", modo:"Temperatura devanado en banda de alerta",
+  accion:"Vigilar tendencia; verificar carga vs nominal; inspección de refrigeración.",
+  norma:"Ajuste temperatura motores R1 (alerta 120°C RTD MT clase F)"},
+
+ // Aislamiento IEEE 43
+ {id:"R-IA-01", cond:m=>m.IP!=null && m.IP<1.0,
+  estado:"alarma", modo:"Aislamiento peligroso: contaminación / humedad severa",
+  accion:"NO energizar. Secado térmico, limpieza de bobinas, repetir prueba IP tras 24h.",
+  norma:"IEEE 43-2013 (IP<1.0 peligroso)"},
+ {id:"R-IA-02", cond:m=>m.IP!=null && m.IP>=1.0 && m.IP<2.0,
+  estado:"alerta", modo:"Aislamiento cuestionable",
+  accion:"Programar secado y re-prueba antes de siguiente ciclo; investigar ingreso de humedad.",
+  norma:"IEEE 43-2013 (IP 1.0-2.0 cuestionable)"},
+
+ // Desbalance corriente NEMA MG-1
+ {id:"R-DI-01", cond:m=>{const d=computeDerived(m); return d.desbalance_i_pct!=null && d.desbalance_i_pct>10;},
+  estado:"alarma", modo:"Desbalance de corriente >10% (posible falla estator o alimentador)",
+  accion:"Verificar tensión de alimentación; medir resistencia por fase; inspección de conexiones. Derateo temporal según curva NEMA.",
+  norma:"NEMA MG-1 §14.35 (>10% requiere no operar sin derateo)"},
+ {id:"R-DI-02", cond:m=>{const d=computeDerived(m); return d.desbalance_i_pct!=null && d.desbalance_i_pct>5 && d.desbalance_i_pct<=10;},
+  estado:"alerta", modo:"Desbalance de corriente 5-10%",
+  accion:"Investigar reparto de carga; verificar contactos de arrancador; ejecutar MCSA para descartar barras rotas.",
+  norma:"NEMA MG-1 §14.35"},
+
+ // Desbalance tensión
+ {id:"R-DV-01", cond:m=>{const d=computeDerived(m); return d.desbalance_v_pct!=null && d.desbalance_v_pct>2;},
+  estado:"alarma", modo:"Desbalance de tensión >2%",
+  accion:"Coordinar con distribución para reparto de fases; revisar transformador y cambiador.",
+  norma:"NEMA MG-1 §14.36 (>2% límite)"},
+
+ // Vibración ISO 20816-3 (bases rígidas GP2, umbrales conservadores)
+ {id:"R-VB-01", cond:m=>m.vibracion_rms_mms!=null && m.vibracion_rms_mms>7.1,
+  estado:"alarma", modo:"Vibración en zona C/D (severidad alta)",
+  accion:"Balancear / alinear / verificar rodamientos y cimentación; considerar MCSA para descartar barras rotas.",
+  norma:"ISO 20816-3 Tbl A2 (>7.1 mm/s peligro base flexible)"},
+ {id:"R-VB-02", cond:m=>m.vibracion_rms_mms!=null && m.vibracion_rms_mms>4.5 && m.vibracion_rms_mms<=7.1,
+  estado:"alerta", modo:"Vibración en zona B (alerta)",
+  accion:"Análisis espectral: descartar desbalance, desalineación, soltura; reprogramar a 30 días.",
+  norma:"ISO 20816-3 Tbl A2 (4.5-7.1 mm/s alerta)"},
+
+ // THD I
+ {id:"R-TH-01", cond:m=>m.THD_I_pct!=null && m.THD_I_pct>15,
+  estado:"alerta", modo:"THD de corriente elevado — probable interacción con VFD/carga no lineal",
+  accion:"Revisar filtros armónicos; verificar sizing del transformador K-factor; evaluar carga.",
+  norma:"IEEE 519 (aplicar tabla por PCC)"},
+];
+
+function diagnosticar(m){
+ const d = computeDerived(m);
+ const findings = [];
+ const merged = {...m, ...d};
+ for(const r of REGLAS){
+  try{ if(r.cond(merged)) findings.push({...r}); }catch(e){}
+ }
+ // Sort worst first
+ const order = {alarma:0, alerta:1, normal:2};
+ findings.sort((a,b)=>order[a.estado]-order[b.estado]);
+ let estado_global = "normal";
+ if(findings.some(f=>f.estado==="alarma")) estado_global="alarma";
+ else if(findings.some(f=>f.estado==="alerta")) estado_global="alerta";
+ return { estado: estado_global, hallazgos: findings, derivadas: d };
+}
+
+/* ---------- FMEA extract table ---------- */
+const FMEA_ROWS = [
+ {familia:"motor", modo:"Barras rotas rotor", detec:"MCSA bandas laterales ±2·s·f, vibración 2f", severidad:"Media-Alta", accion:"Análisis espectral + prueba de crecimiento; reparación taller"},
+ {familia:"motor", modo:"Sobretemperatura devanados", detec:"RTD, termografía carcasa", severidad:"Alta", accion:"Verificar carga/ventilación; secado si aislamiento afectado"},
+ {familia:"motor", modo:"Desalineación", detec:"Vibración 1x/2x, temperatura rodamientos", severidad:"Media", accion:"Alineación láser; reapretado bases"},
+ {familia:"transformador_aceite", modo:"Descarga parcial", detec:"DGA (H2, CH4); acidez", severidad:"Alta", accion:"Aumentar frecuencia DGA; identificar y aislar; considerar cambio aceite"},
+ {familia:"transformador_aceite", modo:"Arco eléctrico interno", detec:"DGA C2H2 alto", severidad:"Crítica", accion:"Fuera de servicio; inspección interna; C57.104 §5"},
+ {familia:"tablero", modo:"Conexión suelta / oxidación", detec:"Termografía ΔT>10°C, ultrasonido", severidad:"Media", accion:"Reapriete par de torque de fábrica; limpieza"},
+ {familia:"interruptor", modo:"Resistencia de contactos alta", detec:"Ductor >2×valor fábrica; ΔT termografía", severidad:"Alta", accion:"Servicio mayor: limpieza / cambio de contactos"},
+ {familia:"vfd", modo:"Distorsión armónica de corriente elevada", detec:"THD_I >15%, calentamiento", severidad:"Media", accion:"Filtros pasivos/activos; verificar carga y sizing"},
+ {familia:"ccm", modo:"Falla arrancador (contactor)", detec:"Corrientes de arranque anómalas; ΔT contactor", severidad:"Media", accion:"Sustitución contactor; verificar térmico"},
+];
+
+/* ---------- UI: tabs ---------- */
+function switchTab(name){
+ $$("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
+ $$("main > section").forEach(s=>s.classList.toggle("hide", s.id!=="view-"+name));
+ if(name==="dashboard") renderDashboard();
+ if(name==="capturar") renderCapturar();
+ if(name==="diagnostico") renderDiagnosticoTab();
+ if(name==="vida") $("#vida-result").innerHTML="";
+ if(name==="tendencias") renderTendencias();
+ if(name==="censo") renderCenso();
+ if(name==="ventanas") renderLimites();
+ if(name==="config") renderConfig();
+}
+$$("nav.tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+
+function refreshHeader(){
+ $("#stat-equipos").textContent = EQUIPOS.length.toLocaleString();
+ $("#stat-mediciones").textContent = MEDICIONES.length.toLocaleString();
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(){
+ // KPIs
+ const total = EQUIPOS.length;
+ const totalMed = MEDICIONES.length;
+ const sectors = new Set(EQUIPOS.map(e=>e.sector)).size;
+ const familias = new Set(EQUIPOS.map(e=>e.familia)).size;
+ const dictaminadas = MEDICIONES.filter(m=>m._diag && m._diag.estado);
+ const alarmas = dictaminadas.filter(m=>m._diag.estado==="alarma").length;
+ const alertas = dictaminadas.filter(m=>m._diag.estado==="alerta").length;
+
+ const kpiHtml = [
+  ["Activos censados", total.toLocaleString(), `${familias} familias · ${sectors} sectores`],
+  ["Mediciones registradas", totalMed.toLocaleString(), totalMed?"En base local":"Aún sin datos"],
+  ["En alarma", alarmas, alarmas?'Requiere intervención':'Sin alarmas'],
+  ["En alerta", alertas, alertas?'A vigilar':'Sin alertas'],
+ ].map(([l,v,s])=>`<div class="kpi"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join("");
+ $("#kpi-grid").innerHTML = kpiHtml;
+
+ // Sector tiles — semáforo por último dictamen por equipo
+ const lastByTag = {};
+ for(const m of MEDICIONES.slice().reverse()) if(!(m.tag in lastByTag)) lastByTag[m.tag]=m;
+ const sectorMap = {};
+ for(const e of EQUIPOS){
+  const s = String(e.sector||"—");
+  if(!sectorMap[s]) sectorMap[s] = {total:0, ok:0, warn:0, alarm:0, sin:0};
+  sectorMap[s].total++;
+  const m = lastByTag[e.tag];
+  const st = m && m._diag && m._diag.estado;
+  if(st==="alarma") sectorMap[s].alarm++;
+  else if(st==="alerta") sectorMap[s].warn++;
+  else if(st==="normal") sectorMap[s].ok++;
+  else sectorMap[s].sin++;
+ }
+ const secKeys = Object.keys(sectorMap).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true}));
+ $("#sector-tiles").innerHTML = secKeys.map(k=>{
+  const s = sectorMap[k];
+  const pctOk = (s.ok/s.total)*100, pctW=(s.warn/s.total)*100, pctA=(s.alarm/s.total)*100, pctSin=(s.sin/s.total)*100;
+  return `<div class="sector-tile"><div class="sh"><span class="name">Sector ${k}</span><span class="cnt">${s.total}</span></div>
+   <div class="bar">
+    <span style="width:${pctOk}%;background:var(--ok)"></span>
+    <span style="width:${pctW}%;background:var(--warn)"></span>
+    <span style="width:${pctA}%;background:var(--alarm)"></span>
+    <span style="width:${pctSin}%;background:#c5cdc8"></span>
+   </div></div>`;
+ }).join("");
+
+ // Últimas mediciones
+ const last8 = MEDICIONES.slice(-8).reverse();
+ if(!last8.length){
+  $("#ultimas-mediciones").innerHTML = '<p class="hint">Aún no hay mediciones registradas. Vaya a <b>Capturar medición</b> para comenzar.</p>';
+ } else {
+  $("#ultimas-mediciones").innerHTML = `<table><thead><tr><th>Fecha</th><th>TAG</th><th>Actividad</th><th>Estado</th></tr></thead><tbody>${
+   last8.map(m=>{
+    const st = m._diag?.estado || "—";
+    const bcls = st==="alarma"?"alarm":st==="alerta"?"warn":st==="normal"?"ok":"gray";
+    const act = ACTIVIDADES.find(a=>a.id===m.id_actividad)?.nombre || m.id_actividad || "—";
+    return `<tr><td>${(m.fecha_iso||"").replace("T"," ")}</td><td class="tag">${m.tag}</td><td>${act}</td><td><span class="badge ${bcls}">${st}</span></td></tr>`;
+   }).join("")
+  }</tbody></table>`;
+ }
+}
+
+/* ---------- CAPTURAR ---------- */
+function renderCapturar(){
+ $("#cap-fecha").value = $("#cap-fecha").value || nowIsoLocal();
+ // datalist con TAGs (limitado a 500 en la lista para performance)
+ const dl = $("#lst-tags");
+ if(!dl.children.length){
+  const opts = EQUIPOS.slice(0, 8738).map(e=>`<option value="${e.tag}">`).join("");
+  dl.innerHTML = opts;
+ }
+ // activities select
+ const sel = $("#cap-act");
+ if(!sel.children.length){
+  sel.innerHTML = ACTIVIDADES.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join("");
+ }
+ $("#cap-tag").oninput = ()=>{
+  const t = $("#cap-tag").value.trim();
+  const eq = EQUIPOS.find(e=>e.tag===t);
+  $("#cap-tag-info").textContent = eq ? `${eq.familia} · sector ${eq.sector} · ${eq.planta||''}` : (t?"TAG no encontrado en censo (puede continuar)":"—");
+ };
+ $("#cap-act").onchange = ()=>{
+  const a = ACTIVIDADES.find(x=>x.id===$("#cap-act").value);
+  $("#cap-act-info").textContent = a? `${a.tecnica} · Norma: ${a.norma} · Periodicidad: ${a.periodicidad}` : "—";
+ };
+ $("#cap-act").onchange();
+}
+$("#btn-limpiar")?.addEventListener?.("click",()=>{["cap-tag","cap-operario","cap-i1","cap-i2","cap-i3","cap-v12","cap-v23","cap-v31","cap-tmax","cap-dt","cap-r","cap-ip","cap-dar","cap-thdv","cap-thdi","cap-vibrms","cap-vibpk","cap-obs"].forEach(id=>{const el=$("#"+id); if(el)el.value=""}); $("#cap-fecha").value=nowIsoLocal(); $("#cap-result").innerHTML=""});
+$("#btn-guardar")?.addEventListener?.("click", async ()=>{
+ const tag = $("#cap-tag").value.trim();
+ if(!tag){toast("Ingrese TAG."); return;}
+ const num = id=>{const v=$("#"+id).value; return v===''?null:Number(v);};
+ const m = {
+  id_medicion: "M"+Date.now(),
+  tag,
+  id_actividad: $("#cap-act").value,
+  fecha_iso: $("#cap-fecha").value || new Date().toISOString().slice(0,16),
+  operario: $("#cap-operario").value.trim(),
+  I_F1:num("cap-i1"), I_F2:num("cap-i2"), I_F3:num("cap-i3"),
+  V_L1L2:num("cap-v12"), V_L2L3:num("cap-v23"), V_L3L1:num("cap-v31"),
+  temp_max_c:num("cap-tmax"), delta_t_c:num("cap-dt"),
+  R_aislamiento_MOhm:num("cap-r"), IP:num("cap-ip"), DAR:num("cap-dar"),
+  THD_V_pct:num("cap-thdv"), THD_I_pct:num("cap-thdi"),
+  vibracion_rms_mms:num("cap-vibrms"), vibracion_pico_mms:num("cap-vibpk"),
+  observaciones: $("#cap-obs").value.trim(),
+ };
+ m._diag = diagnosticar(m);
+ MEDICIONES.push(m);
+ await guardarDatos();
+ renderDiagResult("#cap-result", m);
+ toast("Medición guardada y diagnosticada.");
+});
+
+/* ---------- Diagnóstico render ---------- */
+function renderDiagResult(sel, m){
+ const d = m._diag;
+ const st = d.estado;
+ const box = st==="alarma"?"alarm":st==="alerta"?"warn":"ok";
+ const der = d.derivadas || {};
+ let html = `<div class="result-box ${box}">
+  <h4>Dictamen: <span class="badge ${box}">${st.toUpperCase()}</span></h4>
+  <dl class="rows">
+   <dt>TAG</dt><dd class="tag">${m.tag}</dd>
+   <dt>Actividad</dt><dd>${ACTIVIDADES.find(a=>a.id===m.id_actividad)?.nombre||m.id_actividad}</dd>
+   <dt>Corriente promedio</dt><dd>${fmt(der.corriente_avg,2)} A</dd>
+   <dt>% Desbalance I (NEMA MG-1)</dt><dd>${der.desbalance_i_pct==null?'—':fmt(der.desbalance_i_pct,2)+' %'}</dd>
+   <dt>% Desbalance V</dt><dd>${der.desbalance_v_pct==null?'—':fmt(der.desbalance_v_pct,2)+' %'}</dd>
+  </dl>`;
+ if(d.hallazgos.length){
+  html += `<h4 style="margin-top:14px">Hallazgos (${d.hallazgos.length})</h4><table><thead><tr><th>Regla</th><th>Estado</th><th>Modo probable</th><th>Acción</th><th>Norma</th></tr></thead><tbody>${
+   d.hallazgos.map(h=>{
+    const b = h.estado==="alarma"?"alarm":h.estado==="alerta"?"warn":"ok";
+    return `<tr><td class="mono">${h.id}</td><td><span class="badge ${b}">${h.estado}</span></td><td>${h.modo}</td><td>${h.accion}</td><td style="font-size:11px;color:var(--ink-soft)">${h.norma}</td></tr>`;
+   }).join("")
+  }</tbody></table>`;
+ } else {
+  html += `<p class="hint" style="margin-top:10px">Ninguna regla se activó: parámetros dentro de ventanas normativas.</p>`;
+ }
+ html += `</div>`;
+ $(sel).innerHTML = html;
+}
+
+function renderDiagnosticoTab(){
+ const sel = $("#diag-med");
+ sel.innerHTML = `<option value="">— seleccione una medición —</option>` +
+  MEDICIONES.slice().reverse().map(m=>`<option value="${m.id_medicion}">${(m.fecha_iso||"").replace("T"," ")} · ${m.tag} · ${m.id_actividad}</option>`).join("");
+ $("#fmea-table").innerHTML = `<table><thead><tr><th>Familia</th><th>Modo de falla</th><th>Detección</th><th>Severidad</th><th>Acción</th></tr></thead><tbody>${
+  FMEA_ROWS.map(r=>`<tr><td>${r.familia}</td><td>${r.modo}</td><td>${r.detec}</td><td>${r.severidad}</td><td>${r.accion}</td></tr>`).join("")
+ }</tbody></table>`;
+}
+$("#btn-diag-run")?.addEventListener?.("click", ()=>{
+ const id = $("#diag-med").value;
+ const m = MEDICIONES.find(x=>x.id_medicion===id);
+ if(!m){toast("Seleccione una medición."); return;}
+ m._diag = diagnosticar(m);
+ renderDiagResult("#diag-result", m);
+ guardarDatos();
+});
+
+/* ---------- VIDA REMANENTE ---------- */
+function linreg(xs, ys){
+ const n = xs.length;
+ if(n<2) return null;
+ const mx = xs.reduce((a,b)=>a+b)/n;
+ const my = ys.reduce((a,b)=>a+b)/n;
+ let num=0, den=0;
+ for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)**2;}
+ if(den===0) return null;
+ const m = num/den;
+ const b = my - m*mx;
+ // R^2
+ const sst = ys.reduce((a,y)=>a+(y-my)**2,0);
+ const ssr = ys.reduce((a,y,i)=>a+(y-(m*xs[i]+b))**2,0);
+ const r2 = sst===0?1:(1-ssr/sst);
+ return {m,b,r2,n};
+}
+function limiteParaParametro(param){
+ const map = {
+  "temp_max_c":155, "delta_t_c":15,
+  "IP":1.0, "R_aislamiento_MOhm":100,
+  "THD_V_pct":5, "THD_I_pct":15,
+  "vibracion_rms_mms":7.1,
+  "desbalance_i_pct":10, "desbalance_v_pct":2
+ };
+ const dir = { "IP":"below", "R_aislamiento_MOhm":"below" };
+ return {umbral:map[param]||null, direccion:dir[param]||"above"};
+}
+$("#btn-vida-run")?.addEventListener?.("click", ()=>{
+ const tag = $("#vida-tag").value.trim();
+ const meds = MEDICIONES.filter(m=>m.tag===tag);
+ if(meds.length<3){$("#vida-result").innerHTML = `<div class="result-box warn"><h4>Datos insuficientes</h4><p>Se necesitan ≥3 mediciones para proyectar tendencia. Actualmente hay <b>${meds.length}</b> para <span class="tag">${tag||'(sin tag)'}</span>.</p></div>`; return;}
+ const params = ["temp_max_c","delta_t_c","IP","R_aislamiento_MOhm","THD_V_pct","THD_I_pct","vibracion_rms_mms","desbalance_i_pct","desbalance_v_pct"];
+ const rows = [];
+ for(const p of params){
+  let ys=[], xs=[];
+  for(const m of meds){
+   const val = (p.startsWith("desbalance"))? (computeDerived(m)[p]) : m[p];
+   if(val!=null && !isNaN(val) && m.fecha_iso){
+    xs.push(new Date(m.fecha_iso).getTime()/86400000);
+    ys.push(Number(val));
+   }
+  }
+  if(xs.length<3) continue;
+  const rg = linreg(xs, ys);
+  if(!rg || rg.m===0) continue;
+  const lim = limiteParaParametro(p);
+  if(!lim.umbral) continue;
+  const now = Date.now()/86400000;
+  const yNow = rg.m*now + rg.b;
+  const dias = lim.direccion==="above" ? (lim.umbral - yNow)/rg.m : (yNow - lim.umbral)/(-rg.m);
+  const conf = rg.r2>0.7?"alta": rg.r2>0.4?"media":"baja";
+  rows.push({param:p, m:rg.m, r2:rg.r2, n:rg.n, dias, yNow, lim:lim.umbral, dir:lim.direccion, conf});
+ }
+ if(!rows.length){$("#vida-result").innerHTML = `<div class="result-box warn"><h4>Sin parámetros con serie suficiente</h4><p>Existen mediciones para este equipo pero ningún parámetro tiene ≥3 puntos.</p></div>`; return;}
+ rows.sort((a,b)=>a.dias-b.dias);
+ $("#vida-result").innerHTML = `<div class="result-box ok"><h4>Proyección lineal (extrapolación de tendencia)</h4>
+  <p class="hint">Cada estimación asume que la degradación seguirá la misma pendiente. NO es una predicción de ML.</p>
+  <table><thead><tr><th>Parámetro</th><th>Valor hoy</th><th>Pendiente</th><th>R²</th><th>N</th><th>Días al umbral</th><th>Confianza</th></tr></thead><tbody>${
+   rows.map(r=>`<tr><td>${r.param}</td><td class="mono">${fmt(r.yNow,3)}</td><td class="mono">${fmt(r.m,4)}/d</td><td class="mono">${fmt(r.r2,3)}</td><td>${r.n}</td><td class="mono"><b>${r.dias>0?Math.round(r.dias):'ya rebasado'}</b></td><td>${r.conf}</td></tr>`).join("")
+  }</tbody></table></div>`;
+});
+
+/* ---------- TENDENCIAS ---------- */
+function drawLineChart(container, xs, ys, ylabel, umbralA, umbralB){
+ const W=760, H=260, ml=48, mr=16, mt=14, mb=32;
+ const iw=W-ml-mr, ih=H-mt-mb;
+ if(xs.length<2){container.innerHTML='<p class="hint">Se necesitan ≥2 puntos.</p>';return;}
+ const xmin=Math.min(...xs), xmax=Math.max(...xs);
+ let ymin=Math.min(...ys, umbralA||Infinity, umbralB||Infinity);
+ let ymax=Math.max(...ys, umbralA||-Infinity, umbralB||-Infinity);
+ if(ymin===ymax){ymin-=1;ymax+=1;}
+ const pad=(ymax-ymin)*0.1; ymin-=pad; ymax+=pad;
+ const sx=x=>ml+((x-xmin)/(xmax-xmin||1))*iw;
+ const sy=y=>mt+ih-((y-ymin)/(ymax-ymin))*ih;
+ let path="";
+ xs.forEach((x,i)=>{path+=(i?" L":"M")+sx(x)+" "+sy(ys[i]);});
+ const points=xs.map((x,i)=>`<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="3.4" fill="var(--verde)"/>`).join("");
+ // Y ticks
+ const yticks=[]; for(let i=0;i<=4;i++){const yv=ymin+(ymax-ymin)*i/4; yticks.push(`<g><line x1="${ml}" x2="${W-mr}" y1="${sy(yv)}" y2="${sy(yv)}" stroke="#eef1ef"/><text x="${ml-6}" y="${sy(yv)+3}" text-anchor="end">${yv.toFixed(2)}</text></g>`);}
+ // X ticks (start/mid/end)
+ const xticks=[]; [xmin,(xmin+xmax)/2,xmax].forEach(xv=>{const d=new Date(xv*86400000); xticks.push(`<text x="${sx(xv)}" y="${H-8}" text-anchor="middle">${d.toISOString().slice(0,10)}</text>`);});
+ const uA = umbralA!=null? `<line x1="${ml}" x2="${W-mr}" y1="${sy(umbralA)}" y2="${sy(umbralA)}" stroke="var(--warn)" stroke-dasharray="4 3"/><text x="${W-mr-4}" y="${sy(umbralA)-3}" text-anchor="end" fill="var(--warn)">alerta ${umbralA}</text>`:"";
+ const uB = umbralB!=null? `<line x1="${ml}" x2="${W-mr}" y1="${sy(umbralB)}" y2="${sy(umbralB)}" stroke="var(--alarm)" stroke-dasharray="4 3"/><text x="${W-mr-4}" y="${sy(umbralB)-3}" text-anchor="end" fill="var(--alarm)">alarma ${umbralB}</text>`:"";
+ container.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  ${yticks.join("")}
+  ${uA}${uB}
+  <path d="${path}" fill="none" stroke="var(--verde)" stroke-width="2"/>
+  ${points}
+  ${xticks.join("")}
+  <text x="${ml}" y="${mt-4}" font-weight="700" fill="var(--ink)">${ylabel}</text>
+ </svg>`;
+}
+
+$("#btn-trend")?.addEventListener?.("click", ()=>{
+ const tag = $("#trend-tag").value.trim();
+ const param = $("#trend-param").value;
+ const meds = MEDICIONES.filter(m=>m.tag===tag).sort((a,b)=>a.fecha_iso.localeCompare(b.fecha_iso));
+ const xs=[], ys=[];
+ for(const m of meds){
+  const val = (param.startsWith("desbalance"))? (computeDerived(m)[param]) : m[param];
+  if(val!=null && !isNaN(val) && m.fecha_iso){
+   xs.push(new Date(m.fecha_iso).getTime()/86400000);
+   ys.push(Number(val));
+  }
+ }
+ const {umbral, direccion} = limiteParaParametro(param);
+ const cont = document.createElement("div");
+ drawLineChart(cont, xs, ys, `${param} · ${tag||''}`, direccion==="above"? umbral*0.9 : umbral*1.1, umbral);
+ $("#trend-out").innerHTML = "";
+ $("#trend-out").appendChild(cont);
+});
+
+function renderTendencias(){
+ $("#trend-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro y presione <b>Trazar</b>.</p>';
+ // Heatmap
+ renderHeatmap();
+ // Pareto
+ renderPareto();
+}
+function renderHeatmap(){
+ const lastByTag = {};
+ for(const m of MEDICIONES.slice().reverse()) if(!(m.tag in lastByTag)) lastByTag[m.tag]=m;
+ const sectores = Array.from(new Set(EQUIPOS.map(e=>String(e.sector||"—")))).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true}));
+ const familias = Array.from(new Set(EQUIPOS.map(e=>e.familia))).sort();
+ const mat = {};
+ for(const e of EQUIPOS){
+  const s=String(e.sector||"—"), f=e.familia;
+  const k = s+"|"+f;
+  if(!mat[k]) mat[k]={ok:0,warn:0,alarm:0,sin:0,total:0};
+  mat[k].total++;
+  const m = lastByTag[e.tag];
+  const st = m && m._diag && m._diag.estado;
+  if(st==="alarma") mat[k].alarm++;
+  else if(st==="alerta") mat[k].warn++;
+  else if(st==="normal") mat[k].ok++;
+  else mat[k].sin++;
+ }
+ let html = `<table><thead><tr><th>Familia \\ Sector</th>${sectores.map(s=>`<th style="text-align:center">${s}</th>`).join("")}</tr></thead><tbody>`;
+ for(const f of familias){
+  html += `<tr><td><b>${f}</b></td>`;
+  for(const s of sectores){
+   const c = mat[s+"|"+f];
+   if(!c){html+=`<td></td>`;continue;}
+   const worst = c.alarm>0?"alarm": c.warn>0?"warn": c.ok>0?"ok":"gray";
+   const color = worst==="alarm"?"var(--alarm)": worst==="warn"?"var(--warn)": worst==="ok"?"var(--ok)":"#c5cdc8";
+   const bg = worst==="alarm"?"#fdeaeb": worst==="warn"?"#fff5e8": worst==="ok"?"#e5f4ec":"#f2f4f2";
+   html += `<td style="text-align:center;background:${bg};color:${color};font-weight:700" title="${c.ok}✓ ${c.warn}⚠ ${c.alarm}⛔ ${c.sin}∅">${c.total}</td>`;
+  }
+  html += `</tr>`;
+ }
+ html+="</tbody></table>";
+ $("#heat-out").innerHTML = html;
+}
+function renderPareto(){
+ const counts = {};
+ for(const m of MEDICIONES){
+  const hs = m._diag?.hallazgos || [];
+  for(const h of hs){ counts[h.modo] = (counts[h.modo]||0)+1; }
+ }
+ const rows = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+ if(!rows.length){$("#pareto-out").innerHTML='<p class="hint">No hay hallazgos aún.</p>';return;}
+ const max = rows[0][1];
+ $("#pareto-out").innerHTML = `<table><thead><tr><th>Modo de falla</th><th style="text-align:right">Ocurrencias</th><th>Frecuencia</th></tr></thead><tbody>${
+  rows.map(([k,v])=>`<tr><td>${k}</td><td class="mono" style="text-align:right">${v}</td><td><div style="height:9px;background:#eef1ef;border-radius:4px;overflow:hidden;width:220px"><div style="height:100%;width:${(v/max)*100}%;background:var(--guinda)"></div></div></td></tr>`).join("")
+ }</tbody></table>`;
+}
+
+/* ---------- CENSO ---------- */
+function renderCenso(){
+ const famSel = $("#censo-familia");
+ if(famSel.children.length<=1){
+  const fams = Array.from(new Set(EQUIPOS.map(e=>e.familia))).sort();
+  famSel.innerHTML = '<option value="">Todas las familias</option>' + fams.map(f=>`<option>${f}</option>`).join("");
+  const secSel = $("#censo-sector");
+  const secs = Array.from(new Set(EQUIPOS.map(e=>String(e.sector||"—")))).sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true}));
+  secSel.innerHTML = '<option value="">Todos los sectores</option>' + secs.map(s=>`<option>${s}</option>`).join("");
+ }
+ const draw = ()=>{
+  const q=($("#censo-q").value||"").toLowerCase(), f=famSel.value, s=$("#censo-sector").value;
+  const rows = EQUIPOS.filter(e=>{
+   if(f && e.familia!==f) return false;
+   if(s && String(e.sector)!==s) return false;
+   if(q){
+    const hay = (e.tag+" "+e.denom+" "+e.planta+" "+e.sap).toLowerCase();
+    if(!hay.includes(q)) return false;
+   }
+   return true;
+  });
+  $("#censo-count").textContent = `${rows.length.toLocaleString()} equipos`;
+  $("#censo-table").innerHTML = `<table><thead><tr><th>TAG</th><th>Familia</th><th>Sector</th><th>Planta</th><th>Denominación</th><th>SAP</th></tr></thead><tbody>${
+   rows.slice(0,300).map(e=>`<tr><td class="tag">${e.tag}</td><td><span class="pill">${e.familia}</span></td><td>${e.sector||''}</td><td>${e.planta||''}</td><td>${e.denom||''}</td><td class="mono" style="font-size:11px">${e.sap||''}</td></tr>`).join("")
+  }</tbody></table>`;
+ };
+ $("#censo-q").oninput = draw;
+ famSel.onchange = draw;
+ $("#censo-sector").onchange = draw;
+ draw();
+}
+
+/* ---------- LIMITES ---------- */
+function renderLimites(){
+ $("#lim-table").innerHTML = `<table><thead><tr><th>Tipo de equipo</th><th>Parámetro</th><th>Unidad</th><th>Verde ≤</th><th>Amarillo ≤</th><th>Rojo ≥</th><th>Norma</th></tr></thead><tbody>${
+  LIMITES.map(l=>`<tr><td>${l.tipo_equipo}</td><td>${l.parametro}</td><td>${l.unidad||''}</td><td class="mono">${l.banda_verde_max??'—'}</td><td class="mono">${l.banda_amarilla_max??'—'}</td><td class="mono">${l.banda_roja_min??'—'}</td><td style="font-size:11px;color:var(--ink-soft)">${l.norma}</td></tr>`).join("")
+ }</tbody></table>`;
+}
+
+/* ---------- CONFIG (import/export) ---------- */
+function renderConfig(){
+ $("#cfg-versions").innerHTML = `${EQUIPOS.length.toLocaleString()} equipos · ${ACTIVIDADES.length} actividades · ${LIMITES.length} límites`;
+ $("#cfg-status").textContent = MEDICIONES.length? `${MEDICIONES.length} mediciones locales.` : "Sin mediciones registradas.";
+}
+$("#btn-export")?.addEventListener?.("click", ()=>{
+ const blob = new Blob([JSON.stringify({schema:"sicm-ele/v1", exported_at:new Date().toISOString(), mediciones:MEDICIONES}, null, 2)], {type:"application/json"});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a"); a.href = url; a.download = `sicm-ele_${new Date().toISOString().slice(0,10)}.json`; a.click();
+ URL.revokeObjectURL(url);
+ toast("Respaldo exportado.");
+});
+$("#fin-restore")?.addEventListener?.("change", async (ev)=>{
+ const f = ev.target.files?.[0]; if(!f) return;
+ try{
+  const obj = JSON.parse(await f.text());
+  if(!obj.mediciones) throw new Error("Formato no reconocido");
+  MEDICIONES = obj.mediciones;
+  await guardarDatos(); renderConfig(); toast("Respaldo restaurado.");
+ }catch(e){toast("Error: "+e.message);}
+});
+$("#fin-recorridos")?.addEventListener?.("change", async (ev)=>{
+ const f = ev.target.files?.[0]; if(!f) return;
+ try{
+  const obj = JSON.parse(await f.text());
+  const arr = Array.isArray(obj)?obj:(obj.recorridos||obj.data||[]);
+  let n=0;
+  for(const r of arr){
+   // Best-effort: crear una medicion "INSP" por cada recorrido
+   const m = {
+    id_medicion:"IMP-"+(r.folio||Date.now())+"-"+(n++),
+    tag: r.tag || (r.item?.tag) || (r.folio||""),
+    id_actividad: "INSP",
+    fecha_iso: r.creado || r.fecha || new Date().toISOString().slice(0,16),
+    operario: r.operario || "",
+    observaciones: r.observaciones || JSON.stringify(r).slice(0,200),
+   };
+   m._diag = diagnosticar(m);
+   MEDICIONES.push(m);
+  }
+  await guardarDatos(); renderConfig(); toast(`Importadas ${n} entradas de recorridos.`);
+ }catch(e){toast("Error: "+e.message);}
+});
+$("#btn-purge")?.addEventListener?.("click", async ()=>{
+ if(!confirm("Vaciar TODAS las mediciones locales?")) return;
+ MEDICIONES = []; await guardarDatos(); renderConfig(); toast("Mediciones vaciadas.");
+});
+
+/* ---------- Boot ---------- */
+(async ()=>{
+ await cargarDatos();
+ switchTab("dashboard");
+})();
+</script>
+</body>
+</html>

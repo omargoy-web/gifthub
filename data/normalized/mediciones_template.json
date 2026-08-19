@@ -1,0 +1,33 @@
+{
+ "schema_version": "1.0",
+ "campos": [
+  "id_medicion",
+  "tag",
+  "id_actividad",
+  "fecha_iso",
+  "operario",
+  "I_F1",
+  "I_F2",
+  "I_F3",
+  "V_L1L2",
+  "V_L2L3",
+  "V_L3L1",
+  "temp_max_c",
+  "delta_t_c",
+  "R_aislamiento_MOhm",
+  "IP",
+  "DAR",
+  "THD_V_pct",
+  "THD_I_pct",
+  "vibracion_rms_mms",
+  "vibracion_pico_mms",
+  "condicion",
+  "observaciones"
+ ],
+ "condicion_enum": [
+  "normal",
+  "alerta",
+  "alarma"
+ ],
+ "registros": []
+}

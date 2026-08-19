@@ -1,0 +1,36 @@
+norma,tipo_equipo,parametro,unidad,banda_amarilla_max,banda_roja_min,banda_verde_max,fuente
+"ISO 20816-3 A1 GP1 (>400HP, H>315mm)",motobomba_horizontal_rigida,vibracion_velocidad_rms,mm/s,7.1,7.1,4.5,VALORES_VIBRACION_R12.xlsx
+ISO 20816-3 A1 GP1,motobomba_horizontal_flexible,vibracion_velocidad_rms,mm/s,11.0,11.0,7.1,VALORES_VIBRACION_R12.xlsx
+ISO 20816-3 A1 GP1,motobomba_vertical_rigida,vibracion_velocidad_rms,mm/s,7.1,7.1,4.5,VALORES_VIBRACION_R12.xlsx
+"ISO 20816-3 A2 GP2 (>20 <400HP, H<315mm)",motor_gp2_base_rigida,vibracion_velocidad_rms,mm/s,4.5,4.5,2.8,VALORES_VIBRACION_R12.xlsx
+ISO 20816-3 A2 GP2,motor_gp2_base_flexible,vibracion_velocidad_rms,mm/s,7.1,7.1,4.5,VALORES_VIBRACION_R12.xlsx
+ISO 20816-1,motoventilador_soloaire_flexible,vibracion_velocidad_rms,mm/s,9.3,9.3,4.5,VALORES_VIBRACION_R12.xlsx
+CTI Institute,tiro_inducido_torre_enfriamiento,vibracion_velocidad_rms,mm/s,12.7,12.7,10.9,VALORES_VIBRACION_R12.xlsx
+"IEEE 841 §6.9 (a) motores 2/4/6 polos, desbalanceo/global",motor_ieee841_2_4_6polos_desacoplado,vibracion_velocidad_pico_sin_filtrar,mm/s,2.03,2.03,2.03,VALORES_VIBRACION_R12.xlsx
+IEEE 841 §6.9 (a) motores 8 polos,motor_ieee841_8polos_desacoplado,vibracion_velocidad_pico_sin_filtrar,mm/s,1.52,1.52,1.52,VALORES_VIBRACION_R12.xlsx
+"Ajuste temperatura motores R1 (Clase F, MT RTD)",motor_mt_13.8_4.16kV_devanados_clase_F,temp_devanado,°C,135,155,120,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+Ajuste temperatura motores R1 (Clase H),motor_mt_devanados_clase_H,temp_devanado,°C,135,175,125,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+Ajuste temperatura motores R1 (BT clase F pirómetro; restar 20°C al valor RTD),motor_bt_480V_clase_F_pirometro,temp_devanado,°C,110,120,100,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+Ajuste temperatura motores R1 (BT clase H pirómetro),motor_bt_480V_clase_H_pirometro,temp_devanado,°C,120,130,110,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+Ajuste temperatura motores R1 (rodamientos MT),motor_rodamientos,temp_rodamiento,°C,85,95,70,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+Ajuste temperatura motores R1 (delta 15°C por fase),motor_desbalance_temp_fases,delta_temp_entre_fases,°C,15,15,10,AJUSTE_TEMPERATURA_MOTORES_R1.xlsx
+NFPA 70B / NETA MTS Tbl 100.18 (1-3 investigar; 4-15 reparar corto plazo; >15 mayor),conexion_electrica,delta_t_termografico,°C,15,15,3,Codificación normativa
+IEEE 43-2013 (<1 peligroso; 1-2 cuestionable; 2-4 aceptable; >4 excelente),motor_transformador,indice_polarizacion,-,4.0,1.0,4.0,Codificación normativa
+IEEE 43-2013: kV+1 MΩ mínimo a 40°C (para máquinas fabricadas antes 1970: (kV+1)); para pos-1970: 100 MΩ mínimo,motor_transformador,resistencia_aislamiento_min,MΩ,,,,Codificación normativa
+NEMA MG-1 §14.35 (>10% no operar sin derateo; contextualizar con carga),motor_inducción,desbalance_corriente_pct,%,10,10,5,Codificación normativa
+NEMA MG-1 §14.36 (<1% ideal; <2% límite),motor_inducción,desbalance_tension_pct,%,2,2,1,Codificación normativa
+IEEE 519-2022 Tbl 1 (V≤1kV),PCC_bt_baja_tension,THD_V,%,8,8,5,Codificación normativa
+IEEE 519-2022 Tbl 1 (1kV<V≤69kV),PCC_mt_1_69kV,THD_V,%,5,5,5,Codificación normativa
+IEEE C57.106; ASTM D-1816 gap 2mm (≥35 kV en servicio ≤69kV),transformador_aceite_mineral,rigidez_dielectrica_D1816_2mm,kV,35,35,,RANGOS_ACEITE_R1.xlsx
+ASTM D-924 (<0.05% @ 25°C),transformador_aceite_mineral,factor_potencia_25C,%,0.05,0.05,0.05,RANGOS_ACEITE_R1.xlsx
+ASTM D-924 (<0.30% @ 100°C),transformador_aceite_mineral,factor_potencia_100C,%,0.3,0.3,0.3,RANGOS_ACEITE_R1.xlsx
+ASTM D-971 (<40 mN/m alerta contaminación),transformador_aceite_mineral,tension_interfacial_25C,mN/m,40,40,,RANGOS_ACEITE_R1.xlsx
+IEEE C57.106 Tbl 4 (≤35 ppm servicio 69kV) - ajustar por clase de tensión,transformador_aceite_mineral,contenido_agua_ppm,ppm,35,35,25,RANGOS_ACEITE_R1.xlsx
+IEEE C57.106 (Buen: ≤0.10; alerta 0.10-0.20; degradación >0.20),transformador_aceite_mineral,acidez_D664,mgKOH/g,0.2,0.3,0.1,RANGOS_ACEITE_R1.xlsx
+"CENSO_TRANSFORMADORES_EN_ACEITE (Alerta1 75°C, Alerta2 85°C, Disparo 100°C, límite diseño 120°C)",transformador_aceite_devanado,temp_devanado,°C,85,100,75,CENSO_TRANSFORMADORES_EN_ACEITE.xlsx
+CENSO_TRANSFORMADORES_EN_ACEITE,transformador_aceite_aceite,temp_aceite,°C,85,100,75,CENSO_TRANSFORMADORES_EN_ACEITE.xlsx
+IEEE C57.104-2019 Tbl 3 concentraciones (Condición 1/2/3),transformador_aceite_dga,H2,ppm,700,1800,100,Codificación normativa
+IEEE C57.104-2019,transformador_aceite_dga,CH4,ppm,400,1000,120,Codificación normativa
+IEEE C57.104-2019 (acetileno: cualquier presencia investigar),transformador_aceite_dga,C2H2,ppm,9,35,1,Codificación normativa
+IEEE C57.104-2019,transformador_aceite_dga,C2H4,ppm,100,200,50,Codificación normativa
+IEEE C57.104-2019,transformador_aceite_dga,CO,ppm,570,1400,350,Codificación normativa

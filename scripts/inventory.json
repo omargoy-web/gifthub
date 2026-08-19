@@ -1,0 +1,35 @@
+{
+  "ventanas_operativas": [
+    {"id": "1AMfw8xcShmIS9X5sb9Qhem-opIQ1hD67", "name": "VALORES_VIBRACION_PROPUESTOS_R12.xlsx"},
+    {"id": "1ilsvxYk_GVaRpylsRXf4s__rwXeV--ew", "name": "RANGOS_ACEPTACION_ACEITE_DIELECTRICO_R1.xlsx"},
+    {"id": "1Po3U3py38jsKlGyWgv9pJdjS4Lj2VCXI", "name": "FORMATO_VIBRACIONES_4.16KV_REV4.xlsx"},
+    {"id": "1LP7-4WSAvoeucS-YyuUBEVqWo52ZDGru", "name": "PM_MOTOR_PLANTA_LUBRICACION_RODAMIENTOS_R1.xlsx"},
+    {"id": "17iwyPHvWQLqY5eBRTg3JxAZ_Rz1xQtQ0", "name": "PM_ARRANCADOR_TERMOGRAFIA.xlsx"},
+    {"id": "1u28XowgdvXxc10j2xEaCldXS1JH-lnPJ", "name": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"},
+    {"id": "1Gl1-dqPA4cF4Yp3dXd2Hfi6dSETqYWIP", "name": "PM_INTERRUPTOR_TERMOMETRIA.xlsx"},
+    {"id": "1dKN3yVPluy_MxF5SqPu74Eic4iBHMLjc", "name": "PM_TABLEROS_TERMOGRAFIA.xlsx"},
+    {"id": "1GiFbwGEC05I-M3pEQr4UVJjjWpv5SOd6", "name": "PM_TRANSFORMADORES_SECOS_TERMOMETRIA.xlsx"},
+    {"id": "1SvvZWHXWP7GO5mjpynrRTb_Vbwsrjjct", "name": "CENSO_TRANSFORMADORES_ACEITE_TERMOMETRIA.xlsx"}
+  ],
+  "familias_sap": [
+    {"id": "1bw9BdI1Cf3jwz8ThEfw3WwJuPkvxr4pM", "name": "PM_MOTOR_PLANTA.xlsx"},
+    {"id": "1AMUWkdJZQ9hYNbn2Uri-m1yQsg0pCkiB", "name": "PM_TURBOGENERADOR.xlsx"},
+    {"id": "1MDnaiatadQbbpYQ2BBL2j8cWyiFC8rcO", "name": "PM_VDF.xlsx"},
+    {"id": "1_WxmQABw9MfgJ4UyasEu-AgdhwJ7kPsn", "name": "PM_ARRANCADOR.xlsx"},
+    {"id": "1zwGOAP8bCMQgLdzOMVMtY_DhDrSfQbT9", "name": "PM_RELEVADOR.xlsx"},
+    {"id": "1bfdlW5mpceMfz_Gz_ZkG58-TxJ5PYFzc", "name": "PM_INTERRUPTOR.xlsx"},
+    {"id": "1W6kShkE8q2FdVgVB-9gOcGwLLEl98kxX", "name": "PM_CIRCUITO_POTENCIA.xlsx"},
+    {"id": "12Nf09HUKNqKVR66ZnmXGkmYVBACY8kDJ", "name": "PM_ALUMBRADO.xlsx"},
+    {"id": "1AnYf-AExUr3SyR-IQLNToJxwGyfpZz6Y", "name": "PM_SISTEMA_TIERRA.xlsx"},
+    {"id": "1cYm0RxUyzYQGUBlaeBCYNKE3C0hItU7R", "name": "PM_TRANSFORMADOR.xlsx"},
+    {"id": "19zUbDJROGc7_B5aQbcUQfCrBbMoYm1xv", "name": "PM_TABLEROS.xlsx"},
+    {"id": "17yM6XtgTUCzd4HwLuXb0DG5uPaZhMuhT", "name": "PM_HVAC.xlsx"},
+    {"id": "1lWF6oP9e7PuSwD_Sk-krqwRCgBHSqFK1", "name": "PM_BATERIAS.xlsx"},
+    {"id": "1rh82sO3Srpoc0MW2j6IlNpHKv5bzh9yJ", "name": "PM_CCM.xlsx"},
+    {"id": "1DPyEv84TWomxcDmRDYTVykmj_12WBcmW", "name": "PM_SFI.xlsx"},
+    {"id": "1vbPi8M-TQsUhA2ZT2f8tlCcAW5Zzv42U", "name": "PM_NEUTRO_TIERRA.xlsx"},
+    {"id": "1wrDzXbWbXclbdRtjawyFtYRbAmBBevzL", "name": "PM_PARARRAYOS.xlsx"},
+    {"id": "1qX3DUTnaNuxOIgd8lU4OSlPxV5Haz98u", "name": "PM_TRAZAS_ELECTRICAS.xlsx"},
+    {"id": "1wikbVkFzlVpCDiHy7sby2kXDoPaOM6HK", "name": "PM_BANCO_CAPACITORES.xlsx"}
+  ]
+}

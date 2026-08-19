@@ -1,0 +1,352 @@
+[
+ {
+  "tipo_equipo": "motobomba_horizontal_rigida",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 4.5,
+  "banda_amarilla_max": 7.1,
+  "banda_roja_min": 7.1,
+  "norma": "ISO 20816-3 A1 GP1 (>400HP, H>315mm)",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motobomba_horizontal_flexible",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 7.1,
+  "banda_amarilla_max": 11.0,
+  "banda_roja_min": 11.0,
+  "norma": "ISO 20816-3 A1 GP1",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motobomba_vertical_rigida",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 4.5,
+  "banda_amarilla_max": 7.1,
+  "banda_roja_min": 7.1,
+  "norma": "ISO 20816-3 A1 GP1",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_gp2_base_rigida",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 2.8,
+  "banda_amarilla_max": 4.5,
+  "banda_roja_min": 4.5,
+  "norma": "ISO 20816-3 A2 GP2 (>20 <400HP, H<315mm)",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_gp2_base_flexible",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 4.5,
+  "banda_amarilla_max": 7.1,
+  "banda_roja_min": 7.1,
+  "norma": "ISO 20816-3 A2 GP2",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motoventilador_soloaire_flexible",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 4.5,
+  "banda_amarilla_max": 9.3,
+  "banda_roja_min": 9.3,
+  "norma": "ISO 20816-1",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "tiro_inducido_torre_enfriamiento",
+  "parametro": "vibracion_velocidad_rms",
+  "unidad": "mm/s",
+  "banda_verde_max": 10.9,
+  "banda_amarilla_max": 12.7,
+  "banda_roja_min": 12.7,
+  "norma": "CTI Institute",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_ieee841_2_4_6polos_desacoplado",
+  "parametro": "vibracion_velocidad_pico_sin_filtrar",
+  "unidad": "mm/s",
+  "banda_verde_max": 2.03,
+  "banda_amarilla_max": 2.03,
+  "banda_roja_min": 2.03,
+  "norma": "IEEE 841 §6.9 (a) motores 2/4/6 polos, desbalanceo/global",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_ieee841_8polos_desacoplado",
+  "parametro": "vibracion_velocidad_pico_sin_filtrar",
+  "unidad": "mm/s",
+  "banda_verde_max": 1.52,
+  "banda_amarilla_max": 1.52,
+  "banda_roja_min": 1.52,
+  "norma": "IEEE 841 §6.9 (a) motores 8 polos",
+  "fuente": "VALORES_VIBRACION_R12.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_mt_13.8_4.16kV_devanados_clase_F",
+  "parametro": "temp_devanado",
+  "unidad": "°C",
+  "banda_verde_max": 120,
+  "banda_amarilla_max": 135,
+  "banda_roja_min": 155,
+  "norma": "Ajuste temperatura motores R1 (Clase F, MT RTD)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_mt_devanados_clase_H",
+  "parametro": "temp_devanado",
+  "unidad": "°C",
+  "banda_verde_max": 125,
+  "banda_amarilla_max": 135,
+  "banda_roja_min": 175,
+  "norma": "Ajuste temperatura motores R1 (Clase H)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_bt_480V_clase_F_pirometro",
+  "parametro": "temp_devanado",
+  "unidad": "°C",
+  "banda_verde_max": 100,
+  "banda_amarilla_max": 110,
+  "banda_roja_min": 120,
+  "norma": "Ajuste temperatura motores R1 (BT clase F pirómetro; restar 20°C al valor RTD)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_bt_480V_clase_H_pirometro",
+  "parametro": "temp_devanado",
+  "unidad": "°C",
+  "banda_verde_max": 110,
+  "banda_amarilla_max": 120,
+  "banda_roja_min": 130,
+  "norma": "Ajuste temperatura motores R1 (BT clase H pirómetro)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_rodamientos",
+  "parametro": "temp_rodamiento",
+  "unidad": "°C",
+  "banda_verde_max": 70,
+  "banda_amarilla_max": 85,
+  "banda_roja_min": 95,
+  "norma": "Ajuste temperatura motores R1 (rodamientos MT)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "motor_desbalance_temp_fases",
+  "parametro": "delta_temp_entre_fases",
+  "unidad": "°C",
+  "banda_verde_max": 10,
+  "banda_amarilla_max": 15,
+  "banda_roja_min": 15,
+  "norma": "Ajuste temperatura motores R1 (delta 15°C por fase)",
+  "fuente": "AJUSTE_TEMPERATURA_MOTORES_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "conexion_electrica",
+  "parametro": "delta_t_termografico",
+  "unidad": "°C",
+  "banda_verde_max": 3,
+  "banda_amarilla_max": 15,
+  "banda_roja_min": 15,
+  "norma": "NFPA 70B / NETA MTS Tbl 100.18 (1-3 investigar; 4-15 reparar corto plazo; >15 mayor)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "motor_transformador",
+  "parametro": "indice_polarizacion",
+  "unidad": "-",
+  "banda_verde_max": 4.0,
+  "banda_amarilla_max": 4.0,
+  "banda_roja_min": 1.0,
+  "norma": "IEEE 43-2013 (<1 peligroso; 1-2 cuestionable; 2-4 aceptable; >4 excelente)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "motor_transformador",
+  "parametro": "resistencia_aislamiento_min",
+  "unidad": "MΩ",
+  "banda_verde_max": null,
+  "banda_amarilla_max": null,
+  "banda_roja_min": null,
+  "norma": "IEEE 43-2013: kV+1 MΩ mínimo a 40°C (para máquinas fabricadas antes 1970: (kV+1)); para pos-1970: 100 MΩ mínimo",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "motor_inducción",
+  "parametro": "desbalance_corriente_pct",
+  "unidad": "%",
+  "banda_verde_max": 5,
+  "banda_amarilla_max": 10,
+  "banda_roja_min": 10,
+  "norma": "NEMA MG-1 §14.35 (>10% no operar sin derateo; contextualizar con carga)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "motor_inducción",
+  "parametro": "desbalance_tension_pct",
+  "unidad": "%",
+  "banda_verde_max": 1,
+  "banda_amarilla_max": 2,
+  "banda_roja_min": 2,
+  "norma": "NEMA MG-1 §14.36 (<1% ideal; <2% límite)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "PCC_bt_baja_tension",
+  "parametro": "THD_V",
+  "unidad": "%",
+  "banda_verde_max": 5,
+  "banda_amarilla_max": 8,
+  "banda_roja_min": 8,
+  "norma": "IEEE 519-2022 Tbl 1 (V≤1kV)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "PCC_mt_1_69kV",
+  "parametro": "THD_V",
+  "unidad": "%",
+  "banda_verde_max": 5,
+  "banda_amarilla_max": 5,
+  "banda_roja_min": 5,
+  "norma": "IEEE 519-2022 Tbl 1 (1kV<V≤69kV)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "rigidez_dielectrica_D1816_2mm",
+  "unidad": "kV",
+  "banda_verde_max": null,
+  "banda_amarilla_max": 35,
+  "banda_roja_min": 35,
+  "norma": "IEEE C57.106; ASTM D-1816 gap 2mm (≥35 kV en servicio ≤69kV)",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "factor_potencia_25C",
+  "unidad": "%",
+  "banda_verde_max": 0.05,
+  "banda_amarilla_max": 0.05,
+  "banda_roja_min": 0.05,
+  "norma": "ASTM D-924 (<0.05% @ 25°C)",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "factor_potencia_100C",
+  "unidad": "%",
+  "banda_verde_max": 0.3,
+  "banda_amarilla_max": 0.3,
+  "banda_roja_min": 0.3,
+  "norma": "ASTM D-924 (<0.30% @ 100°C)",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "tension_interfacial_25C",
+  "unidad": "mN/m",
+  "banda_verde_max": null,
+  "banda_amarilla_max": 40,
+  "banda_roja_min": 40,
+  "norma": "ASTM D-971 (<40 mN/m alerta contaminación)",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "contenido_agua_ppm",
+  "unidad": "ppm",
+  "banda_verde_max": 25,
+  "banda_amarilla_max": 35,
+  "banda_roja_min": 35,
+  "norma": "IEEE C57.106 Tbl 4 (≤35 ppm servicio 69kV) - ajustar por clase de tensión",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_mineral",
+  "parametro": "acidez_D664",
+  "unidad": "mgKOH/g",
+  "banda_verde_max": 0.1,
+  "banda_amarilla_max": 0.2,
+  "banda_roja_min": 0.3,
+  "norma": "IEEE C57.106 (Buen: ≤0.10; alerta 0.10-0.20; degradación >0.20)",
+  "fuente": "RANGOS_ACEITE_R1.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_devanado",
+  "parametro": "temp_devanado",
+  "unidad": "°C",
+  "banda_verde_max": 75,
+  "banda_amarilla_max": 85,
+  "banda_roja_min": 100,
+  "norma": "CENSO_TRANSFORMADORES_EN_ACEITE (Alerta1 75°C, Alerta2 85°C, Disparo 100°C, límite diseño 120°C)",
+  "fuente": "CENSO_TRANSFORMADORES_EN_ACEITE.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_aceite",
+  "parametro": "temp_aceite",
+  "unidad": "°C",
+  "banda_verde_max": 75,
+  "banda_amarilla_max": 85,
+  "banda_roja_min": 100,
+  "norma": "CENSO_TRANSFORMADORES_EN_ACEITE",
+  "fuente": "CENSO_TRANSFORMADORES_EN_ACEITE.xlsx"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_dga",
+  "parametro": "H2",
+  "unidad": "ppm",
+  "banda_verde_max": 100,
+  "banda_amarilla_max": 700,
+  "banda_roja_min": 1800,
+  "norma": "IEEE C57.104-2019 Tbl 3 concentraciones (Condición 1/2/3)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_dga",
+  "parametro": "CH4",
+  "unidad": "ppm",
+  "banda_verde_max": 120,
+  "banda_amarilla_max": 400,
+  "banda_roja_min": 1000,
+  "norma": "IEEE C57.104-2019",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_dga",
+  "parametro": "C2H2",
+  "unidad": "ppm",
+  "banda_verde_max": 1,
+  "banda_amarilla_max": 9,
+  "banda_roja_min": 35,
+  "norma": "IEEE C57.104-2019 (acetileno: cualquier presencia investigar)",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_dga",
+  "parametro": "C2H4",
+  "unidad": "ppm",
+  "banda_verde_max": 50,
+  "banda_amarilla_max": 100,
+  "banda_roja_min": 200,
+  "norma": "IEEE C57.104-2019",
+  "fuente": "Codificación normativa"
+ },
+ {
+  "tipo_equipo": "transformador_aceite_dga",
+  "parametro": "CO",
+  "unidad": "ppm",
+  "banda_verde_max": 350,
+  "banda_amarilla_max": 570,
+  "banda_roja_min": 1400,
+  "norma": "IEEE C57.104-2019",
+  "fuente": "Codificación normativa"
+ }
+]

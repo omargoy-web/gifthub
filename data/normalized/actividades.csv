@@ -1,0 +1,13 @@
+id,nombre,tecnica,norma,periodicidad
+TERMO,Termografía infrarroja,IR imaging,NFPA 70B; NETA MTS Tbl 100.18,Trimestral / Semestral
+TERMOM,Termometría (puntual),Pirómetro IR,NFPA 70B,Mensual
+VIB,Análisis de vibraciones,Vibrómetro / colector,ISO 20816-3; IEEE 841; NEMA MG-1 §7,Mensual / Bimestral
+US,Ultrasonido pasivo,SEE / gE ultrasónico,ISO 17359; NETA MTS,Trimestral
+RAIS,Resistencia de aislamiento (IP/DAR),Megger 500-10kV DC,IEEE 43-2013,Anual / Bianual
+MCSA,MCSA / firma de corriente,FFT corriente estator,ISO 20958; IEEE 1415,Semestral
+QE,"Calidad de energía (THD, desbal.)",Analizador clase A,IEEE 519; NEMA MG-1 §14.35,Continua / trimestral
+ACEITE,Análisis fisicoquímico de aceite,ASTM D-877/D-1816/D-971/D-974,IEEE C57.106; ASTM D-1816,Anual
+AGD,Análisis de gases disueltos (DGA),Cromatografía de gases (ASTM D-3612),IEEE C57.104,Anual / Semestral
+INSP,Inspección de estado aparente,Recorrido visual,NRF-048-PEMEX; NOM-029-STPS,Mensual
+TIERRA,Medición de red de tierras,Telurómetro caída potencial,NRF-011-PEMEX; IEEE 81,Anual
+RCONT,Resistencia de contactos,Micro-ohmiómetro (ductor),IEEE C57.152; NETA MTS 7.1,Bianual (mayor)

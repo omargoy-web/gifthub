@@ -1,0 +1,86 @@
+[
+ {
+  "id": "TERMO",
+  "nombre": "Termografía infrarroja",
+  "tecnica": "IR imaging",
+  "norma": "NFPA 70B; NETA MTS Tbl 100.18",
+  "periodicidad": "Trimestral / Semestral"
+ },
+ {
+  "id": "TERMOM",
+  "nombre": "Termometría (puntual)",
+  "tecnica": "Pirómetro IR",
+  "norma": "NFPA 70B",
+  "periodicidad": "Mensual"
+ },
+ {
+  "id": "VIB",
+  "nombre": "Análisis de vibraciones",
+  "tecnica": "Vibrómetro / colector",
+  "norma": "ISO 20816-3; IEEE 841; NEMA MG-1 §7",
+  "periodicidad": "Mensual / Bimestral"
+ },
+ {
+  "id": "US",
+  "nombre": "Ultrasonido pasivo",
+  "tecnica": "SEE / gE ultrasónico",
+  "norma": "ISO 17359; NETA MTS",
+  "periodicidad": "Trimestral"
+ },
+ {
+  "id": "RAIS",
+  "nombre": "Resistencia de aislamiento (IP/DAR)",
+  "tecnica": "Megger 500-10kV DC",
+  "norma": "IEEE 43-2013",
+  "periodicidad": "Anual / Bianual"
+ },
+ {
+  "id": "MCSA",
+  "nombre": "MCSA / firma de corriente",
+  "tecnica": "FFT corriente estator",
+  "norma": "ISO 20958; IEEE 1415",
+  "periodicidad": "Semestral"
+ },
+ {
+  "id": "QE",
+  "nombre": "Calidad de energía (THD, desbal.)",
+  "tecnica": "Analizador clase A",
+  "norma": "IEEE 519; NEMA MG-1 §14.35",
+  "periodicidad": "Continua / trimestral"
+ },
+ {
+  "id": "ACEITE",
+  "nombre": "Análisis fisicoquímico de aceite",
+  "tecnica": "ASTM D-877/D-1816/D-971/D-974",
+  "norma": "IEEE C57.106; ASTM D-1816",
+  "periodicidad": "Anual"
+ },
+ {
+  "id": "AGD",
+  "nombre": "Análisis de gases disueltos (DGA)",
+  "tecnica": "Cromatografía de gases (ASTM D-3612)",
+  "norma": "IEEE C57.104",
+  "periodicidad": "Anual / Semestral"
+ },
+ {
+  "id": "INSP",
+  "nombre": "Inspección de estado aparente",
+  "tecnica": "Recorrido visual",
+  "norma": "NRF-048-PEMEX; NOM-029-STPS",
+  "periodicidad": "Mensual"
+ },
+ {
+  "id": "TIERRA",
+  "nombre": "Medición de red de tierras",
+  "tecnica": "Telurómetro caída potencial",
+  "norma": "NRF-011-PEMEX; IEEE 81",
+  "periodicidad": "Anual"
+ },
+ {
+  "id": "RCONT",
+  "nombre": "Resistencia de contactos",
+  "tecnica": "Micro-ohmiómetro (ductor)",
+  "norma": "IEEE C57.152; NETA MTS 7.1",
+  "periodicidad": "Bianual (mayor)"
+ }
+]
