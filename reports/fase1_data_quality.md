@@ -1,8 +1,8 @@
 # Reporte de calidad de datos — FASE 1
 
-- Archivos fuente procesados: **19**
-- EQUIPOS únicos extraídos: **8738**
-- Colisiones de TAG entre fuentes: **7419** (en 3940 tags)
+- Archivos fuente procesados: **24**
+- EQUIPOS únicos extraídos: **10930**
+- Colisiones de TAG entre fuentes: **7429** (en 3950 tags)
 - ACTIVIDADES catalogadas: **12**
 - LIMITES normativos codificados: **35**
 - MEDICIONES cargadas: **0** (esquema listo, esperando ingesta desde recorridos y campañas)
@@ -15,35 +15,36 @@
 | relevador | 1947 |
 | motor | 1758 |
 | interruptor | 1298 |
+| circuito_potencia | 994 |
+| alumbrado | 413 |
 | transformador_seco | 392 |
+| sistema_tierra | 331 |
 | tablero | 286 |
 | ccm | 219 |
+| baterias | 212 |
+| pararrayos | 208 |
 | transformador | 39 |
+| subestacion | 34 |
 
 ## Distribución de EQUIPOS por sector
 
 | Sector | # Equipos |
 |---|---:|
-| 1 | 702 |
-| 2 | 936 |
-| 3 | 1036 |
-| 4 | 1054 |
-| 5 | 1079 |
-| 6 | 724 |
-| 7 | 883 |
-| 8 | 2229 |
-| TALLERES | 95 |
+| 1 | 857 |
+| 2 | 1138 |
+| 3 | 1187 |
+| 4 | 1331 |
+| 5 | 1391 |
+| 6 | 885 |
+| 7 | 1289 |
+| 8 | 2728 |
+| TALLERES | 124 |
 
 ## Familias faltantes o no ingestadas
 
-- `alumbrado` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `banco_capacitores` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
-- `baterias` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
-- `circuito_potencia` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `hvac` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `neutro_tierra` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
-- `pararrayos` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
-- `sistema_tierra` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `transformador_aceite` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `trazas_electricas` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)
 - `turbogenerador` — sin registros ingestados (archivo pendiente de descarga o vacío en esta corrida)

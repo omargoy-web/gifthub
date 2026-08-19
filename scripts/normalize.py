@@ -48,6 +48,45 @@ FAMILY_MAP = {
     "PM_TRAZAS_ELECTRICAS": "trazas_electricas",
 }
 
+# ---------- Extractor de SUBESTACIONES a partir de ubicacion técnica -----------------
+# Ubicaciones tienen patrones como:
+#   TRI-REF-DBP-08SEL-SEP01-TR_SEP01_01A    -> SEP01 sector 8
+#   TRI-REF-DBP-08SEL-SEP02-TR_SEP02_01     -> SEP02 sector 8
+#   TRI-REF-DBP-06SEL-S_029-TR_29_01_SE29   -> SE-29 sector 6
+#   TRI-REF-DBP-04SEL-S_023-TR_23_01_SE23   -> SE-23 sector 4
+#   TRI-REF-DBP-05SEL-S_003-61_TR_101A_SE3  -> SE-03 sector 5
+#   TRI-REF-DBP-08SEL-S_ANR-TR_ANR_01_SEANR -> SE-ANR (arranque negro) sector 8
+def extract_subestacion(ubicacion, sector):
+    """
+    Devuelve dict {tag, sector, denom, planta, familia:'subestacion'} o None.
+    """
+    if not ubicacion or not isinstance(ubicacion,str): return None
+    m = re.match(r"TRI-REF-DBP-(\d{2})([A-Z]{3})-([A-Z_0-9]+)-", ubicacion)
+    if not m: return None
+    sec_from_uti = int(m.group(1))
+    se_token = m.group(3)  # e.g. SEP01, S_029, SEP02, S_ANR
+    # normalize:
+    if se_token.startswith("SEP"):
+        tag = se_token  # SEP01, SEP02
+        denom = f"SUBESTACIÓN PRINCIPAL {tag}"
+    elif se_token.startswith("S_"):
+        suf = se_token[2:]
+        tag = f"SE-{suf}"
+        denom = f"SUBESTACIÓN {tag}"
+    else:
+        return None  # SEDIF, SDESA, SGELE, etc. no son subestaciones eléctricas
+    return {
+        "tag": tag,
+        "sector": sec_from_uti if sec_from_uti else sector,
+        "familia": "subestacion",
+        "denominacion": denom,
+        "sap_equipo": None,
+        "planta": None,
+        "criticidad_abc": "A",  # subestaciones son alta criticidad por defecto
+        "ubicacion": ubicacion.split(f"-{se_token}-")[0] + f"-{se_token}",
+        "fuente": "derivado_ubicacion",
+    }
+
 # ---------- EQUIPOS -----------------------------------------------------------------
 # Columnas SAP comunes en PM_*.xlsx
 COL_ALIAS = {
@@ -77,6 +116,7 @@ def is_pm_family_file(title: str) -> str | None:
 def parse_equipos(dumps):
     equipos = OrderedDict()  # key = tag
     seen_dup = defaultdict(int)
+    subestaciones = OrderedDict()  # key = tag SE
     for d in dumps:
         family = is_pm_family_file(d["source_title"])
         if not family: continue
@@ -141,7 +181,25 @@ def parse_equipos(dumps):
                         if not equipos[tag].get(k) and v: equipos[tag][k] = v
                 else:
                     equipos[tag] = rec
-    return equipos, seen_dup
+
+                # Derivar subestación desde ubicacion
+                sub = extract_subestacion(rec.get("ubicacion"), rec.get("sector"))
+                if sub:
+                    stag = sub["tag"]
+                    if stag not in subestaciones:
+                        subestaciones[stag] = sub
+                        subestaciones[stag]["equipos_asociados"] = []
+                    subestaciones[stag]["equipos_asociados"].append(tag)
+
+    # Añadir subestaciones al censo maestro
+    for stag, srec in subestaciones.items():
+        srec_out = dict(srec)
+        # Conteo de equipos como campo extra
+        srec_out["extra_n_equipos"] = len(srec.get("equipos_asociados", []))
+        srec_out.pop("equipos_asociados", None)
+        equipos[stag] = srec_out
+
+    return equipos, seen_dup, subestaciones
 
 # ---------- ACTIVIDADES catalog -----------------------------------------------------
 ACTIVIDADES = [
@@ -306,11 +364,19 @@ def main():
     print(f"Loaded {len(dumps)} dumps")
 
     # --- EQUIPOS ---
-    equipos, dups = parse_equipos(dumps)
-    print(f"EQUIPOS: {len(equipos)} unique tags, dedup collisions: {sum(dups.values())} across {len(dups)} tags")
+    equipos, dups, subs = parse_equipos(dumps)
+    print(f"EQUIPOS: {len(equipos)} unique tags (incluye {len(subs)} subestaciones derivadas), dedup collisions: {sum(dups.values())} across {len(dups)} tags")
     # Save
     (OUT / "equipos.json").write_text(json.dumps(list(equipos.values()), ensure_ascii=False, indent=1, default=str), encoding="utf-8")
     write_csv(OUT / "equipos.csv", list(equipos.values()))
+
+    # Subestaciones inventario dedicado (con conteo equipos asociados)
+    subs_out = [{"tag":s["tag"], "sector":s["sector"], "denominacion":s["denominacion"],
+                 "criticidad_abc":s["criticidad_abc"], "n_equipos_asociados": len(s.get("equipos_asociados",[])),
+                 "ubicacion_base": s["ubicacion"]}
+                for s in subs.values()]
+    (OUT / "subestaciones.json").write_text(json.dumps(subs_out, ensure_ascii=False, indent=1), encoding="utf-8")
+    write_csv(OUT / "subestaciones.csv", subs_out)
 
     # Breakdown by familia and sector
     by_family = defaultdict(int); by_sector = defaultdict(int)
@@ -319,8 +385,14 @@ def main():
         by_sector[str(r.get("sector",""))] += 1
 
     # --- ACTIVIDADES ---
-    (OUT / "actividades.json").write_text(json.dumps(ACTIVIDADES, ensure_ascii=False, indent=1), encoding="utf-8")
-    write_csv(OUT / "actividades.csv", ACTIVIDADES)
+    # Se mantiene el archivo actividades.json editado manualmente (16 técnicas SICM);
+    # solo lo re-emitimos si no existe todavía.
+    if not (OUT / "actividades.json").exists():
+        (OUT / "actividades.json").write_text(json.dumps(ACTIVIDADES, ensure_ascii=False, indent=1), encoding="utf-8")
+        write_csv(OUT / "actividades.csv", ACTIVIDADES)
+    else:
+        n_acts = len(json.loads((OUT / "actividades.json").read_text()))
+        print(f"ACTIVIDADES: {n_acts} preservadas de actividades.json (editado manualmente).")
 
     # --- LIMITES ---
     (OUT / "limites.json").write_text(json.dumps(LIMITES, ensure_ascii=False, indent=1), encoding="utf-8")

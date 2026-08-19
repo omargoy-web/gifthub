@@ -1,0 +1,274 @@
+[
+ {
+  "tag": "SE-015",
+  "sector": 2,
+  "denominacion": "SUBESTACIÓN SE-015",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 252,
+  "ubicacion_base": "TRI-REF-DBP-02SEL-S_015"
+ },
+ {
+  "tag": "SE-001",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-001",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 107,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_001"
+ },
+ {
+  "tag": "SE-018",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-018",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 81,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_018"
+ },
+ {
+  "tag": "SEP02",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN PRINCIPAL SEP02",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 305,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-SEP02"
+ },
+ {
+  "tag": "SE-019",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-019",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 115,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_019"
+ },
+ {
+  "tag": "SE-016",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-016",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 107,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_016"
+ },
+ {
+  "tag": "SEP01",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN PRINCIPAL SEP01",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 546,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-SEP01"
+ },
+ {
+  "tag": "SE-ANR",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-ANR",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 46,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_ANR"
+ },
+ {
+  "tag": "SE-017",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-017",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 74,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_017"
+ },
+ {
+  "tag": "SE-025",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-025",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 71,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_025"
+ },
+ {
+  "tag": "SE-030",
+  "sector": 8,
+  "denominacion": "SUBESTACIÓN SE-030",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 38,
+  "ubicacion_base": "TRI-REF-DBP-08SEL-S_030"
+ },
+ {
+  "tag": "SE-013",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-013",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 57,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_013"
+ },
+ {
+  "tag": "SE-020",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-020",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 94,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_020"
+ },
+ {
+  "tag": "SE-021",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-021",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 82,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_021"
+ },
+ {
+  "tag": "SE-022",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-022",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 41,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_022"
+ },
+ {
+  "tag": "SE-010",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-010",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 94,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_010"
+ },
+ {
+  "tag": "SE-033",
+  "sector": 7,
+  "denominacion": "SUBESTACIÓN SE-033",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 70,
+  "ubicacion_base": "TRI-REF-DBP-07SEL-S_033"
+ },
+ {
+  "tag": "SE-023",
+  "sector": 4,
+  "denominacion": "SUBESTACIÓN SE-023",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 113,
+  "ubicacion_base": "TRI-REF-DBP-04SEL-S_023"
+ },
+ {
+  "tag": "SE-007",
+  "sector": 3,
+  "denominacion": "SUBESTACIÓN SE-007",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 193,
+  "ubicacion_base": "TRI-REF-DBP-03SEL-S_007"
+ },
+ {
+  "tag": "SE-014",
+  "sector": 3,
+  "denominacion": "SUBESTACIÓN SE-014",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 178,
+  "ubicacion_base": "TRI-REF-DBP-03SEL-S_014"
+ },
+ {
+  "tag": "SE-026",
+  "sector": 4,
+  "denominacion": "SUBESTACIÓN SE-026",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 157,
+  "ubicacion_base": "TRI-REF-DBP-04SEL-S_026"
+ },
+ {
+  "tag": "SE-027",
+  "sector": 4,
+  "denominacion": "SUBESTACIÓN SE-027",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 149,
+  "ubicacion_base": "TRI-REF-DBP-04SEL-S_027"
+ },
+ {
+  "tag": "SE-024",
+  "sector": 4,
+  "denominacion": "SUBESTACIÓN SE-024",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 171,
+  "ubicacion_base": "TRI-REF-DBP-04SEL-S_024"
+ },
+ {
+  "tag": "SE-002",
+  "sector": 6,
+  "denominacion": "SUBESTACIÓN SE-002",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 198,
+  "ubicacion_base": "TRI-REF-DBP-06SEL-S_002"
+ },
+ {
+  "tag": "SE-008",
+  "sector": 6,
+  "denominacion": "SUBESTACIÓN SE-008",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 118,
+  "ubicacion_base": "TRI-REF-DBP-06SEL-S_008"
+ },
+ {
+  "tag": "SE-009",
+  "sector": 6,
+  "denominacion": "SUBESTACIÓN SE-009",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 105,
+  "ubicacion_base": "TRI-REF-DBP-06SEL-S_009"
+ },
+ {
+  "tag": "SE-003",
+  "sector": 5,
+  "denominacion": "SUBESTACIÓN SE-003",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 153,
+  "ubicacion_base": "TRI-REF-DBP-05SEL-S_003"
+ },
+ {
+  "tag": "SE-004",
+  "sector": 5,
+  "denominacion": "SUBESTACIÓN SE-004",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 148,
+  "ubicacion_base": "TRI-REF-DBP-05SEL-S_004"
+ },
+ {
+  "tag": "SE-005",
+  "sector": 5,
+  "denominacion": "SUBESTACIÓN SE-005",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 94,
+  "ubicacion_base": "TRI-REF-DBP-05SEL-S_005"
+ },
+ {
+  "tag": "SE-006",
+  "sector": 5,
+  "denominacion": "SUBESTACIÓN SE-006",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 162,
+  "ubicacion_base": "TRI-REF-DBP-05SEL-S_006"
+ },
+ {
+  "tag": "SE-011",
+  "sector": 5,
+  "denominacion": "SUBESTACIÓN SE-011",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 210,
+  "ubicacion_base": "TRI-REF-DBP-05SEL-S_011"
+ },
+ {
+  "tag": "SE-012",
+  "sector": 1,
+  "denominacion": "SUBESTACIÓN SE-012",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 175,
+  "ubicacion_base": "TRI-REF-DBP-01SEL-S_012"
+ },
+ {
+  "tag": "SE-029",
+  "sector": 6,
+  "denominacion": "SUBESTACIÓN SE-029",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 157,
+  "ubicacion_base": "TRI-REF-DBP-06SEL-S_029"
+ },
+ {
+  "tag": "SE-028",
+  "sector": 6,
+  "denominacion": "SUBESTACIÓN SE-028",
+  "criticidad_abc": "A",
+  "n_equipos_asociados": 132,
+  "ubicacion_base": "TRI-REF-DBP-06SEL-S_028"
+ }
+]

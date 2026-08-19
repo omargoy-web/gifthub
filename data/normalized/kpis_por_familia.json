@@ -1,5 +1,17 @@
 [
  {
+  "familia": "alumbrado",
+  "n_total": 413,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 413,
+  "n_BT": 0,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
   "familia": "arrancador",
   "n_total": 2799,
   "n_alta": 0,
@@ -12,12 +24,36 @@
   "MVA_total": 0.0
  },
  {
+  "familia": "baterias",
+  "n_total": 212,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 212,
+  "n_BT": 0,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
   "familia": "ccm",
   "n_total": 219,
   "n_alta": 0,
   "n_media": 0,
   "n_baja": 219,
   "n_BT": 219,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "circuito_potencia",
+  "n_total": 994,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 994,
+  "n_BT": 0,
   "n_MT": 0,
   "n_AT": 0,
   "HP_total": 0,
@@ -48,12 +84,48 @@
   "MVA_total": 0.0
  },
  {
+  "familia": "pararrayos",
+  "n_total": 208,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 208,
+  "n_BT": 0,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
   "familia": "relevador",
   "n_total": 1947,
   "n_alta": 0,
   "n_media": 0,
   "n_baja": 1947,
   "n_BT": 1896,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "sistema_tierra",
+  "n_total": 331,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 331,
+  "n_BT": 0,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "subestacion",
+  "n_total": 34,
+  "n_alta": 34,
+  "n_media": 0,
+  "n_baja": 0,
+  "n_BT": 0,
   "n_MT": 0,
   "n_AT": 0,
   "HP_total": 0,

@@ -126,11 +126,43 @@ Con la base normalizada de la Fase 1, se agregan **indicadores consolidados de c
 
 ## Total refinería (nameplate consolidado)
 
-- **8,738 equipos** censados en 8 familias × 8 sectores + área de talleres.
+- **10,930 equipos** censados en **14 familias** × 8 sectores + área de talleres.
+- **34 subestaciones** derivadas del campo `Ubicac.técnica` (SEP01/SEP02 principales; SE-001 a SE-033; SE-ANR arranque negro).
 - **~3,112 MVA** de transformación instalada (excluye 2 outliers SAP > 250 MVA).
 - **447 MW (599,561 HP)** potencia motriz instalada.
 - Detalle en `reports/fase2_kpis.md`.
 
+## Ampliación posterior a la primera entrega (Fase 2+)
+
+**Subestaciones agregadas al censo** — 34 subestaciones se extraen del patrón de `ubicacion` (`DBP-<sector><area>-<S_XXX|SEP0X>-…`) y se agregan como una nueva familia `subestacion` con:
+- Criticidad ABC = A por defecto (todo el sector eléctrico depende de ellas).
+- Conteo de equipos asociados (SEP01 = 546 equipos; SEP02 = 305; SE-015 = 252; …).
+- Ubicación base para navegación jerárquica.
+- Salidas dedicadas: `data/normalized/subestaciones.{json,csv}`.
+
+**Catálogo de ACTIVIDADES expandido a las 16 técnicas SICM** operadas en la Refinería Olmeca (más 1 auxiliar):
+1. Inspección preventiva a subestaciones (estado aparente) — NRF-048/NFPA 70B
+2. Inspección de transformadores en aceite — IEEE C57.152
+3. Temperatura en transformadores secos (termografía) — IEEE C57.12
+4. Temperatura en tableros eléctricos (termografía) — ANSI C37.20/NFPA 70B
+5. Temperatura en interruptores de alta tensión (termografía) — ANSI C37.20
+6. Termografía a arrancadores — NFPA 70B/NETA MTS
+7. Vibraciones de motores eléctricos — ISO 20816-3/IEEE 841/NEMA MG-1
+8. Monitoreo de motores con VFD — IEEE 1415/NEMA MG-1 §30
+9. Desbalance CCM 480 V — NEMA MG-1 §14.35/§14.36/IEEE 519
+10. Ultrasonido acústico de condición — ISO 17359/ISO 29821-1
+11. Rigidez dieléctrica de aceite (D-1816) — ASTM D-1816/IEEE C57.106
+12. Transformadores de desaladora (monitoreo específico) — IEEE C57.106
+13. Cargador y banco de baterías (celda por celda) — IEEE 450/1188; NRF-097
+14. Sistema de fuerza ininterrumpida (SFI/UPS) — IEEE 946/IEC 62040; NRF-097
+15. Relevadores de protección (ajustes) — IEEE C37.90/C37.2
+16. Estado aparente torres de enfriamiento — CTI Institute/ISO 20816-3
+17. Estado aparente de soloaires — ISO 20816-3 A2 GP2
+
+**Familias del censo expandidas de 8 a 14**: se agregaron `alumbrado` (413), `baterias` (212), `circuito_potencia` (994), `pararrayos` (208), `sistema_tierra` (331), y `subestacion` (34).
+
+**Pendiente (bajo esfuerzo)**: 6 familias adicionales de SAP —`turbogenerador` (4 equipos, ya en placa: 4 TG de 112 MVA c/u), `vfd` (~40 variadores), `hvac` (~100 unidades), `neutro_tierra` (~80 resistencias), `trazas_electricas` (~50 sistemas), `banco_capacitores` (~50 bancos). Sus xlsx fueron descargados pero llegaron en línea y no persistieron en esta sesión; con `read_file_content` o descarga a `data/raw/xlsx/` y re-corrida de `scripts/extract_xlsx.py` se ingestan.
+
 ## Rama y estado
 
-Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1 y 2 entregadas.
+Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2 y extensión (subestaciones + 16 actividades + familias adicionales) entregadas.

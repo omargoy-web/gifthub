@@ -1,86 +1,103 @@
 [
- {
-  "id": "TERMO",
-  "nombre": "Termografía infrarroja",
-  "tecnica": "IR imaging",
-  "norma": "NFPA 70B; NETA MTS Tbl 100.18",
-  "periodicidad": "Trimestral / Semestral"
- },
- {
-  "id": "TERMOM",
-  "nombre": "Termometría (puntual)",
-  "tecnica": "Pirómetro IR",
-  "norma": "NFPA 70B",
-  "periodicidad": "Mensual"
- },
- {
-  "id": "VIB",
-  "nombre": "Análisis de vibraciones",
-  "tecnica": "Vibrómetro / colector",
-  "norma": "ISO 20816-3; IEEE 841; NEMA MG-1 §7",
-  "periodicidad": "Mensual / Bimestral"
- },
- {
-  "id": "US",
-  "nombre": "Ultrasonido pasivo",
-  "tecnica": "SEE / gE ultrasónico",
-  "norma": "ISO 17359; NETA MTS",
-  "periodicidad": "Trimestral"
- },
- {
-  "id": "RAIS",
-  "nombre": "Resistencia de aislamiento (IP/DAR)",
-  "tecnica": "Megger 500-10kV DC",
-  "norma": "IEEE 43-2013",
-  "periodicidad": "Anual / Bianual"
- },
- {
-  "id": "MCSA",
-  "nombre": "MCSA / firma de corriente",
-  "tecnica": "FFT corriente estator",
-  "norma": "ISO 20958; IEEE 1415",
-  "periodicidad": "Semestral"
- },
- {
-  "id": "QE",
-  "nombre": "Calidad de energía (THD, desbal.)",
-  "tecnica": "Analizador clase A",
-  "norma": "IEEE 519; NEMA MG-1 §14.35",
-  "periodicidad": "Continua / trimestral"
- },
- {
-  "id": "ACEITE",
-  "nombre": "Análisis fisicoquímico de aceite",
-  "tecnica": "ASTM D-877/D-1816/D-971/D-974",
-  "norma": "IEEE C57.106; ASTM D-1816",
-  "periodicidad": "Anual"
- },
- {
-  "id": "AGD",
-  "nombre": "Análisis de gases disueltos (DGA)",
-  "tecnica": "Cromatografía de gases (ASTM D-3612)",
-  "norma": "IEEE C57.104",
-  "periodicidad": "Anual / Semestral"
- },
- {
-  "id": "INSP",
-  "nombre": "Inspección de estado aparente",
-  "tecnica": "Recorrido visual",
-  "norma": "NRF-048-PEMEX; NOM-029-STPS",
-  "periodicidad": "Mensual"
- },
- {
-  "id": "TIERRA",
-  "nombre": "Medición de red de tierras",
-  "tecnica": "Telurómetro caída potencial",
-  "norma": "NRF-011-PEMEX; IEEE 81",
-  "periodicidad": "Anual"
- },
- {
-  "id": "RCONT",
-  "nombre": "Resistencia de contactos",
-  "tecnica": "Micro-ohmiómetro (ductor)",
-  "norma": "IEEE C57.152; NETA MTS 7.1",
-  "periodicidad": "Bianual (mayor)"
- }
+ {"id": "IEA-SUB", "nombre": "Inspección preventiva a subestaciones (estado aparente)",
+  "tecnica": "Recorrido visual + termografía puntual + auditoría de operación",
+  "norma": "NRF-048-PEMEX; NOM-029-STPS; NFPA 70B",
+  "periodicidad": "Mensual / Bimestral",
+  "familia_objetivo": ["subestacion", "tablero", "interruptor"]},
+
+ {"id": "IEA-TRA", "nombre": "Inspección de transformadores en aceite",
+  "tecnica": "Estado aparente + termometría + toma de muestras + medición cargas",
+  "norma": "IEEE C57.152; NFPA 70B; NRF-048-PEMEX",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["transformador_aceite", "transformador"]},
+
+ {"id": "IEA-TRS", "nombre": "Temperatura en transformadores secos (termografía)",
+  "tecnica": "Termografía IR + termometría RTD + carga",
+  "norma": "IEEE C57.12; NFPA 70B; PM_TRANSFORMADORES_SECOS_TERMOMETRIA (interno)",
+  "periodicidad": "Mensual / Bimestral",
+  "familia_objetivo": ["transformador_seco"]},
+
+ {"id": "IEA-TAB", "nombre": "Temperatura en tableros eléctricos (termografía)",
+  "tecnica": "Termografía IR bajo carga",
+  "norma": "NFPA 70B; NETA MTS Tbl 100.18; ANSI C37.20",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["tablero", "ccm"]},
+
+ {"id": "IEA-INT", "nombre": "Temperatura en interruptores de alta tensión (termografía)",
+  "tecnica": "Termografía IR + medición corriente",
+  "norma": "ANSI C37.20; NFPA 70B; NETA MTS",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["interruptor"]},
+
+ {"id": "IEA-ARR", "nombre": "Termografía a arrancadores",
+  "tecnica": "Termografía IR bajo carga + inspección contactor",
+  "norma": "NFPA 70B; NETA MTS",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["arrancador"]},
+
+ {"id": "MMR-VIB", "nombre": "Vibraciones de motores eléctricos",
+  "tecnica": "Vibrometría multi-eje V/H/A + aceleración envolvente (gE)",
+  "norma": "ISO 20816-3; IEEE 841 §6.9; NEMA MG-1 §7",
+  "periodicidad": "Mensual (crítico) / Bimestral (rutina)",
+  "familia_objetivo": ["motor"]},
+
+ {"id": "MMR-MON", "nombre": "Monitoreo de motores con VFD (parámetros eléctricos)",
+  "tecnica": "I/V por fase, temperatura RTD, MCSA",
+  "norma": "IEEE 1415; NEMA MG-1 §30 (VFD); NRF-048-PEMEX",
+  "periodicidad": "Continua / Mensual",
+  "familia_objetivo": ["motor", "vfd", "ccm"]},
+
+ {"id": "MMR-CCM", "nombre": "Desbalance CCM 480 V",
+  "tecnica": "Analizador de red (I/V/THD/FP)",
+  "norma": "NEMA MG-1 §14.35 (I); §14.36 (V); IEEE 519",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["ccm", "tablero"]},
+
+ {"id": "US-AC", "nombre": "Ultrasonido acústico de condición",
+  "tecnica": "SEE / detector airborne 20-100 kHz",
+  "norma": "ISO 17359; ISO 29821-1",
+  "periodicidad": "Bimestral",
+  "familia_objetivo": ["motor", "transformador", "interruptor", "tablero"]},
+
+ {"id": "DIE-RIG", "nombre": "Rigidez dieléctrica de aceite (D-1816)",
+  "tecnica": "Prueba de ruptura dieléctrica en laboratorio",
+  "norma": "ASTM D-1816; IEEE C57.106",
+  "periodicidad": "Anual",
+  "familia_objetivo": ["transformador_aceite"]},
+
+ {"id": "TRA-DES", "nombre": "Transformadores de desaladora (monitoreo específico)",
+  "tecnica": "I secundario, corriente derivación, temperatura, sonidos",
+  "norma": "IEEE C57.106; NRF-048",
+  "periodicidad": "Mensual",
+  "familia_objetivo": ["transformador"]},
+
+ {"id": "IEA-BAT", "nombre": "Cargador y banco de baterías (celda por celda)",
+  "tecnica": "Voltaje flotación por celda, gravedad específica, temperatura, impedancia",
+  "norma": "IEEE 450 (VLA); IEEE 1188 (VRLA); NRF-097-PEMEX",
+  "periodicidad": "Mensual (rondas); Semestral (impedancia)",
+  "familia_objetivo": ["baterias", "ups_sfi"]},
+
+ {"id": "IEA-SFI", "nombre": "Sistema de fuerza ininterrumpida (SFI/UPS)",
+  "tecnica": "Prueba de autonomía + THD de salida + inspección banco",
+  "norma": "IEEE 946; NRF-097-PEMEX; IEC 62040",
+  "periodicidad": "Trimestral",
+  "familia_objetivo": ["ups_sfi", "baterias"]},
+
+ {"id": "IEA-REL", "nombre": "Relevadores de protección (verificación de ajustes)",
+  "tecnica": "Inyección secundaria + verificación firmware/pickup/tiempo",
+  "norma": "IEEE C37.90; IEEE C37.2; NRF-048",
+  "periodicidad": "Bianual",
+  "familia_objetivo": ["relevador"]},
+
+ {"id": "IEA-TE", "nombre": "Estado aparente de torres de enfriamiento (motores + reductores)",
+  "tecnica": "Recorrido visual + vibración + termografía + ultrasonido",
+  "norma": "CTI Institute; ISO 20816-3",
+  "periodicidad": "Mensual",
+  "familia_objetivo": ["motor", "torre_enfriamiento"]},
+
+ {"id": "IEA-SOL", "nombre": "Estado aparente de soloaires (motoventiladores)",
+  "tecnica": "Recorrido visual + vibración + termografía",
+  "norma": "ISO 20816-3 A2 GP2 base flexible / rígida",
+  "periodicidad": "Mensual",
+  "familia_objetivo": ["motor"]}
 ]
