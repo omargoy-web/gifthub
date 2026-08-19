@@ -159,6 +159,7 @@ footer.foot b{color:var(--ink-soft)}
 <nav class="tabs">
  <div class="max">
   <button data-tab="dashboard" class="active">Panel</button>
+  <button data-tab="consolidado">Consolidado (Fase 2)</button>
   <button data-tab="capturar">Capturar medición</button>
   <button data-tab="diagnostico">Diagnóstico</button>
   <button data-tab="vida">Vida remanente</button>
@@ -185,6 +186,33 @@ footer.foot b{color:var(--ink-soft)}
  <div class="card">
   <div class="card-title"><span class="n">3</span> Últimas 8 mediciones</div>
   <div id="ultimas-mediciones"></div>
+ </div>
+</section>
+
+<!-- CONSOLIDADO (Fase 2) -->
+<section id="view-consolidado" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Indicadores de nameplate por sector</div>
+  <p class="hint" style="margin-top:0">KPIs de censo/nameplate: totales de equipos, criticidad ABC, nivel de tensión (BT/MT/AT), potencia instalada. Los outliers de SAP (`capacidad` > 250 MVA por transformador) se excluyen del total MVA.</p>
+  <div id="cons-sector"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">2</span> Indicadores por familia</div>
+  <div id="cons-familia"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Ranking Top 20 por score de criticidad</div>
+  <p class="hint" style="margin-top:0"><span class="mono">score = criticidad_ABC × nivel_tension × log10(potencia+1)</span></p>
+  <div id="cons-ranking"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">4</span> Matriz sector × familia</div>
+  <div id="cons-matriz"></div>
+ </div>
+ <div class="card">
+  <div class="card-title"><span class="n">5</span> Indicadores de mediciones (vivos)</div>
+  <p class="hint" style="margin-top:0">Cuando existan MEDICIONES, cada parámetro se clasifica contra las ventanas normativas de la Fase 1. Al momento: <b id="cons-med-count">0</b> mediciones ingestadas.</p>
+  <div id="cons-med-tabla"></div>
  </div>
 </section>
 
@@ -360,6 +388,10 @@ footer.foot b{color:var(--ink-soft)}
 const LIMITES = __LIMITES__;
 const ACTIVIDADES = __ACTIVIDADES__;
 const EQUIPOS = __EQUIPOS__;
+const KPI_SECTOR = __KPI_SECTOR__;
+const KPI_FAMILIA = __KPI_FAMILIA__;
+const RANKING = __RANKING__;
+const MATRIZ = __MATRIZ__;
 
 /* ---------- IndexedDB simple ---------- */
 const IDB_NAME="sicm_ele_idb", IDB_STORE="kv";
@@ -400,6 +432,42 @@ function nemaUnbalancePct(...vals){
  const avg = vals.reduce((a,b)=>a+b)/vals.length;
  const maxDev = Math.max(...vals.map(v=>Math.abs(v-avg)));
  return (maxDev/avg)*100;
+}
+
+/* ---------- KPI engine (Fase 2): funciones evaluadoras por parámetro ---------- */
+// Cada evaluator devuelve {estado:"normal|alerta|alarma|sin_dato", ref:"norma"}
+const KPI_EVAL = {
+ desbalance_i_pct: v => v==null?{estado:"sin_dato"}: v>10?{estado:"alarma",ref:"NEMA MG-1 §14.35"}: v>5?{estado:"alerta",ref:"NEMA MG-1 §14.35"}:{estado:"normal",ref:"NEMA MG-1 §14.35"},
+ desbalance_v_pct: v => v==null?{estado:"sin_dato"}: v>2?{estado:"alarma",ref:"NEMA MG-1 §14.36"}: v>1?{estado:"alerta",ref:"NEMA MG-1 §14.36"}:{estado:"normal",ref:"NEMA MG-1 §14.36"},
+ IP: v => v==null?{estado:"sin_dato"}: v<1?{estado:"alarma",ref:"IEEE 43-2013"}: v<2?{estado:"alerta",ref:"IEEE 43-2013"}: v<4?{estado:"normal",ref:"IEEE 43-2013 aceptable"}:{estado:"normal",ref:"IEEE 43-2013 excelente"},
+ THD_V_pct: v => v==null?{estado:"sin_dato"}: v>8?{estado:"alarma",ref:"IEEE 519-2022 Tbl1"}: v>5?{estado:"alerta",ref:"IEEE 519-2022 Tbl1"}:{estado:"normal",ref:"IEEE 519-2022 Tbl1"},
+ THD_I_pct: v => v==null?{estado:"sin_dato"}: v>15?{estado:"alerta",ref:"IEEE 519"}:{estado:"normal",ref:"IEEE 519"},
+ delta_t_c: v => v==null?{estado:"sin_dato"}: v>15?{estado:"alarma",ref:"NFPA 70B / NETA MTS"}: v>3?{estado:"alerta",ref:"NFPA 70B / NETA MTS"}:{estado:"normal",ref:"NFPA 70B"},
+ temp_max_c: v => v==null?{estado:"sin_dato"}: v>=155?{estado:"alarma",ref:"Ajuste temp motores R1 (MT clase F)"}: v>=120?{estado:"alerta",ref:"Ajuste temp motores R1"}:{estado:"normal",ref:"Ajuste temp motores R1"},
+ vibracion_rms_mms: v => v==null?{estado:"sin_dato"}: v>7.1?{estado:"alarma",ref:"ISO 20816-3 A2 GP2"}: v>4.5?{estado:"alerta",ref:"ISO 20816-3 A2 GP2"}:{estado:"normal",ref:"ISO 20816-3 A2 GP2"},
+ carga_pct: v => v==null?{estado:"sin_dato"}: v>110?{estado:"alarma",ref:"NEMA MG-1 (>110% nom)"}: v>100?{estado:"alerta",ref:"NEMA MG-1"}: v>85?{estado:"normal",ref:"régimen nominal"}: v>20?{estado:"normal",ref:"régimen bajo"}: {estado:"sin_dato",ref:"carga <20% – KPIs poco significativos"},
+};
+
+function evaluarMedicion(m){
+ const d = computeDerived(m);
+ const carga = eqLookupCargaPct(m.tag, d.corriente_avg);
+ const res = {};
+ res.desbalance_i_pct = {v:d.desbalance_i_pct, ...KPI_EVAL.desbalance_i_pct(d.desbalance_i_pct)};
+ res.desbalance_v_pct = {v:d.desbalance_v_pct, ...KPI_EVAL.desbalance_v_pct(d.desbalance_v_pct)};
+ res.IP = {v:m.IP, ...KPI_EVAL.IP(m.IP)};
+ res.THD_V_pct = {v:m.THD_V_pct, ...KPI_EVAL.THD_V_pct(m.THD_V_pct)};
+ res.THD_I_pct = {v:m.THD_I_pct, ...KPI_EVAL.THD_I_pct(m.THD_I_pct)};
+ res.delta_t_c = {v:m.delta_t_c, ...KPI_EVAL.delta_t_c(m.delta_t_c)};
+ res.temp_max_c = {v:m.temp_max_c, ...KPI_EVAL.temp_max_c(m.temp_max_c)};
+ res.vibracion_rms_mms = {v:m.vibracion_rms_mms, ...KPI_EVAL.vibracion_rms_mms(m.vibracion_rms_mms)};
+ res.carga_pct = {v:carga, ...KPI_EVAL.carga_pct(carga)};
+ return res;
+}
+function eqLookupCargaPct(tag, i_op){
+ if(!tag || !i_op) return null;
+ const eq = EQUIPOS.find(x=>x.tag===tag);
+ if(!eq || !eq.I) return null;
+ return (i_op / eq.I) * 100;
 }
 
 function computeDerived(m){
@@ -510,6 +578,7 @@ function switchTab(name){
  $$("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.tab===name));
  $$("main > section").forEach(s=>s.classList.toggle("hide", s.id!=="view-"+name));
  if(name==="dashboard") renderDashboard();
+ if(name==="consolidado") renderConsolidado();
  if(name==="capturar") renderCapturar();
  if(name==="diagnostico") renderDiagnosticoTab();
  if(name==="vida") $("#vida-result").innerHTML="";
@@ -584,6 +653,65 @@ function renderDashboard(){
     const act = ACTIVIDADES.find(a=>a.id===m.id_actividad)?.nombre || m.id_actividad || "—";
     return `<tr><td>${(m.fecha_iso||"").replace("T"," ")}</td><td class="tag">${m.tag}</td><td>${act}</td><td><span class="badge ${bcls}">${st}</span></td></tr>`;
    }).join("")
+  }</tbody></table>`;
+ }
+}
+
+/* ---------- CONSOLIDADO (Fase 2) ---------- */
+function renderConsolidado(){
+ // Sector table
+ $("#cons-sector").innerHTML = `<table><thead><tr><th>Sector</th><th>Total</th><th>Alta crit.</th><th>Media</th><th>Baja</th><th>BT</th><th>MT</th><th>AT</th><th>HP instalado</th><th>MVA instalada</th></tr></thead><tbody>${
+  KPI_SECTOR.map(r=>`<tr><td><b>${r.sector}</b></td><td class="mono">${r.n_total.toLocaleString()}</td><td class="mono">${r.n_alta_criticidad}</td><td class="mono">${r.n_media_criticidad}</td><td class="mono">${r.n_baja_criticidad}</td><td class="mono">${r.n_BT.toLocaleString()}</td><td class="mono">${r.n_MT.toLocaleString()}</td><td class="mono">${r.n_AT.toLocaleString()}</td><td class="mono">${r.HP_instalado.toLocaleString()}</td><td class="mono">${r.MVA_instalada.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join("")
+ }</tbody></table>`;
+
+ // Familia table
+ $("#cons-familia").innerHTML = `<table><thead><tr><th>Familia</th><th>Total</th><th>Alta</th><th>BT</th><th>MT</th><th>AT</th><th>HP total</th><th>MVA total</th></tr></thead><tbody>${
+  KPI_FAMILIA.map(r=>`<tr><td><b>${r.familia}</b></td><td class="mono">${r.n_total.toLocaleString()}</td><td class="mono">${r.n_alta}</td><td class="mono">${r.n_BT.toLocaleString()}</td><td class="mono">${r.n_MT.toLocaleString()}</td><td class="mono">${r.n_AT.toLocaleString()}</td><td class="mono">${r.HP_total.toLocaleString()}</td><td class="mono">${r.MVA_total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</td></tr>`).join("")
+ }</tbody></table>`;
+
+ // Ranking top 20
+ $("#cons-ranking").innerHTML = `<table><thead><tr><th>#</th><th>Score</th><th>TAG</th><th>Familia</th><th>Sector</th><th>ABC</th><th>NT</th><th>Potencia</th><th>Denominación</th></tr></thead><tbody>${
+  RANKING.slice(0,20).map(r=>{
+   const pot = r.kVA? `${(r.kVA/1000).toFixed(1)} MVA` : r.HP? `${r.HP.toLocaleString()} HP` : '—';
+   return `<tr><td class="mono">${r.rank}</td><td class="mono">${r.score}</td><td class="tag">${r.tag}</td><td>${r.familia}</td><td>${r.sector}</td><td><span class="pill">${r.criticidad_abc||'—'}</span></td><td>${r.nivel_tension||'?'}</td><td class="mono">${pot}</td><td style="font-size:12px">${(r.denom||'').slice(0,50)}</td></tr>`;
+  }).join("")
+ }</tbody></table>`;
+
+ // Matriz sector × familia
+ const secs = MATRIZ.sectores, fams = MATRIZ.familias;
+ // Max for color scale
+ let maxV=0;
+ for(const s of secs) for(const f of fams){ maxV = Math.max(maxV, MATRIZ.counts[s][f]||0); }
+ $("#cons-matriz").innerHTML = `<div style="overflow-x:auto"><table><thead><tr><th>Familia \\ Sector</th>${secs.map(s=>`<th style="text-align:center">${s}</th>`).join("")}<th style="text-align:right">Total</th></tr></thead><tbody>${
+  fams.map(f=>{
+   let total=0; const cells = secs.map(s=>{ const v=MATRIZ.counts[s][f]||0; total+=v;
+    const intensity = v/Math.max(maxV,1);
+    const bg = v>0? `rgba(0,99,65,${0.1+intensity*0.5})` : "#f7f9f8";
+    return `<td style="text-align:center;background:${bg};font-family:var(--mono);font-weight:${v>0?'700':'400'}">${v||''}</td>`;
+   }).join("");
+   return `<tr><td><b>${f}</b></td>${cells}<td style="text-align:right;font-family:var(--mono);font-weight:700">${total.toLocaleString()}</td></tr>`;
+  }).join("")
+ }</tbody></table></div>`;
+
+ // Live mediciones KPI table
+ $("#cons-med-count").textContent = MEDICIONES.length;
+ if(MEDICIONES.length===0){
+  $("#cons-med-tabla").innerHTML = '<p class="hint">Cargue mediciones en <b>Capturar medición</b> o importe recorridos SICM-INS desde <b>Datos y respaldo</b> para que este cuadro se llene.</p>';
+ } else {
+  const paramList = ["desbalance_i_pct","desbalance_v_pct","IP","THD_V_pct","THD_I_pct","delta_t_c","temp_max_c","vibracion_rms_mms","carga_pct"];
+  const paramLabel = {
+   desbalance_i_pct:"Desbal. I (%)", desbalance_v_pct:"Desbal. V (%)", IP:"IP", THD_V_pct:"THD V (%)", THD_I_pct:"THD I (%)",
+   delta_t_c:"Δ T (°C)", temp_max_c:"Temp max (°C)", vibracion_rms_mms:"Vib RMS (mm/s)", carga_pct:"Carga (%)"
+  };
+  const counts = {}; paramList.forEach(p=>counts[p]={normal:0,alerta:0,alarma:0,sin_dato:0});
+  for(const m of MEDICIONES){
+   const r = evaluarMedicion(m);
+   for(const p of paramList){
+    counts[p][r[p].estado] = (counts[p][r[p].estado]||0)+1;
+   }
+  }
+  $("#cons-med-tabla").innerHTML = `<table><thead><tr><th>Parámetro</th><th>Normal</th><th>Alerta</th><th>Alarma</th><th>Sin dato</th></tr></thead><tbody>${
+   paramList.map(p=>`<tr><td>${paramLabel[p]}</td><td><span class="badge ok">${counts[p].normal}</span></td><td><span class="badge warn">${counts[p].alerta}</span></td><td><span class="badge alarm">${counts[p].alarma}</span></td><td><span class="badge gray">${counts[p].sin_dato}</span></td></tr>`).join("")
   }</tbody></table>`;
  }
 }

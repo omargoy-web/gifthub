@@ -1,0 +1,9 @@
+familia,n_total,n_alta,n_media,n_baja,n_BT,n_MT,n_AT,HP_total,MVA_total
+arrancador,2799,0,0,2799,2439,328,0,346615.1,0.0
+ccm,219,0,0,219,219,0,0,0,0.0
+interruptor,1298,0,0,1298,0,0,0,0,0.0
+motor,1758,0,0,1758,1521,173,0,252946.1,0.0
+relevador,1947,0,0,1947,1896,0,0,0,0.0
+tablero,286,0,0,286,110,97,4,0,0.0
+transformador,39,0,0,39,8,23,8,0,1926.76
+transformador_seco,392,0,0,392,115,274,0,0,1185.57

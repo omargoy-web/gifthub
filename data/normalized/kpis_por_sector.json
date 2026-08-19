@@ -1,0 +1,192 @@
+[
+ {
+  "sector": "1",
+  "n_total": 702,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 702,
+  "n_BT": 557,
+  "n_MT": 82,
+  "n_AT": 4,
+  "HP_instalado": 50916.0,
+  "MVA_instalada": 91.53,
+  "familias": {
+   "tablero": 12,
+   "transformador_seco": 20,
+   "arrancador": 280,
+   "interruptor": 55,
+   "motor": 89,
+   "transformador": 8,
+   "ccm": 12,
+   "relevador": 226
+  }
+ },
+ {
+  "sector": "2",
+  "n_total": 936,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 936,
+  "n_BT": 740,
+  "n_MT": 95,
+  "n_AT": 0,
+  "HP_instalado": 106868.1,
+  "MVA_instalada": 111.93,
+  "familias": {
+   "tablero": 17,
+   "transformador_seco": 32,
+   "motor": 356,
+   "arrancador": 272,
+   "interruptor": 100,
+   "transformador": 1,
+   "ccm": 18,
+   "relevador": 140
+  }
+ },
+ {
+  "sector": "3",
+  "n_total": 1036,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 1036,
+  "n_BT": 901,
+  "n_MT": 55,
+  "n_AT": 0,
+  "HP_instalado": 48215.9,
+  "MVA_instalada": 88.8,
+  "familias": {
+   "tablero": 11,
+   "transformador_seco": 33,
+   "motor": 360,
+   "arrancador": 406,
+   "interruptor": 75,
+   "ccm": 27,
+   "relevador": 124
+  }
+ },
+ {
+  "sector": "4",
+  "n_total": 1054,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 1054,
+  "n_BT": 749,
+  "n_MT": 93,
+  "n_AT": 0,
+  "HP_instalado": 113335.0,
+  "MVA_instalada": 106.32,
+  "familias": {
+   "tablero": 34,
+   "transformador_seco": 51,
+   "motor": 122,
+   "arrancador": 450,
+   "interruptor": 162,
+   "ccm": 24,
+   "relevador": 211
+  }
+ },
+ {
+  "sector": "5",
+  "n_total": 1079,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 1079,
+  "n_BT": 787,
+  "n_MT": 99,
+  "n_AT": 0,
+  "HP_instalado": 72702.2,
+  "MVA_instalada": 141.5,
+  "familias": {
+   "tablero": 42,
+   "transformador_seco": 67,
+   "arrancador": 480,
+   "interruptor": 182,
+   "motor": 71,
+   "ccm": 34,
+   "relevador": 203
+  }
+ },
+ {
+  "sector": "6",
+  "n_total": 724,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 724,
+  "n_BT": 563,
+  "n_MT": 35,
+  "n_AT": 0,
+  "HP_instalado": 18288.0,
+  "MVA_instalada": 27.51,
+  "familias": {
+   "tablero": 14,
+   "transformador_seco": 25,
+   "arrancador": 194,
+   "interruptor": 118,
+   "motor": 146,
+   "ccm": 18,
+   "relevador": 209
+  }
+ },
+ {
+  "sector": "7",
+  "n_total": 883,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 883,
+  "n_BT": 571,
+  "n_MT": 158,
+  "n_AT": 0,
+  "HP_instalado": 47231.1,
+  "MVA_instalada": 74.56,
+  "familias": {
+   "tablero": 46,
+   "transformador_seco": 52,
+   "arrancador": 255,
+   "interruptor": 152,
+   "motor": 169,
+   "ccm": 26,
+   "relevador": 183
+  }
+ },
+ {
+  "sector": "8",
+  "n_total": 2229,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 2229,
+  "n_BT": 1409,
+  "n_MT": 249,
+  "n_AT": 8,
+  "HP_instalado": 141002.9,
+  "MVA_instalada": 2409.86,
+  "familias": {
+   "tablero": 98,
+   "transformador_seco": 86,
+   "motor": 438,
+   "arrancador": 462,
+   "interruptor": 422,
+   "transformador": 30,
+   "ccm": 42,
+   "relevador": 651
+  }
+ },
+ {
+  "sector": "TALLERES",
+  "n_total": 95,
+  "n_alta_criticidad": 0,
+  "n_media_criticidad": 0,
+  "n_baja_criticidad": 95,
+  "n_BT": 31,
+  "n_MT": 29,
+  "n_AT": 0,
+  "HP_instalado": 1002.0,
+  "MVA_instalada": 60.32,
+  "familias": {
+   "tablero": 12,
+   "transformador_seco": 26,
+   "motor": 7,
+   "interruptor": 32,
+   "ccm": 18
+  }
+ }
+]

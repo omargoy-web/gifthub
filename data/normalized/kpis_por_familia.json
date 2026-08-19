@@ -1,0 +1,98 @@
+[
+ {
+  "familia": "arrancador",
+  "n_total": 2799,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 2799,
+  "n_BT": 2439,
+  "n_MT": 328,
+  "n_AT": 0,
+  "HP_total": 346615.1,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "ccm",
+  "n_total": 219,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 219,
+  "n_BT": 219,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "interruptor",
+  "n_total": 1298,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 1298,
+  "n_BT": 0,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "motor",
+  "n_total": 1758,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 1758,
+  "n_BT": 1521,
+  "n_MT": 173,
+  "n_AT": 0,
+  "HP_total": 252946.1,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "relevador",
+  "n_total": 1947,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 1947,
+  "n_BT": 1896,
+  "n_MT": 0,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "tablero",
+  "n_total": 286,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 286,
+  "n_BT": 110,
+  "n_MT": 97,
+  "n_AT": 4,
+  "HP_total": 0,
+  "MVA_total": 0.0
+ },
+ {
+  "familia": "transformador",
+  "n_total": 39,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 39,
+  "n_BT": 8,
+  "n_MT": 23,
+  "n_AT": 8,
+  "HP_total": 0,
+  "MVA_total": 1926.76
+ },
+ {
+  "familia": "transformador_seco",
+  "n_total": 392,
+  "n_alta": 0,
+  "n_media": 0,
+  "n_baja": 392,
+  "n_BT": 115,
+  "n_MT": 274,
+  "n_AT": 0,
+  "HP_total": 0,
+  "MVA_total": 1185.57
+ }
+]

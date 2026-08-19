@@ -105,6 +105,32 @@ Todas las bandas amarillo/rojo son trazables a fuente pública:
 4. IP/DAR requieren compensación por temperatura de prueba.
 5. Umbrales DGA usan IEEE C57.104-2019 Tabla 3 concentraciones. Para dictamen formal considerar §5 (tasas de generación).
 
+## FASE 2 — Consolidación e indicadores (entregado)
+
+Con la base normalizada de la Fase 1, se agregan **indicadores consolidados de censo + KPI engine dinámico** sobre las mediciones. Salidas nuevas:
+
+- `data/normalized/equipos_nameplate.json` — censo con **nameplate por familia** (V, I, HP, kVA, clase de aislamiento, RPM, etc.). Corrige inconsistencias de unidad de SAP con el cálculo eléctrico √3·V·I cuando ambos datos están disponibles.
+- `data/normalized/kpis_por_sector.{json,csv}` — totales, criticidad, distribución BT/MT/AT, HP y MVA instalados.
+- `data/normalized/kpis_por_familia.{json,csv}` — mismos KPIs por familia.
+- `data/normalized/ranking_criticidad.{json,csv}` — top 100 por score = `criticidad_ABC × nivel_tension × log10(potencia+1)`.
+- `data/normalized/matriz_sector_familia.json` — matriz numérica para heatmap.
+- `reports/fase2_kpis.md` — reporte narrativo con tablas y sección de calidad de datos SAP.
+
+**Nueva pestaña "Consolidado (Fase 2)" en la PWA** con:
+- Tablas de KPIs por sector y familia.
+- Ranking Top 20 activos.
+- Matriz sector × familia como heatmap.
+- Distribución de condición operativa por parámetro (Normal/Alerta/Alarma/sin dato) que se **actualiza en vivo** conforme se ingesten mediciones.
+
+**Módulo KPI engine** (`KPI_EVAL` en `app/sicm-ele.template.html`): funciones evaluadoras por parámetro que aplican las ventanas normativas de la Fase 1 y devuelven `{estado, ref}`. Cubre: desbalance I/V, IP, THD V/I, ΔT termográfico, temperatura, vibración y **carga vs nominal** (usando nameplate).
+
+## Total refinería (nameplate consolidado)
+
+- **8,738 equipos** censados en 8 familias × 8 sectores + área de talleres.
+- **~3,112 MVA** de transformación instalada (excluye 2 outliers SAP > 250 MVA).
+- **447 MW (599,561 HP)** potencia motriz instalada.
+- Detalle en `reports/fase2_kpis.md`.
+
 ## Rama y estado
 
-Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`.
+Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1 y 2 entregadas.

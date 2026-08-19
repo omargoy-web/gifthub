@@ -4,11 +4,27 @@ import json
 from pathlib import Path
 ROOT = Path("/home/user/gifthub")
 tpl = (ROOT / "app/sicm-ele.template.html").read_text(encoding="utf-8")
-limites = (ROOT / "data/normalized/limites.json").read_text(encoding="utf-8")
-actividades = (ROOT / "data/normalized/actividades.json").read_text(encoding="utf-8")
-equipos = (ROOT / "data/normalized/equipos.min.json").read_text(encoding="utf-8")
 
-out = tpl.replace("__LIMITES__", limites).replace("__ACTIVIDADES__", actividades).replace("__EQUIPOS__", equipos)
+def load(p): return (ROOT / p).read_text(encoding="utf-8")
+
+# Fase 2: usamos el manifiesto enriquecido con nameplate (V, I, HP, kVA, NT)
+equipos = load("data/normalized/equipos_nameplate.min.json")
+limites = load("data/normalized/limites.json")
+actividades = load("data/normalized/actividades.json")
+kpi_sector = load("data/normalized/kpis_por_sector.json")
+kpi_familia = load("data/normalized/kpis_por_familia.json")
+ranking = load("data/normalized/ranking_criticidad.json")
+matriz = load("data/normalized/matriz_sector_familia.json")
+
+out = (tpl
+ .replace("__LIMITES__", limites)
+ .replace("__ACTIVIDADES__", actividades)
+ .replace("__EQUIPOS__", equipos)
+ .replace("__KPI_SECTOR__", kpi_sector)
+ .replace("__KPI_FAMILIA__", kpi_familia)
+ .replace("__RANKING__", ranking)
+ .replace("__MATRIZ__", matriz)
+)
 target = ROOT / "app/sicm-ele.html"
 target.write_text(out, encoding="utf-8")
 print(f"Escrito {target}: {target.stat().st_size:,} bytes")

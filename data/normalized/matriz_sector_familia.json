@@ -1,0 +1,115 @@
+{
+ "sectores": [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "TALLERES"
+ ],
+ "familias": [
+  "arrancador",
+  "ccm",
+  "interruptor",
+  "motor",
+  "relevador",
+  "tablero",
+  "transformador",
+  "transformador_seco"
+ ],
+ "counts": {
+  "1": {
+   "arrancador": 280,
+   "ccm": 12,
+   "interruptor": 55,
+   "motor": 89,
+   "relevador": 226,
+   "tablero": 12,
+   "transformador": 8,
+   "transformador_seco": 20
+  },
+  "2": {
+   "arrancador": 272,
+   "ccm": 18,
+   "interruptor": 100,
+   "motor": 356,
+   "relevador": 140,
+   "tablero": 17,
+   "transformador": 1,
+   "transformador_seco": 32
+  },
+  "3": {
+   "arrancador": 406,
+   "ccm": 27,
+   "interruptor": 75,
+   "motor": 360,
+   "relevador": 124,
+   "tablero": 11,
+   "transformador": 0,
+   "transformador_seco": 33
+  },
+  "4": {
+   "arrancador": 450,
+   "ccm": 24,
+   "interruptor": 162,
+   "motor": 122,
+   "relevador": 211,
+   "tablero": 34,
+   "transformador": 0,
+   "transformador_seco": 51
+  },
+  "5": {
+   "arrancador": 480,
+   "ccm": 34,
+   "interruptor": 182,
+   "motor": 71,
+   "relevador": 203,
+   "tablero": 42,
+   "transformador": 0,
+   "transformador_seco": 67
+  },
+  "6": {
+   "arrancador": 194,
+   "ccm": 18,
+   "interruptor": 118,
+   "motor": 146,
+   "relevador": 209,
+   "tablero": 14,
+   "transformador": 0,
+   "transformador_seco": 25
+  },
+  "7": {
+   "arrancador": 255,
+   "ccm": 26,
+   "interruptor": 152,
+   "motor": 169,
+   "relevador": 183,
+   "tablero": 46,
+   "transformador": 0,
+   "transformador_seco": 52
+  },
+  "8": {
+   "arrancador": 462,
+   "ccm": 42,
+   "interruptor": 422,
+   "motor": 438,
+   "relevador": 651,
+   "tablero": 98,
+   "transformador": 30,
+   "transformador_seco": 86
+  },
+  "TALLERES": {
+   "arrancador": 0,
+   "ccm": 18,
+   "interruptor": 32,
+   "motor": 7,
+   "relevador": 0,
+   "tablero": 12,
+   "transformador": 0,
+   "transformador_seco": 26
+  }
+ }
+}
