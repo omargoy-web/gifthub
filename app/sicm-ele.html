@@ -152,6 +152,7 @@ footer.foot b{color:var(--ink-soft)}
   <div class="stats">
    <div><b id="stat-equipos">—</b> equipos</div>
    <div><b id="stat-mediciones">—</b> mediciones</div>
+   <div style="font-size:10px;opacity:.7;margin-top:2px">build <span id="stat-build">v2026-08-20·fcb7143</span></div>
   </div>
  </div>
 </header>
@@ -491,6 +492,7 @@ footer.foot b{color:var(--ink-soft)}
    <label class="btn btn-ghost" style="cursor:pointer">Importar respaldo<input type="file" id="fin-restore" accept=".json" hidden></label>
    <button class="btn btn-ghost" id="btn-go-import">Importar recorridos (ir a pestaña)</button>
    <button class="btn btn-danger" id="btn-purge">Vaciar mediciones</button>
+   <button class="btn btn-danger" id="btn-purge-all">Reiniciar TODO (mediciones + revisión + lotes)</button>
   </div>
   <div id="cfg-status" class="hint" style="margin-top:10px"></div>
  </div>
@@ -27208,6 +27210,28 @@ async function cargarDatos(){
  try{MEDICIONES = (await idbGet(KEY_MED)) || [];}catch(e){MEDICIONES=[]}
  try{LOTES = (await idbGet(KEY_LOTES)) || [];}catch(e){LOTES=[]}
  try{REVISION = (await idbGet(KEY_REVISION)) || [];}catch(e){REVISION=[]}
+ // Re-normalizar candidatos que quedaron en el buffer con TAGs de la versión
+ // vieja del parser (p.ej. EC-72003 27 → ECM-72003 A-14 vía matcher tolerante).
+ // Esto sana automáticamente estados heredados de builds anteriores sin obligar
+ // al usuario a reiniciar la revisión.
+ let saneados = 0;
+ for(const r of REVISION){
+  if(!r || typeof r!=="object") continue;
+  const eqM = findEquipoByTag(r.tag);
+  if(eqM && eqM.tag !== r.tag){
+   r._origen = r._origen || {};
+   r._origen.tag_original = r._origen.tag_original || r.tag;
+   r.tag = eqM.tag;
+   saneados++;
+  }
+  // Re-evaluar warnings
+  r._issues = Array.isArray(r._issues) ? r._issues.filter(i=>i!=="TAG no encontrado en censo") : [];
+  if(!eqM) r._issues.push("TAG no encontrado en censo");
+ }
+ if(saneados>0){
+  try{await idbSet(KEY_REVISION, REVISION);}catch(_){}
+  setTimeout(()=>toast(`✓ ${saneados} TAG(s) sanados con el matcher del censo.`), 800);
+ }
  refreshHeader();
 }
 async function guardarDatos(){
@@ -29166,6 +29190,13 @@ $("#btn-go-import")?.addEventListener?.("click", ()=>switchTab("capturar"));
 $("#btn-purge")?.addEventListener?.("click", async ()=>{
  if(!confirm("Vaciar TODAS las mediciones locales?")) return;
  MEDICIONES = []; await guardarDatos(); renderConfig(); toast("Mediciones vaciadas.");
+});
+$("#btn-purge-all")?.addEventListener?.("click", async ()=>{
+ if(!confirm("¿Reiniciar TODO? Se borrarán mediciones asentadas, buffer de revisión e historial de lotes. Esta acción no es reversible.")) return;
+ MEDICIONES = []; REVISION = []; LOTES = [];
+ await guardarDatos();
+ renderConfig(); renderRevision?.(); renderLotes?.(); renderDashboard?.();
+ toast("✓ Base local reiniciada. Puede volver a cargar los JSON.");
 });
 
 /* ---------- Binds Fase 4b: importación / revisión / expediente ---------- */
