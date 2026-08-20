@@ -1415,40 +1415,104 @@ async function _confirmarAsentar(){
  const asentar = REVISION.filter(r=>!r._discard);
  if(!asentar.length){toast("Nada que asentar"); return;}
  if(!confirm(`Asentar ${asentar.length} mediciones en la base de datos? Los registros descartados NO se guardarán.`)) return;
- let n = 0;
- for(const r of asentar){
-  // Limpiar campos internos antes de persistir
-  const {_rid, _issues, _discard, _edited, _origen, ...med} = r;
-  med._diag = diagnosticar(med);
-  MEDICIONES.push(med);
-  n++;
+
+ // Feedback visible durante el proceso (5000+ items pueden tomar unos segundos)
+ const host = $("#revision-out");
+ let progreso = null;
+ if(host){
+  progreso = document.createElement("div");
+  progreso.className = "result-box";
+  progreso.style.cssText = "margin:12px 0;background:#eef8f2;border-color:var(--verde)";
+  progreso.innerHTML = `<h4>Asentando…</h4><p>Procesando <span id="pg-cur">0</span> / ${asentar.length}</p>`;
+  host.parentNode.insertBefore(progreso, host);
  }
- // Guarda historial de lote consumido
+
+ // 1) Persistir SIEMPRE (aún si el motor de diagnóstico falla en algún item)
+ const nuevas = [];
+ const fallosDiag = [];
+ for(let i=0;i<asentar.length;i++){
+  const r = asentar[i];
+  // Limpiar campos internos antes de persistir; también quitamos `gps` que puede ser
+  // un objeto complejo que a veces rompe la serialización structured-clone de IDB.
+  const {_rid, _issues, _discard, _edited, _origen, gps, ...med} = r;
+  try{ med._diag = diagnosticar(med); }
+  catch(e){ med._diag = {estado:"sin_diag", hallazgos:[], derivadas:{}, _err: String(e).slice(0,120)}; fallosDiag.push(med.id_medicion || `#${i}`); }
+  nuevas.push(med);
+  if(progreso && (i%250===0)){ progreso.querySelector("#pg-cur").textContent = i+1; await new Promise(rq=>setTimeout(rq,0)); }
+ }
+ MEDICIONES.push(...nuevas);
+
+ // 2) Guardar y VERIFICAR que quedó en IndexedDB
+ let idbOK = false, idbErr = null, verificado = 0;
+ try{
+  await idbSet(KEY_MED, MEDICIONES);
+  // Verificar leyendo de vuelta
+  const leido = await idbGet(KEY_MED);
+  verificado = Array.isArray(leido) ? leido.length : 0;
+  idbOK = verificado === MEDICIONES.length;
+  if(!idbOK) idbErr = `IndexedDB persistió ${verificado} de ${MEDICIONES.length}`;
+ }catch(e){ idbErr = String(e?.message||e); }
+
+ // 3) Manejo de fallo IDB: se hace ROLLBACK en memoria y se ofrece exportar
+ if(!idbOK){
+  MEDICIONES.length = MEDICIONES.length - nuevas.length; // rollback
+  if(progreso) progreso.remove();
+  const err = document.createElement("div");
+  err.className = "result-box warn";
+  err.style.cssText = "margin:12px 0;background:#fff2ec;border-color:#c1272d;border-left:5px solid #c1272d";
+  err.innerHTML = `<h4 style="color:#c1272d">✗ No se pudieron persistir en IndexedDB</h4>
+   <p><b>${nuevas.length}</b> mediciones se procesaron pero el navegador rechazó guardarlas.
+   Motivo: <span class="mono">${idbErr||"desconocido"}</span></p>
+   <p>La causa más común es cuota de almacenamiento agotada o modo privado.
+   Puede descargar un respaldo JSON con las mediciones para no perderlas y volver a intentar
+   en otro navegador o borrando datos del sitio.</p>
+   <div class="btn-row">
+    <button class="btn" id="btn-emerg-download">Descargar respaldo JSON</button>
+    <button class="btn btn-ghost" id="btn-emerg-close">Cerrar</button>
+   </div>`;
+  if(host) host.parentNode.insertBefore(err, host);
+  err.querySelector("#btn-emerg-download").onclick = ()=>{
+   const pack = {schema:"sicm-ele/emerg", exported_at:new Date().toISOString(), mediciones:nuevas};
+   const blob = new Blob([JSON.stringify(pack,null,2)],{type:"application/json"});
+   const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+   a.download = `sicm-ele_no_guardadas_${Date.now()}.json`; a.click();
+   URL.revokeObjectURL(a.href);
+  };
+  err.querySelector("#btn-emerg-close").onclick = ()=>err.remove();
+  toast("✗ Fallo al persistir. Descargue el respaldo.");
+  return;
+ }
+
+ // 4) Éxito: limpiar buffer y confirmar
  const lastLote = LOTES[LOTES.length-1] || {};
  lastLote.confirmado_at = new Date().toISOString();
- lastLote.confirmados = n;
- lastLote.descartados = REVISION.length - n;
- // Limpiar buffer de revisión
+ lastLote.confirmados = nuevas.length;
+ lastLote.descartados = REVISION.length - nuevas.length;
  REVISION = [];
- await guardarDatos();
+ try{ await idbSet(KEY_LOTES, LOTES); }catch(_){}
+ try{ await idbSet(KEY_REVISION, REVISION); }catch(_){}
+ refreshHeader();
+
  renderRevision();
  renderLotes();
  renderConsolidado();
  renderDashboard();
- toast(`✓ ${n} mediciones asentadas. Ver en: Expediente por activo · Tendencias.`);
- // Sugerencia visual: mostrar CTA hacia el expediente y catálogo de inspecciones
+
+ if(progreso) progreso.remove();
  const cta = document.createElement("div");
  cta.className = "result-box ok";
- cta.style.margin = "12px 0";
- cta.innerHTML = `<h4>✓ ${n} mediciones asentadas en la base</h4>
-  <p>Ya puede consultarlas por activo o por tipo de inspección:</p>
+ cta.style.cssText = "margin:12px 0;background:#eef8f2;border-color:var(--verde);border-left:5px solid var(--verde)";
+ cta.innerHTML = `<h4>✓ ${nuevas.length} mediciones asentadas en la base</h4>
+  <p>Persistencia verificada en IndexedDB (total ahora: <b>${verificado}</b> mediciones).
+  ${fallosDiag.length?`<br><span class="hint">Nota: ${fallosDiag.length} mediciones se guardaron sin diagnóstico automático por error del motor.</span>`:""}</p>
   <div class="btn-row">
    <button class="btn" id="cta-exp">Ir a Expediente por activo</button>
    <button class="btn btn-ghost" id="cta-tend">Ver catálogo de equipos con inspección</button>
   </div>`;
- const host = $("#revision-out"); if(host){ host.parentNode.insertBefore(cta, host); }
+ if(host) host.parentNode.insertBefore(cta, host);
  cta.querySelector("#cta-exp").onclick = ()=>{ switchTab("expediente"); cta.remove(); };
  cta.querySelector("#cta-tend").onclick = ()=>{ switchTab("tendencias"); cta.remove(); };
+ toast(`✓ ${nuevas.length} mediciones asentadas.`);
 }
 
 function renderLotes(){
