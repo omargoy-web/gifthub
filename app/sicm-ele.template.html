@@ -238,6 +238,7 @@ footer.foot b{color:var(--ink-soft)}
   <div class="filterbar">
    <input id="rev-q" placeholder="Filtrar por TAG / operario / folio…">
    <select id="rev-filter"><option value="">Todos</option><option value="valid">Solo válidos</option><option value="warn">Con advertencias</option><option value="edited">Editados</option><option value="discard">Descartados</option></select>
+   <button class="btn btn-ghost" id="btn-revision-drop-nocenso">Descartar los que no están en censo</button>
    <button class="btn btn-ghost" id="btn-revision-reset">Reiniciar revisión</button>
    <button class="btn" id="btn-revision-confirm" disabled>Asentar en la base de datos</button>
   </div>
@@ -979,8 +980,12 @@ function parseRecorridoJSON(raw, filename){
 
   for(const it of itemsArr){
     if(!it || typeof it!=="object") continue;
-    const tag = it.tag || it.TAG || it.equipo || rec.tag || null;
+    // Para EAS el `tag` es el arrancador (p.ej. "EC-72003 27") y NO está en el censo;
+    // el equipo del censo es el motor (`motor_tag` p.ej. "ECM-72003 A-14"). Preferir motor_tag.
+    const tag = it.motor_tag || it.tag || it.TAG || it.equipo || rec.tag || null;
     if(!tag) continue;
+    // Guardar el TAG original si lo cambiamos, para trazabilidad
+    const tagArrancador = (it.motor_tag && it.tag && it.motor_tag!==it.tag) ? it.tag : null;
 
     const sap = it.sap || rec.sap || null;
     const sector = it.sector || sectorRec;
@@ -1154,9 +1159,17 @@ function parseRecorridoJSON(raw, filename){
       observaciones: obs,
      };
 
+     // Normalizar TAG contra el censo (tolerante a espacios/guiones)
+     const eqMatch = findEquipoByTag(item.tag);
+     if(eqMatch && eqMatch.tag !== item.tag){
+      item._origen.tag_original = item.tag;
+      item.tag = eqMatch.tag; // usar el TAG canónico del censo
+     }
+     if(tagArrancador){ item._origen.tag_arrancador = tagArrancador; }
+
      // Validaciones
      if(!item.fecha_iso) item._issues.push("Sin fecha");
-     if(!EQUIPOS.find(e=>e.tag===item.tag)) item._issues.push("TAG no encontrado en censo");
+     if(!eqMatch) item._issues.push("TAG no encontrado en censo");
      if(!item.operario) item._issues.push("Sin operario");
      if(item.sector==null) item._issues.push("Sin sector");
      const hasReading = ["I_F1","I_F2","temp_max_c","delta_t_c","V_celda_A","vibracion_rms_mms","kw","V_L1L2"].some(k=>item[k]!=null);
@@ -1166,6 +1179,26 @@ function parseRecorridoJSON(raw, filename){
   }
  }
  return out;
+}
+
+// Matcher tolerante de TAG contra el censo:
+// - exacto primero
+// - luego colapsando espacios múltiples a uno
+// - luego ignorando espacios/guiones (para "IP-29-01" vs "IP 29-01" o "IP-2901")
+let _EQ_INDEX_NORM = null;
+function _norm(t){ return String(t||"").toUpperCase().replace(/[\s\-_]+/g,""); }
+function findEquipoByTag(tag){
+ if(!tag) return null;
+ let e = EQUIPOS.find(e=>e.tag===tag);
+ if(e) return e;
+ const trim = String(tag).trim().replace(/\s+/g," ");
+ e = EQUIPOS.find(e=>e.tag===trim);
+ if(e) return e;
+ if(!_EQ_INDEX_NORM){
+  _EQ_INDEX_NORM = new Map();
+  for(const eq of EQUIPOS){ _EQ_INDEX_NORM.set(_norm(eq.tag), eq); }
+ }
+ return _EQ_INDEX_NORM.get(_norm(tag)) || null;
 }
 
 function _sectorFromFolio(folio){
@@ -1397,8 +1430,10 @@ function openEditar(rid){
   r._edited = true;
   // Re-validar
   r._issues = [];
+  const eqM = findEquipoByTag(r.tag);
+  if(eqM && eqM.tag !== r.tag) r.tag = eqM.tag;
   if(!r.fecha_iso) r._issues.push("Sin fecha");
-  if(!EQUIPOS.find(e=>e.tag===r.tag)) r._issues.push("TAG no encontrado en censo");
+  if(!eqM) r._issues.push("TAG no encontrado en censo");
   if(!r.operario) r._issues.push("Sin operario");
   if(r.sector==null) r._issues.push("Sin sector");
   await guardarDatos();
@@ -2483,6 +2518,16 @@ $("#btn-revision-reset")?.addEventListener?.("click", async ()=>{
  if(!REVISION.length){toast("No hay revisión pendiente"); return;}
  if(!confirm("¿Descartar todos los candidatos pendientes de revisión?")) return;
  REVISION = []; await guardarDatos(); renderRevision();
+});
+$("#btn-revision-drop-nocenso")?.addEventListener?.("click", async ()=>{
+ if(!REVISION.length){toast("No hay revisión pendiente"); return;}
+ const noCenso = REVISION.filter(r=>r._issues?.includes("TAG no encontrado en censo") && !r._discard);
+ if(!noCenso.length){toast("Ningún candidato con TAG fuera del censo."); return;}
+ if(!confirm(`Descartar ${noCenso.length} candidato(s) cuyo TAG no está en el censo? Los demás se conservan para asentar.`)) return;
+ for(const r of noCenso) r._discard = true;
+ await guardarDatos();
+ renderRevision();
+ toast(`✓ ${noCenso.length} descartados por no estar en el censo.`);
 });
 $("#btn-revision-confirm")?.addEventListener?.("click", _confirmarAsentar);
 
