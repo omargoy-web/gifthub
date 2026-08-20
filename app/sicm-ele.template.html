@@ -378,6 +378,17 @@ footer.foot b{color:var(--ink-soft)}
  </div>
 
  <div class="card">
+  <div class="card-title"><span class="n">★</span> Equipos con inspección (clasificados por tipo) <span class="right" id="ins-count">—</span></div>
+  <p class="hint" style="margin-top:0">Se listan solo los equipos con mediciones asentadas en la base. Elija un tipo de inspección para ver los activos con histórico y clic en cualquier TAG para graficar su tendencia debajo (o abrir el expediente completo).</p>
+  <div class="filterbar">
+   <select id="ins-tipo"><option value="">Todos los tipos</option></select>
+   <input id="ins-q" placeholder="Filtrar por TAG / planta…">
+   <button class="btn btn-ghost" id="btn-ins-refresh">Actualizar</button>
+  </div>
+  <div id="ins-out"></div>
+ </div>
+
+ <div class="card">
   <div class="card-title"><span class="n">1</span> Tendencia temporal con bandas normativas</div>
   <div class="filterbar">
    <input id="trend-tag" list="lst-tags" placeholder="TAG del equipo">
@@ -912,14 +923,16 @@ function renderConsolidado(){
 // --- Helpers de parseo de valores ---
 function _parseRange(v){
  // "62-63" -> {a:62, b:63, max:63, min:62, avg:62.5, delta:1}. Tolerante con "62-63/65", "N/A", etc.
+ // El separador "-" es SIEMPRE separador (no signo negativo) porque los valores medidos
+ // son intrínsecamente positivos (temperatura °C sobre ambiente, corrientes A, etc.).
  if(v==null || v==="") return null;
  if(typeof v==="number") return {a:v, b:v, max:v, min:v, avg:v, delta:0};
  const s = String(v).trim();
- const nums = s.match(/-?\d+(?:\.\d+)?/g);
- if(!nums || !nums.length) return null;
- const arr = nums.map(Number);
- const max = Math.max(...arr), min = Math.min(...arr);
- return {a:arr[0], b:arr[1]??arr[0], max, min, avg:(max+min)/2, delta:max-min};
+ // Aceptar separadores: '-', '/', ',', ';', espacios
+ const nums = s.split(/[\-\/,;\s]+/).map(t=>t.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n));
+ if(!nums.length) return null;
+ const max = Math.max(...nums), min = Math.min(...nums);
+ return {a:nums[0], b:nums[1]??nums[0], max, min, avg:(max+min)/2, delta:max-min};
 }
 function _agg(readings, key, agg){
  // agg = 'max'|'min'|'avg'|'last'
@@ -991,9 +1004,12 @@ function parseRecorridoJSON(raw, filename){
     const accion = it.accion || null;
     const fotos = Array.isArray(it.fotos) ? it.fotos.length : 0;
 
-    // Snapshots de lectura — cada lect[] es UNA medición separada
-    const lects = Array.isArray(it.lect) ? it.lect : (it.lect ? [it.lect] : [it]);
-    const snapshots = lects.length ? lects : [{}];
+    // Snapshots de lectura — cada lect[] es UNA medición separada.
+    // Si NO hay lect[] (esquemas EAS / VME / TBL), el propio `it` es el snapshot único
+    // porque las lecturas viven directamente sobre la válvula.
+    const hasLect = Array.isArray(it.lect) && it.lect.length>0;
+    const lects = hasLect ? it.lect : (it.lect ? [it.lect] : [it]);
+    const snapshots = lects.length ? lects : [it];
     // Fecha base
     const fBase = it.fecha || rec.fecha || (creado||"").slice(0,10);
 
@@ -1022,23 +1038,61 @@ function parseRecorridoJSON(raw, filename){
      const isTermo = /TERMO|IAT|TAB/i.test(String(tipo));
      const isVib = /VIB|VME/i.test(String(tipo));
 
-     // Temperaturas: tomar máxima de todos los pares RTD (t12..t910) y ΔT interno máximo
-     const tRanges = [L.t12,L.t34,L.t56,L.t78,L.t910].map(_parseRange).filter(x=>x!=null);
-     const tMax = tRanges.length? Math.max(...tRanges.map(r=>r.max)) : null;
-     const tDelta = tRanges.length? Math.max(...tRanges.map(r=>r.delta)) : null;
+     // Temperaturas: tomar máxima de TODOS los canales disponibles según esquema
+     //  - MOT: pares RTD t12..t910 ("62-63" cada uno)
+     //  - VME: rtd_rod_1..4 (rodamientos), rtd_dev_5..10 (devanados) y temp_lc/lv/cuerpo
+     //  - TBL: temp_linea_f1..3 y temp_carga_f1..3
+     const tPairs = [L.t12,L.t34,L.t56,L.t78,L.t910].map(_parseRange).filter(x=>x!=null);
+     const tSingles = [
+      L.rtd_rod_1,L.rtd_rod_2,L.rtd_rod_3,L.rtd_rod_4,
+      L.rtd_dev_5,L.rtd_dev_6,L.rtd_dev_7,L.rtd_dev_8,L.rtd_dev_9,L.rtd_dev_10,
+      L.temp_lc,L.temp_lv,L.temp_cuerpo,
+      L.temp_linea_f1,L.temp_linea_f2,L.temp_linea_f3,
+      L.temp_carga_f1,L.temp_carga_f2,L.temp_carga_f3,
+     ].map(_numOrStr).filter(x=>typeof x==="number");
+     const allT = [...tPairs.flatMap(r=>[r.max,r.min]), ...tSingles];
+     const tMax = allT.length? Math.max(...allT) : null;
+     // ΔT: máximo de rangos internos si hay pares; para VME/TBL usar delta entre linea-carga o entre rtds
+     let tDelta = tPairs.length? Math.max(...tPairs.map(r=>r.delta)) : null;
+     if(tDelta==null){
+      const rtdRod = [L.rtd_rod_1,L.rtd_rod_2,L.rtd_rod_3,L.rtd_rod_4].map(_numOrStr).filter(x=>typeof x==="number");
+      const rtdDev = [L.rtd_dev_5,L.rtd_dev_6,L.rtd_dev_7,L.rtd_dev_8,L.rtd_dev_9,L.rtd_dev_10].map(_numOrStr).filter(x=>typeof x==="number");
+      if(rtdRod.length>=2) tDelta = Math.max(...rtdRod)-Math.min(...rtdRod);
+      else if(rtdDev.length>=2) tDelta = Math.max(...rtdDev)-Math.min(...rtdDev);
+      // TBL: ΔT entre carga y línea por fase
+      const tLin=[L.temp_linea_f1,L.temp_linea_f2,L.temp_linea_f3].map(_numOrStr);
+      const tCar=[L.temp_carga_f1,L.temp_carga_f2,L.temp_carga_f3].map(_numOrStr);
+      const deltas = [];
+      for(let i=0;i<3;i++){ if(typeof tLin[i]==="number" && typeof tCar[i]==="number") deltas.push(Math.abs(tCar[i]-tLin[i])); }
+      if(deltas.length) tDelta = Math.max(tDelta||0, ...deltas);
+     }
 
-     // imax/imin: "122-121" → I_F1 (max), I_F3 (min); avg = imotor si existe
+     // Corrientes por fase — soporta MOT (imax_imin), DSL (ia/ib), EAS/VME (corr_ia/ib/ic), TBL (amp_ia/ib/ic)
      const imm = _parseRange(L.imax_imin);
      let I_F1=null, I_F2=null, I_F3=null;
      if(imm){
       I_F1 = imm.max; I_F3 = imm.min;
       I_F2 = (L.i_motor!=null? Number(String(L.i_motor).match(/-?\d+(?:\.\d+)?/)?.[0]) : imm.avg);
-     } else if(L.ia!=null){ // DSL celda A y B
+     } else if(L.corr_ia!=null || L.amp_ia!=null){
+      I_F1 = _numOrStr(L.corr_ia ?? L.amp_ia);
+      I_F2 = _numOrStr(L.corr_ib ?? L.amp_ib);
+      I_F3 = _numOrStr(L.corr_ic ?? L.amp_ic);
+     } else if(L.ia!=null){ // DSL celda A y B → mapear como I_F1/I_F2 (no son fases pero mantienen la señal)
       I_F1 = _numOrStr(L.ia); I_F2 = _numOrStr(L.ib); I_F3 = null;
      }
-     // V "línea" — tratar como línea a línea (los tres iguales si no hay más info)
+     // Voltajes por fase — MOT (v_linea/v_salida), EAS (volt_ab/bc/ca), VME (volt_fases_vab/bc/ca), TBL (volts_f1/f2/f3)
      const Vl = L.v_linea!=null ? Number(String(L.v_linea).match(/-?\d+(?:\.\d+)?/)?.[0]) : null;
      const Vs = L.v_salida!=null ? Number(String(L.v_salida).match(/-?\d+(?:\.\d+)?/)?.[0]) : null;
+     const V12 = _numOrStr(L.volt_ab ?? L.volt_fases_vab ?? L.volts_f1);
+     const V23 = _numOrStr(L.volt_bc ?? L.volt_fases_vbc ?? L.volts_f2);
+     const V31 = _numOrStr(L.volt_ca ?? L.volt_fases_vca ?? L.volts_f3);
+
+     // Vibración — VME: velocidad y aceleración en LL/LC/LV, direcciones V/H/A
+     const vibs = [L.vel_ll_v,L.vel_ll_h,L.vel_ll_a,L.vel_lc_v,L.vel_lc_h,L.vel_lc_a]
+      .map(_numOrStr).filter(x=>typeof x==="number");
+     const vibRMS = vibs.length? Math.max(...vibs) : (L.vib_rms??L.vibRMS??L.velocidad_rms??null);
+     const acels = [L.acel_ll,L.acel_lc].map(_numOrStr).filter(x=>typeof x==="number");
+     const vibPk = acels.length? Math.max(...acels) : (L.vib_pico??L.vibPk??null);
 
      const item = {
       _rid: (crypto.randomUUID? crypto.randomUUID() : ("R"+Date.now()+"_"+Math.random().toString(36).slice(2,8))),
@@ -1064,7 +1118,9 @@ function parseRecorridoJSON(raw, filename){
 
       // Lecturas normalizadas
       I_F1, I_F2, I_F3,
-      V_L1L2: Vl, V_L2L3: Vl, V_L3L1: Vl,
+      V_L1L2: (typeof V12==="number"?V12:Vl),
+      V_L2L3: (typeof V23==="number"?V23:Vl),
+      V_L3L1: (typeof V31==="number"?V31:Vl),
       V_salida_VFD: Vs,
       kw: L.kw!=null? Number(String(L.kw).match(/-?\d+(?:\.\d+)?/)?.[0]) : null,
       rpm_op: L.rpm!=null? Number(String(L.rpm).match(/-?\d+(?:\.\d+)?/)?.[0]) : null,
@@ -1090,8 +1146,8 @@ function parseRecorridoJSON(raw, filename){
       DAR: L.DAR||null,
       THD_V_pct: L.thd_v||L.THD_V||null,
       THD_I_pct: L.thd_i||L.THD_I||null,
-      vibracion_rms_mms: L.vib_rms||L.vibRMS||L.velocidad_rms||null,
-      vibracion_pico_mms: L.vib_pico||L.vibPk||null,
+      vibracion_rms_mms: vibRMS,
+      vibracion_pico_mms: vibPk,
       rigidez_dielectrica_D1816_kV: L.rigidez||null,
 
       veredicto, modo_falla_reportado: modo, accion_reportada: accion,
@@ -1137,9 +1193,11 @@ function _actividadPara(tipo, it, rec){
  const t = String(tipo||"").toUpperCase();
  const rmap = {
   "EBV":"IEA-SUB","SEC":"IEA-SUB","MIT":"IEA-SUB","SCD":"IEA-SUB","ESD":"IEA-SUB",
-  "TERMO":"IEA-TAB","TERMOGRAFIA":"IEA-TAB","IAT":"IEA-INT","IATS":"IEA-INT",
-  "VIB":"MMR-VIB","VME":"MMR-VIB","VIBRACION":"MMR-VIB",
+  "TERMO":"IEA-TAB","TERMOGRAFIA":"IEA-TAB","TBL":"IEA-TAB",   // TBL = tablero (termografía + eléctricas)
+  "IAT":"IEA-INT","IATS":"IEA-INT",
+  "VIB":"MMR-VIB","VME":"MMR-VIB","VIBRACION":"MMR-VIB",       // VME = vibración mecánica-eléctrica
   "MOT":"MMR-MON","MCSA":"MMR-MON",           // MOT = Monitoreo de motores con VFD
+  "EAS":"MMR-CCM","ARR":"MMR-CCM",             // EAS = estado aparente arrancador/CCM
   "DSL":"IEA-BAT",                             // DSL = Desbalance CCM/celdas (baterías/UPS)
   "BKP":"IEA-BAT","CEL":"IEA-BAT",             // BKP = Backup/banco baterías
   "ACEITE":"IEA-TRA","DGA":"IEA-TRA","RIG":"DIE-RIG",
@@ -1377,7 +1435,20 @@ async function _confirmarAsentar(){
  renderLotes();
  renderConsolidado();
  renderDashboard();
- toast(`✓ ${n} mediciones asentadas en la base.`);
+ toast(`✓ ${n} mediciones asentadas. Ver en: Expediente por activo · Tendencias.`);
+ // Sugerencia visual: mostrar CTA hacia el expediente y catálogo de inspecciones
+ const cta = document.createElement("div");
+ cta.className = "result-box ok";
+ cta.style.margin = "12px 0";
+ cta.innerHTML = `<h4>✓ ${n} mediciones asentadas en la base</h4>
+  <p>Ya puede consultarlas por activo o por tipo de inspección:</p>
+  <div class="btn-row">
+   <button class="btn" id="cta-exp">Ir a Expediente por activo</button>
+   <button class="btn btn-ghost" id="cta-tend">Ver catálogo de equipos con inspección</button>
+  </div>`;
+ const host = $("#revision-out"); if(host){ host.parentNode.insertBefore(cta, host); }
+ cta.querySelector("#cta-exp").onclick = ()=>{ switchTab("expediente"); cta.remove(); };
+ cta.querySelector("#cta-tend").onclick = ()=>{ switchTab("tendencias"); cta.remove(); };
 }
 
 function renderLotes(){
@@ -1806,10 +1877,115 @@ function renderTendencias(){
  $("#trend-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro y presione <b>Trazar</b>.</p>';
  $("#bar-out").innerHTML = '<p class="hint">Seleccione un equipo para ver su desbalance de corriente.</p>';
  $("#ctrl-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro para la carta de control.</p>';
+ renderInspeccionCatalog();
  renderScatter();
  renderHeatmap();
  renderPareto();
  renderUrgency();
+}
+
+/* ---- Catálogo de equipos con inspección, clasificado por tipo ---- */
+function renderInspeccionCatalog(){
+ // Agrupar mediciones por id_actividad → tag → puntos
+ const porTipo = {}; // { id_actividad: { tag: [med...] } }
+ for(const m of MEDICIONES){
+  const t = m.id_actividad || "sin_actividad";
+  if(!porTipo[t]) porTipo[t] = {};
+  const g = porTipo[t];
+  if(!g[m.tag]) g[m.tag] = [];
+  g[m.tag].push(m);
+ }
+ const tipos = Object.keys(porTipo).sort();
+ const totalEq = new Set(MEDICIONES.map(m=>m.tag)).size;
+ $("#ins-count").textContent = MEDICIONES.length
+  ? `${tipos.length} tipos · ${totalEq} equipos con histórico`
+  : "sin mediciones";
+
+ // Rellenar select una sola vez y refrescar opciones ante nuevos tipos
+ const sel = $("#ins-tipo");
+ if(sel){
+  const actual = sel.value;
+  const opts = ['<option value="">Todos los tipos</option>'].concat(tipos.map(t=>{
+   const act = (typeof ACTIVIDADES!=="undefined") ? ACTIVIDADES.find(a=>a.id===t) : null;
+   const label = act ? `${t} — ${act.nombre}` : t;
+   const n = Object.keys(porTipo[t]).length;
+   return `<option value="${t}">${label} (${n} eq.)</option>`;
+  }));
+  sel.innerHTML = opts.join("");
+  if(tipos.includes(actual)) sel.value = actual;
+ }
+
+ if(!MEDICIONES.length){
+  $("#ins-out").innerHTML = '<p class="hint">Aún no hay mediciones asentadas. Cargue archivos JSON en la pestaña <b>Cargar recorridos</b> o el dataset sintético del recuadro superior.</p>';
+  return;
+ }
+
+ const tipoFiltro = sel?.value || "";
+ const q = ($("#ins-q")?.value||"").toLowerCase();
+ const tiposMostrar = tipoFiltro ? [tipoFiltro] : tipos;
+
+ const bloques = tiposMostrar.map(t=>{
+  const g = porTipo[t];
+  const act = (typeof ACTIVIDADES!=="undefined") ? ACTIVIDADES.find(a=>a.id===t) : null;
+  const titulo = act ? `${t} — ${act.nombre}` : t;
+  const tags = Object.keys(g).filter(tag=>{
+   if(!q) return true;
+   const eq = EQUIPOS.find(e=>e.tag===tag);
+   const hay = (tag+" "+(eq?.planta||"")+" "+(eq?.denom||"")).toLowerCase();
+   return hay.includes(q);
+  }).sort();
+  if(!tags.length) return "";
+  const rows = tags.map(tag=>{
+   const meds = g[tag].slice().sort((a,b)=>(a.fecha_iso||"").localeCompare(b.fecha_iso||""));
+   const eq = EQUIPOS.find(e=>e.tag===tag);
+   const ultima = meds[meds.length-1];
+   const alarmas = meds.filter(m=>m._diag?.estado==="alarma").length;
+   const alertas = meds.filter(m=>m._diag?.estado==="alerta").length;
+   const est = alarmas? `<span class="badge alarm">${alarmas} alarma</span>` : alertas? `<span class="badge warn">${alertas} alerta</span>` : `<span class="badge ok">OK</span>`;
+   const puedeTrazar = meds.length>=2;
+   return `<tr>
+    <td><a href="#" class="tag" data-ins-exp="${tag}" style="text-decoration:none;color:var(--verde)">${tag}</a></td>
+    <td>${eq?.familia||'—'}</td>
+    <td>${eq?.sector??''}</td>
+    <td style="font-size:11px">${eq?.planta||''}</td>
+    <td class="mono">${meds.length}</td>
+    <td style="font-size:11px">${(ultima?.fecha_iso||'').slice(0,10)}</td>
+    <td>${est}</td>
+    <td>
+     ${puedeTrazar? `<button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" data-ins-trace="${tag}">Trazar tendencia</button>` : `<span class="hint" style="font-size:11px">≥2 ptos para trazar</span>`}
+     <button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" data-ins-exp="${tag}">Expediente</button>
+    </td>
+   </tr>`;
+  }).join("");
+  return `<div style="margin-bottom:16px">
+   <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0 4px">
+    <b style="color:var(--verde);font-size:13px">${titulo}</b>
+    <span class="hint">${tags.length} equipo(s) con inspección</span>
+   </div>
+   <div style="overflow-x:auto"><table><thead><tr><th>TAG</th><th>Familia</th><th>Sector</th><th>Planta</th><th>N mediciones</th><th>Última</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+ }).filter(Boolean).join("");
+ $("#ins-out").innerHTML = bloques || '<p class="hint">Sin resultados con el filtro actual.</p>';
+
+ // Bind acciones
+ $$("#ins-out [data-ins-exp]").forEach(a=>a.addEventListener("click", ev=>{
+  ev.preventDefault();
+  const tag = a.dataset.insExp;
+  switchTab("expediente");
+  const inp = $("#exp-tag"); if(inp) inp.value = tag;
+  abrirExpediente(tag);
+ }));
+ $$("#ins-out [data-ins-trace]").forEach(b=>b.addEventListener("click", ()=>{
+  const tag = b.dataset.insTrace;
+  const inp = $("#trend-tag"); if(inp) inp.value = tag;
+  // Elegir el primer parámetro con ≥2 puntos
+  const meds = MEDICIONES.filter(m=>m.tag===tag);
+  const params = ["temp_max_c","delta_t_c","vibracion_rms_mms","IP","THD_I_pct","THD_V_pct","R_aislamiento_MOhm","desbalance_i_pct","desbalance_v_pct"];
+  const ok = params.find(p=>meds.filter(m=>m[p]!=null).length>=2);
+  const sel = $("#trend-param"); if(sel && ok) sel.value = ok;
+  $("#btn-trend")?.click();
+  document.querySelector("#trend-out")?.scrollIntoView({behavior:"smooth", block:"start"});
+ }));
 }
 
 $("#btn-load-syn")?.addEventListener?.("click", async ()=>{
@@ -2175,10 +2351,26 @@ function renderCenso(){
    }
    return true;
   });
+  // Nº de mediciones por TAG para señalar cuáles tienen histórico
+  const medPorTag = {};
+  for(const m of MEDICIONES){ medPorTag[m.tag] = (medPorTag[m.tag]||0)+1; }
   $("#censo-count").textContent = `${rows.length.toLocaleString()} equipos`;
-  $("#censo-table").innerHTML = `<table><thead><tr><th>TAG</th><th>Familia</th><th>Sector</th><th>Planta</th><th>Denominación</th><th>SAP</th></tr></thead><tbody>${
-   rows.slice(0,300).map(e=>`<tr><td class="tag">${e.tag}</td><td><span class="pill">${e.familia}</span></td><td>${e.sector||''}</td><td>${e.planta||''}</td><td>${e.denom||''}</td><td class="mono" style="font-size:11px">${e.sap||''}</td></tr>`).join("")
+  $("#censo-table").innerHTML = `<table><thead><tr><th>TAG</th><th>Familia</th><th>Sector</th><th>Planta</th><th>Denominación</th><th>Mediciones</th><th>SAP</th></tr></thead><tbody>${
+   rows.slice(0,300).map(e=>{
+    const n = medPorTag[e.tag]||0;
+    const btn = `<a href="#" class="tag" data-exp="${e.tag}" title="Abrir expediente del activo" style="text-decoration:none;color:var(--verde)">${e.tag}</a>`;
+    const medCell = n? `<span class="badge ok">${n}</span>` : '<span class="hint">—</span>';
+    return `<tr><td>${btn}</td><td><span class="pill">${e.familia}</span></td><td>${e.sector||''}</td><td>${e.planta||''}</td><td>${e.denom||''}</td><td>${medCell}</td><td class="mono" style="font-size:11px">${e.sap||''}</td></tr>`;
+   }).join("")
   }</tbody></table>`;
+  // Click-to-open-expediente
+  $$("#censo-table [data-exp]").forEach(a=>a.addEventListener("click", ev=>{
+   ev.preventDefault();
+   const tag = a.dataset.exp;
+   switchTab("expediente");
+   const inp = $("#exp-tag"); if(inp) inp.value = tag;
+   abrirExpediente(tag);
+  }));
  };
  $("#censo-q").oninput = draw;
  famSel.onchange = draw;
@@ -2233,6 +2425,11 @@ $("#btn-revision-confirm")?.addEventListener?.("click", _confirmarAsentar);
 $("#btn-exp-abrir")?.addEventListener?.("click", ()=>abrirExpediente($("#exp-tag").value));
 $("#btn-exp-export")?.addEventListener?.("click", ()=>exportarExpediente($("#exp-tag").value));
 $("#exp-tag")?.addEventListener?.("keydown", e=>{ if(e.key==="Enter") abrirExpediente($("#exp-tag").value); });
+
+/* ---- Inspección catálogo ---- */
+$("#ins-tipo")?.addEventListener?.("change", renderInspeccionCatalog);
+$("#ins-q")?.addEventListener?.("input", renderInspeccionCatalog);
+$("#btn-ins-refresh")?.addEventListener?.("click", renderInspeccionCatalog);
 
 /* ---------- Boot ---------- */
 (async ()=>{
