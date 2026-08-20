@@ -16,6 +16,13 @@ kpi_familia = load("data/normalized/kpis_por_familia.json")
 ranking = load("data/normalized/ranking_criticidad.json")
 matriz = load("data/normalized/matriz_sector_familia.json")
 
+ventanas = load("data/normalized/ventanas_operativas.json")
+tendencias = load("data/normalized/tendencias.json")
+# Extract just the mediciones array from synthetic dataset for embed
+import json as _j
+syn_wrap = _j.loads(load("data/normalized/mediciones_sinteticas.json"))
+syn_meds = _j.dumps(syn_wrap["mediciones"], ensure_ascii=False, separators=(",",":"))
+
 out = (tpl
  .replace("__LIMITES__", limites)
  .replace("__ACTIVIDADES__", actividades)
@@ -24,6 +31,9 @@ out = (tpl
  .replace("__KPI_FAMILIA__", kpi_familia)
  .replace("__RANKING__", ranking)
  .replace("__MATRIZ__", matriz)
+ .replace("__VENTANAS__", ventanas)
+ .replace("__TENDENCIAS__", tendencias)
+ .replace("__SYN_MEDS__", syn_meds)
 )
 target = ROOT / "app/sicm-ele.html"
 target.write_text(out, encoding="utf-8")

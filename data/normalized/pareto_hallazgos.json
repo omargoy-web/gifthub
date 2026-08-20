@@ -1,0 +1,38 @@
+{
+ "por_parametro": [
+  {
+   "parametro": "IP",
+   "n": 11
+  },
+  {
+   "parametro": "R_aislamiento_MOhm",
+   "n": 11
+  },
+  {
+   "parametro": "vibracion_rms_mms",
+   "n": 9
+  },
+  {
+   "parametro": "THD_I_pct",
+   "n": 1
+  }
+ ],
+ "por_modo": [
+  {
+   "modo": "motor IP → alerta",
+   "n": 11
+  },
+  {
+   "modo": "motor R_aislamiento_MOhm → alerta",
+   "n": 11
+  },
+  {
+   "modo": "motor vibracion_rms_mms → alarma",
+   "n": 9
+  },
+  {
+   "modo": "ccm THD_I_pct → alarma",
+   "n": 1
+  }
+ ]
+}

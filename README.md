@@ -163,6 +163,35 @@ Con la base normalizada de la Fase 1, se agregan **indicadores consolidados de c
 
 **Pendiente (bajo esfuerzo)**: 6 familias adicionales de SAP —`turbogenerador` (4 equipos, ya en placa: 4 TG de 112 MVA c/u), `vfd` (~40 variadores), `hvac` (~100 unidades), `neutro_tierra` (~80 resistencias), `trazas_electricas` (~50 sistemas), `banco_capacitores` (~50 bancos). Sus xlsx fueron descargados pero llegaron en línea y no persistieron en esta sesión; con `read_file_content` o descarga a `data/raw/xlsx/` y re-corrida de `scripts/extract_xlsx.py` se ingestan.
 
+## FASE 3 — Tendencias, ventanas operativas y tasas de degradación (entregado)
+
+**Ventanas operativas expandidas** a 48 bandas por familia específica con norma explícita (`data/normalized/ventanas_operativas.json`). Cada banda contiene `verde_max / amarillo_max / rojo_min / unidad / norma / sentido`. Cubre motor (MT/BT, clase F/H, vibración GP1/GP2), transformador (aceite/seco, temperatura, aceite dieléctrico, DGA H2/CH4/C2H2/C2H4/CO), tableros, interruptores, arrancadores, CCM, VFD, baterías, SFI/UPS, sistema de tierras, pararrayos y turbogenerador.
+
+**Motor de tendencias** (`scripts/tendencias.py`) — para cada serie `(tag, parametro)` con ≥3 puntos:
+- Regresión lineal: pendiente por día, R², n.
+- Estado actual contra ventana normativa.
+- Días al umbral amarillo/rojo por extrapolación.
+- Ranking por urgencia (equipos en alarma primero, luego por días al umbral).
+
+**Dataset sintético para demostrar el pipeline** (`scripts/gen_synthetic.py` → `data/normalized/mediciones_sinteticas.json`): 600 mediciones sobre 100 equipos críticos con 6 puntos históricos cada uno, 30 días de espaciado, seed reproducible. Etiquetadas explícitamente como sintéticas — sustituir por datos reales cuando se disponga.
+
+**Nueva pestaña "Tendencias (Fase 3)" en la PWA** con los 6 tipos de gráficas exigidos + un extra:
+1. **Tendencia temporal con bandas normativas** — SVG con banda verde/amarilla/roja sombreadas + línea de regresión
+2. **Comparativa de corriente por fase** — barras F1/F2/F3 + promedio + I_nom con badge de desbalance NEMA
+3. **Gráfica de control** — CL / UCL(µ+3σ) / líneas de alerta/alarma, puntos coloreados por zona
+4. **Dispersión I vs T** — correlación mecánico-eléctrica coloreada por familia
+5. **Mapa de calor sector × familia** — condición agregada con gradiente
+6. **Pareto de hallazgos** — modos más frecuentes con barras
+7. **Ranking urgencia (top 20)** — recalculado en vivo desde `MEDICIONES` con pendiente y días al umbral
+
+Botón *"Cargar dataset sintético"* pobla la PWA con las 600 mediciones para explorar todas las gráficas sin datos reales.
+
+**Salidas del pipeline Fase 3**:
+- `data/normalized/tendencias.json` — 516 series analizadas con regresión completa
+- `data/normalized/tasa_degradacion.csv` — export ordenado por urgencia
+- `data/normalized/pareto_hallazgos.json` — conteo de modos por parámetro y familia
+- `reports/fase3_tendencias.md` — reporte narrativo con top-20, metodología, aviso de honestidad
+
 ## Rama y estado
 
-Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2 y extensión (subestaciones + 16 actividades + familias adicionales) entregadas.
+Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades) y Fase 3 entregadas.

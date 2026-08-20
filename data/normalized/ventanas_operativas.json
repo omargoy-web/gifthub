@@ -1,0 +1,218 @@
+{
+ "schema_version": "1.0",
+ "descripcion": "Matriz completa parámetro × familia con banda verde/amarilla/roja y norma sustentante. Cada banda es una tripleta [verde_max, amarillo_max, rojo_min]. Cuando verde_max=amarillo_max la regla es binaria (normal/alarma).",
+ "bandas": [
+
+  {"familia":"motor", "nivel_tension":"MT", "parametro":"temp_devanado_C", "clase":"F",
+   "verde_max":120, "amarillo_max":135, "rojo_min":155, "unidad":"°C",
+   "norma":"AJUSTE_TEMP_MOTORES_R1 · Clase F, medición RTD",
+   "accion_amarillo":"Vigilar tendencia; verificar carga vs nominal",
+   "accion_rojo":"Bajar carga o parar; verificar refrigeración y RTDs"},
+
+  {"familia":"motor", "nivel_tension":"MT", "parametro":"temp_devanado_C", "clase":"H",
+   "verde_max":125, "amarillo_max":135, "rojo_min":175, "unidad":"°C",
+   "norma":"AJUSTE_TEMP_MOTORES_R1 · Clase H, medición RTD",
+   "accion_rojo":"Parar; probable falla de refrigeración/sobrecarga"},
+
+  {"familia":"motor", "nivel_tension":"BT", "parametro":"temp_devanado_C", "clase":"F",
+   "verde_max":100, "amarillo_max":110, "rojo_min":120, "unidad":"°C",
+   "norma":"AJUSTE_TEMP_MOTORES_R1 · BT 480V Clase F, medición pirómetro (restar 20°C al RTD equivalente)",
+   "accion_rojo":"Sobretemperatura BT: revisar carga, ventilación"},
+
+  {"familia":"motor", "parametro":"temp_rodamiento_C",
+   "verde_max":70, "amarillo_max":85, "rojo_min":95, "unidad":"°C",
+   "norma":"AJUSTE_TEMP_MOTORES_R1; ISO 10816 rodamientos",
+   "accion_amarillo":"Verificar lubricación; analizar vibración",
+   "accion_rojo":"Falla inminente rodamiento; parar equipo"},
+
+  {"familia":"motor", "parametro":"vibracion_rms_mms", "grupo":"GP2_base_rigida",
+   "verde_max":2.8, "amarillo_max":4.5, "rojo_min":4.5, "unidad":"mm/s",
+   "norma":"ISO 20816-3 A2 (20-400 HP, H<315mm) base rígida",
+   "accion_amarillo":"Análisis espectral; descartar desbalance/desalineación",
+   "accion_rojo":"Balancear; alinear; verificar rodamientos"},
+
+  {"familia":"motor", "parametro":"vibracion_rms_mms", "grupo":"GP2_base_flexible",
+   "verde_max":4.5, "amarillo_max":7.1, "rojo_min":7.1, "unidad":"mm/s",
+   "norma":"ISO 20816-3 A2 base flexible"},
+
+  {"familia":"motor", "parametro":"vibracion_rms_mms", "grupo":"GP1_base_rigida",
+   "verde_max":4.5, "amarillo_max":7.1, "rojo_min":7.1, "unidad":"mm/s",
+   "norma":"ISO 20816-3 A1 (>400 HP, H>315mm) base rígida"},
+
+  {"familia":"motor", "parametro":"vibracion_rms_mms", "grupo":"GP1_base_flexible",
+   "verde_max":7.1, "amarillo_max":11.0, "rojo_min":11.0, "unidad":"mm/s",
+   "norma":"ISO 20816-3 A1 base flexible"},
+
+  {"familia":"motor", "parametro":"desbalance_i_pct",
+   "verde_max":5, "amarillo_max":10, "rojo_min":10, "unidad":"%",
+   "norma":"NEMA MG-1 §14.35 — >10% no operar sin derateo (aplica con carga >20% nominal)",
+   "accion_amarillo":"Investigar reparto de carga; contactos arrancador",
+   "accion_rojo":"Falla estator/alimentador; MCSA + derateo curva NEMA"},
+
+  {"familia":"motor", "parametro":"desbalance_v_pct",
+   "verde_max":1, "amarillo_max":2, "rojo_min":2, "unidad":"%",
+   "norma":"NEMA MG-1 §14.36 (<1% ideal; <2% límite operacional)"},
+
+  {"familia":"motor", "parametro":"IP",
+   "verde_max":4.0, "amarillo_max":4.0, "rojo_min":1.0, "unidad":"—",
+   "norma":"IEEE 43-2013 (<1 peligroso, 1-2 cuestionable, 2-4 aceptable, >4 excelente); interpretación inversa",
+   "sentido":"below"},
+
+  {"familia":"motor", "parametro":"R_aislamiento_MOhm",
+   "verde_max":10000, "amarillo_max":10000, "rojo_min":100, "unidad":"MΩ",
+   "norma":"IEEE 43-2013 mínimo (kV+1) para máquinas <1970; 100 MΩ para post-1970",
+   "sentido":"below"},
+
+  {"familia":"motor", "parametro":"carga_pct",
+   "verde_max":85, "amarillo_max":100, "rojo_min":110, "unidad":"%",
+   "norma":"NEMA MG-1 §14 servicio continuo; SF ampara transientes"},
+
+  {"familia":"transformador_aceite", "parametro":"temp_devanado_C",
+   "verde_max":75, "amarillo_max":85, "rojo_min":100, "unidad":"°C",
+   "norma":"CENSO_TRANSFORMADORES_EN_ACEITE (Alerta1 75°C, Alerta2 85°C, Disparo 100°C, diseño 120°C)"},
+
+  {"familia":"transformador_aceite", "parametro":"temp_aceite_C",
+   "verde_max":75, "amarillo_max":85, "rojo_min":100, "unidad":"°C",
+   "norma":"CENSO_TRANSFORMADORES_EN_ACEITE · IEEE C57.91"},
+
+  {"familia":"transformador_aceite", "parametro":"rigidez_dielectrica_D1816_kV",
+   "verde_max":100, "amarillo_max":100, "rojo_min":35, "unidad":"kV/2mm",
+   "norma":"ASTM D-1816 gap 2mm; IEEE C57.106 (≥35 kV servicio ≤69kV)",
+   "sentido":"below"},
+
+  {"familia":"transformador_aceite", "parametro":"factor_potencia_25C_pct",
+   "verde_max":0.05, "amarillo_max":0.05, "rojo_min":0.05, "unidad":"%",
+   "norma":"ASTM D-924 (<0.05% @ 25°C)"},
+
+  {"familia":"transformador_aceite", "parametro":"contenido_agua_ppm",
+   "verde_max":25, "amarillo_max":35, "rojo_min":35, "unidad":"ppm",
+   "norma":"IEEE C57.106 Tbl 4 (≤35 ppm servicio 69kV; ajustar por clase)"},
+
+  {"familia":"transformador_aceite", "parametro":"acidez_D664_mgKOHg",
+   "verde_max":0.10, "amarillo_max":0.20, "rojo_min":0.30, "unidad":"mgKOH/g",
+   "norma":"IEEE C57.106 (Bueno ≤0.10; alerta 0.10-0.20; degradación >0.20)"},
+
+  {"familia":"transformador_aceite", "parametro":"tension_interfacial_mNm",
+   "verde_max":100, "amarillo_max":100, "rojo_min":40, "unidad":"mN/m",
+   "norma":"ASTM D-971 (<40 mN/m indica contaminación)",
+   "sentido":"below"},
+
+  {"familia":"transformador_aceite", "parametro":"DGA_H2_ppm",
+   "verde_max":100, "amarillo_max":700, "rojo_min":1800, "unidad":"ppm",
+   "norma":"IEEE C57.104-2019 Tbl 3 (Cond 1/2/3) — hidrógeno"},
+
+  {"familia":"transformador_aceite", "parametro":"DGA_CH4_ppm",
+   "verde_max":120, "amarillo_max":400, "rojo_min":1000, "unidad":"ppm",
+   "norma":"IEEE C57.104-2019 — metano"},
+
+  {"familia":"transformador_aceite", "parametro":"DGA_C2H2_ppm",
+   "verde_max":1, "amarillo_max":9, "rojo_min":35, "unidad":"ppm",
+   "norma":"IEEE C57.104-2019 — acetileno (crítico: cualquier presencia investigar)"},
+
+  {"familia":"transformador_aceite", "parametro":"DGA_C2H4_ppm",
+   "verde_max":50, "amarillo_max":100, "rojo_min":200, "unidad":"ppm",
+   "norma":"IEEE C57.104-2019 — etileno"},
+
+  {"familia":"transformador_aceite", "parametro":"DGA_CO_ppm",
+   "verde_max":350, "amarillo_max":570, "rojo_min":1400, "unidad":"ppm",
+   "norma":"IEEE C57.104-2019 — monóxido de carbono (celulosa)"},
+
+  {"familia":"transformador_seco", "parametro":"temp_devanado_C", "clase":"F",
+   "verde_max":115, "amarillo_max":130, "rojo_min":155, "unidad":"°C",
+   "norma":"IEEE C57.12.01 aislamiento clase F"},
+
+  {"familia":"transformador_seco", "parametro":"temp_devanado_C", "clase":"H",
+   "verde_max":140, "amarillo_max":165, "rojo_min":180, "unidad":"°C",
+   "norma":"IEEE C57.12.01 aislamiento clase H"},
+
+  {"familia":"tablero", "parametro":"delta_t_termografico_C",
+   "verde_max":3, "amarillo_max":15, "rojo_min":15, "unidad":"°C",
+   "norma":"NFPA 70B; NETA MTS Tbl 100.18 (ΔT>15°C deficiencia mayor)"},
+
+  {"familia":"tablero", "parametro":"temp_conexion_C",
+   "verde_max":40, "amarillo_max":60, "rojo_min":70, "unidad":"°C",
+   "norma":"ANSI C37.20 (barras y conexiones límite 70°C total, Δ30°C sobre ambiente)"},
+
+  {"familia":"interruptor", "parametro":"delta_t_termografico_C",
+   "verde_max":3, "amarillo_max":15, "rojo_min":15, "unidad":"°C",
+   "norma":"NFPA 70B; NETA MTS Tbl 100.18"},
+
+  {"familia":"interruptor", "parametro":"temp_conexion_C",
+   "verde_max":40, "amarillo_max":60, "rojo_min":70, "unidad":"°C",
+   "norma":"ANSI C37.20 (materiales estándar); 105°C para materiales especiales"},
+
+  {"familia":"interruptor", "parametro":"resistencia_contactos_uohm_pct_fabrica",
+   "verde_max":120, "amarillo_max":150, "rojo_min":200, "unidad":"% del valor de fábrica",
+   "norma":"IEEE C37.09; NETA MTS 7.6.1 (>150% investigar; >200% reparar)"},
+
+  {"familia":"arrancador", "parametro":"delta_t_termografico_C",
+   "verde_max":3, "amarillo_max":15, "rojo_min":15, "unidad":"°C",
+   "norma":"NFPA 70B / NETA MTS · contactor y protector"},
+
+  {"familia":"ccm", "parametro":"desbalance_i_pct",
+   "verde_max":5, "amarillo_max":10, "rojo_min":15, "unidad":"%",
+   "norma":"NEMA MG-1 §14.35 aplicado en el bus del CCM"},
+
+  {"familia":"ccm", "parametro":"THD_V_pct",
+   "verde_max":5, "amarillo_max":8, "rojo_min":8, "unidad":"%",
+   "norma":"IEEE 519-2022 Tbl 1 (BT V≤1kV)"},
+
+  {"familia":"ccm", "parametro":"THD_I_pct",
+   "verde_max":5, "amarillo_max":15, "rojo_min":15, "unidad":"%",
+   "norma":"IEEE 519 (aplicar tabla por PCC según ISC/IL)"},
+
+  {"familia":"vfd", "parametro":"THD_I_pct",
+   "verde_max":8, "amarillo_max":15, "rojo_min":20, "unidad":"%",
+   "norma":"IEEE 519 (VFD sin filtro típicamente 30-40%; con filtro pasivo <15%)"},
+
+  {"familia":"baterias", "parametro":"voltaje_flotacion_por_celda_V",
+   "verde_max":2.27, "amarillo_max":2.30, "rojo_min":2.35, "unidad":"V",
+   "norma":"IEEE 450 (Pb-ácido VLA típico 2.15-2.30 V/celda a 25°C)"},
+
+  {"familia":"baterias", "parametro":"gravedad_especifica",
+   "verde_max":1.28, "amarillo_max":1.28, "rojo_min":1.21, "unidad":"—",
+   "norma":"IEEE 450 (celda plena carga 1.215-1.30; ≤1.21 = celda descargada)",
+   "sentido":"below"},
+
+  {"familia":"baterias", "parametro":"impedancia_interna_pct_vs_referencia",
+   "verde_max":110, "amarillo_max":125, "rojo_min":150, "unidad":"% ref",
+   "norma":"IEEE 1188 (VRLA) — cambio >50% baseline = celda al fin de vida"},
+
+  {"familia":"ups_sfi", "parametro":"autonomia_min",
+   "verde_max":600, "amarillo_max":600, "rojo_min":30, "unidad":"min",
+   "norma":"NRF-097-PEMEX (autonomía diseño típica 60 min; alarma <30 min)",
+   "sentido":"below"},
+
+  {"familia":"ups_sfi", "parametro":"THD_V_salida_pct",
+   "verde_max":3, "amarillo_max":5, "rojo_min":8, "unidad":"%",
+   "norma":"IEEE 946; IEC 62040-3 (carga lineal <3%; no lineal <5%)"},
+
+  {"familia":"sistema_tierra", "parametro":"resistencia_tierra_ohm",
+   "verde_max":5, "amarillo_max":10, "rojo_min":25, "unidad":"Ω",
+   "norma":"IEEE 80/81; NRF-011-PEMEX (subestaciones ≤5Ω; equipos ≤25Ω)"},
+
+  {"familia":"pararrayos", "parametro":"corriente_fuga_uA",
+   "verde_max":200, "amarillo_max":500, "rojo_min":1000, "unidad":"µA",
+   "norma":"IEC 60099-5 (fuga tercera armónica; deterioro >500 µA)"},
+
+  {"familia":"turbogenerador", "parametro":"temp_devanado_estator_C", "clase":"F",
+   "verde_max":120, "amarillo_max":140, "rojo_min":155, "unidad":"°C",
+   "norma":"IEC 60034-1 clase F; NEMA MG-1"},
+
+  {"familia":"turbogenerador", "parametro":"cojinete_temp_C",
+   "verde_max":70, "amarillo_max":85, "rojo_min":95, "unidad":"°C",
+   "norma":"API 617/546; NEMA MG-1"},
+
+  {"familia":"universal", "parametro":"THD_V_pct_BT",
+   "verde_max":5, "amarillo_max":8, "rojo_min":8, "unidad":"%",
+   "norma":"IEEE 519-2022 Tbl 1 · V≤1kV"},
+
+  {"familia":"universal", "parametro":"THD_V_pct_MT",
+   "verde_max":5, "amarillo_max":5, "rojo_min":5, "unidad":"%",
+   "norma":"IEEE 519-2022 Tbl 1 · 1kV<V≤69kV"},
+
+  {"familia":"universal", "parametro":"THD_V_pct_AT",
+   "verde_max":2.5, "amarillo_max":2.5, "rojo_min":2.5, "unidad":"%",
+   "norma":"IEEE 519-2022 Tbl 1 · V>69kV"}
+ ]
+}

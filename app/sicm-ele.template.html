@@ -163,7 +163,7 @@ footer.foot b{color:var(--ink-soft)}
   <button data-tab="capturar">Capturar medición</button>
   <button data-tab="diagnostico">Diagnóstico</button>
   <button data-tab="vida">Vida remanente</button>
-  <button data-tab="tendencias">Tendencias</button>
+  <button data-tab="tendencias">Tendencias (Fase 3)</button>
   <button data-tab="censo">Censo</button>
   <button data-tab="ventanas">Ventanas operativas</button>
   <button data-tab="config">Datos y respaldo</button>
@@ -297,10 +297,20 @@ footer.foot b{color:var(--ink-soft)}
  </div>
 </section>
 
-<!-- TENDENCIAS -->
+<!-- TENDENCIAS (Fase 3) -->
 <section id="view-tendencias" class="hide">
+ <div class="card" style="background:#fff8e5;border-color:#f0c96b">
+  <div class="card-title" style="color:#a05e00"><span class="n" style="background:#a05e00">!</span> Dataset de trabajo</div>
+  <p style="margin:0 0 10px;font-size:13px;line-height:1.55">Fase 3 requiere ≥3 mediciones por parámetro/equipo. Puede cargar el <b>dataset sintético</b> pre-calculado (600 mediciones sobre 100 equipos críticos) para explorar todas las gráficas, o importar sus mediciones reales desde <b>Datos y respaldo</b>.</p>
+  <div class="btn-row">
+   <button class="btn" id="btn-load-syn">Cargar dataset sintético (demo)</button>
+   <button class="btn btn-ghost" id="btn-clear-syn">Limpiar mediciones cargadas</button>
+   <span class="hint" id="syn-status" style="margin-left:6px">—</span>
+  </div>
+ </div>
+
  <div class="card">
-  <div class="card-title"><span class="n">1</span> Tendencia temporal por parámetro</div>
+  <div class="card-title"><span class="n">1</span> Tendencia temporal con bandas normativas</div>
   <div class="filterbar">
    <input id="trend-tag" list="lst-tags" placeholder="TAG del equipo">
    <select id="trend-param">
@@ -318,13 +328,53 @@ footer.foot b{color:var(--ink-soft)}
   </div>
   <div id="trend-out"></div>
  </div>
+
  <div class="card">
-  <div class="card-title"><span class="n">2</span> Mapa de calor: condición por sector × familia</div>
+  <div class="card-title"><span class="n">2</span> Comparativa de corriente por fase (barras)</div>
+  <p class="hint" style="margin-top:0">Visualiza el desbalance de corriente en el último punto disponible por equipo. Selecciona un equipo con mediciones cargadas.</p>
+  <div class="filterbar">
+   <input id="bar-tag" list="lst-tags" placeholder="TAG del equipo">
+   <button class="btn" id="btn-bar">Trazar</button>
+  </div>
+  <div id="bar-out"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Gráfica de control por parámetro</div>
+  <p class="hint" style="margin-top:0">Muestra la serie temporal como carta de control con línea central y límites de alerta/alarma según norma.</p>
+  <div class="filterbar">
+   <input id="ctrl-tag" list="lst-tags" placeholder="TAG">
+   <select id="ctrl-param">
+    <option value="temp_max_c">Temperatura (°C)</option>
+    <option value="vibracion_rms_mms">Vibración RMS (mm/s)</option>
+    <option value="delta_t_c">Δ T (°C)</option>
+    <option value="THD_I_pct">THD I (%)</option>
+   </select>
+   <button class="btn" id="btn-ctrl">Trazar</button>
+  </div>
+  <div id="ctrl-out"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">4</span> Dispersión: Corriente vs Temperatura</div>
+  <p class="hint" style="margin-top:0">Correlación mecánico-eléctrica: puntos por equipo con las mediciones disponibles.</p>
+  <div id="scatter-out"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">5</span> Mapa de calor: condición por sector × familia</div>
   <div id="heat-out"></div>
  </div>
+
  <div class="card">
-  <div class="card-title"><span class="n">3</span> Pareto de hallazgos</div>
+  <div class="card-title"><span class="n">6</span> Pareto de hallazgos</div>
   <div id="pareto-out"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">7</span> Ranking urgencia de intervención (top 20 tendencias pre-calculadas)</div>
+  <p class="hint" style="margin-top:0">Tendencias calculadas con el dataset sintético. Cuando cargue mediciones reales, este listado se recalcula.</p>
+  <div id="urgency-out"></div>
  </div>
 </section>
 
@@ -392,6 +442,9 @@ const KPI_SECTOR = __KPI_SECTOR__;
 const KPI_FAMILIA = __KPI_FAMILIA__;
 const RANKING = __RANKING__;
 const MATRIZ = __MATRIZ__;
+const VENTANAS = __VENTANAS__;
+const TENDENCIAS = __TENDENCIAS__;
+const SYN_MEDS = __SYN_MEDS__;
 
 /* ---------- IndexedDB simple ---------- */
 const IDB_NAME="sicm_ele_idb", IDB_STORE="kv";
@@ -907,31 +960,311 @@ function drawLineChart(container, xs, ys, ylabel, umbralA, umbralB){
  </svg>`;
 }
 
+function renderTendencias(){
+ const cnt = MEDICIONES.length;
+ $("#syn-status").textContent = cnt? `${cnt} mediciones locales cargadas${MEDICIONES.some(m=>m._sintetico)?' (incluye sintéticas)':''}.` : "Sin mediciones. Cargue el dataset sintético o importe uno real.";
+ $("#trend-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro y presione <b>Trazar</b>.</p>';
+ $("#bar-out").innerHTML = '<p class="hint">Seleccione un equipo para ver su desbalance de corriente.</p>';
+ $("#ctrl-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro para la carta de control.</p>';
+ renderScatter();
+ renderHeatmap();
+ renderPareto();
+ renderUrgency();
+}
+
+$("#btn-load-syn")?.addEventListener?.("click", async ()=>{
+ // fusiona sin duplicar (por id_medicion)
+ const existing = new Set(MEDICIONES.map(m=>m.id_medicion));
+ let n = 0;
+ for(const m of SYN_MEDS){
+  if(existing.has(m.id_medicion)) continue;
+  const mm = {...m};
+  mm._diag = diagnosticar(mm);
+  MEDICIONES.push(mm); n++;
+ }
+ await guardarDatos();
+ renderTendencias();
+ renderConsolidado();
+ toast(`Cargadas ${n} mediciones sintéticas.`);
+});
+$("#btn-clear-syn")?.addEventListener?.("click", async ()=>{
+ if(!confirm("¿Vaciar TODAS las mediciones locales?")) return;
+ MEDICIONES = []; await guardarDatos(); renderTendencias(); toast("Mediciones vaciadas.");
+});
+
+/* ---- Ventana para parámetro ---- */
+function ventanaFor(familia, parametro){
+ const paramMap = {temp_max_c:"temp_devanado_C", delta_t_c:"delta_t_termografico_C"};
+ const vp = paramMap[parametro] || parametro;
+ for(const b of VENTANAS.bandas){
+  if(b.familia===familia && b.parametro===vp) return b;
+ }
+ for(const b of VENTANAS.bandas){
+  if(b.familia===familia && b.parametro===parametro) return b;
+ }
+ for(const b of VENTANAS.bandas){
+  if(b.familia==="universal" && b.parametro===vp) return b;
+ }
+ // Fallback vibración motor
+ if(parametro==="vibracion_rms_mms"){
+  for(const b of VENTANAS.bandas){
+   if(b.familia==="motor" && b.parametro==="vibracion_rms_mms" && b.grupo==="GP2_base_rigida") return b;
+  }
+ }
+ return null;
+}
+
+/* ---- Gráfica 1: tendencia con bandas ---- */
+function drawTrendWithBands(container, xs, ys, ylabel, band, familia){
+ const W=760, H=280, ml=52, mr=90, mt=18, mb=34;
+ const iw=W-ml-mr, ih=H-mt-mb;
+ if(xs.length<2){container.innerHTML='<p class="hint">Se necesitan ≥2 puntos.</p>';return;}
+ const xmin=Math.min(...xs), xmax=Math.max(...xs);
+ const upper = band? Math.max(band.rojo_min, band.amarillo_max, band.verde_max, ...ys) : Math.max(...ys);
+ const lower = band? Math.min(band.verde_max, band.amarillo_max, band.rojo_min, ...ys) : Math.min(...ys);
+ let ymin=lower, ymax=upper;
+ if(ymin===ymax){ymin-=1;ymax+=1;}
+ const pad=(ymax-ymin)*0.1; ymin-=pad; ymax+=pad;
+ const sx=x=>ml+((x-xmin)/(xmax-xmin||1))*iw;
+ const sy=y=>mt+ih-((y-ymin)/(ymax-ymin))*ih;
+
+ // Rectángulos de banda (fondos)
+ let bands = "";
+ if(band){
+  const sentido = band.sentido || "above";
+  if(sentido==="above"){
+   bands += `<rect x="${ml}" y="${sy(band.rojo_min)}" width="${iw}" height="${Math.max(0,sy(ymax)+ih-sy(band.rojo_min)*0)}" fill="rgba(193,39,45,0.08)"/>`;
+   bands += `<rect x="${ml}" y="${sy(band.amarillo_max)}" width="${iw}" height="${sy(band.rojo_min)-sy(band.amarillo_max)}" fill="rgba(207,106,31,0.08)"/>`;
+   bands += `<rect x="${ml}" y="${mt}" width="${iw}" height="${sy(band.amarillo_max)-mt}" fill="rgba(31,122,77,0.06)"/>`;
+   bands += `<line x1="${ml}" x2="${W-mr}" y1="${sy(band.amarillo_max)}" y2="${sy(band.amarillo_max)}" stroke="var(--warn)" stroke-dasharray="4 3" stroke-width="1.2"/>`;
+   bands += `<line x1="${ml}" x2="${W-mr}" y1="${sy(band.rojo_min)}" y2="${sy(band.rojo_min)}" stroke="var(--alarm)" stroke-dasharray="4 3" stroke-width="1.4"/>`;
+   bands += `<text x="${W-mr+4}" y="${sy(band.amarillo_max)+3}" fill="var(--warn)" font-size="10" font-weight="700">Alerta ${band.amarillo_max}</text>`;
+   bands += `<text x="${W-mr+4}" y="${sy(band.rojo_min)+3}" fill="var(--alarm)" font-size="10" font-weight="700">Alarma ${band.rojo_min}</text>`;
+  } else {
+   bands += `<line x1="${ml}" x2="${W-mr}" y1="${sy(band.rojo_min)}" y2="${sy(band.rojo_min)}" stroke="var(--alarm)" stroke-dasharray="4 3" stroke-width="1.4"/>`;
+   bands += `<text x="${W-mr+4}" y="${sy(band.rojo_min)+3}" fill="var(--alarm)" font-size="10" font-weight="700">Alarma ${band.rojo_min}</text>`;
+  }
+ }
+ // Regresión
+ let regLine = "";
+ if(xs.length>=2){
+  const n = xs.length, mx = xs.reduce((a,b)=>a+b)/n, my = ys.reduce((a,b)=>a+b)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)**2;}
+  if(den>0){
+   const m = num/den, b = my-m*mx;
+   const y1 = m*xmin+b, y2 = m*xmax+b;
+   regLine = `<line x1="${sx(xmin)}" x2="${sx(xmax)}" y1="${sy(y1)}" y2="${sy(y2)}" stroke="var(--verde-dark)" stroke-dasharray="6 3" stroke-width="1.4" opacity="0.6"/>`;
+  }
+ }
+ let path="";
+ xs.forEach((x,i)=>{path+=(i?" L":"M")+sx(x)+" "+sy(ys[i]);});
+ const points=xs.map((x,i)=>`<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="4" fill="var(--verde)" stroke="#fff" stroke-width="1.5"/>`).join("");
+ const yticks=[]; for(let i=0;i<=4;i++){const yv=ymin+(ymax-ymin)*i/4; yticks.push(`<g><line x1="${ml}" x2="${W-mr}" y1="${sy(yv)}" y2="${sy(yv)}" stroke="#eef1ef" stroke-width="0.5"/><text x="${ml-6}" y="${sy(yv)+3}" text-anchor="end">${yv.toFixed(2)}</text></g>`);}
+ const xticks=[]; [xmin,(xmin+xmax)/2,xmax].forEach(xv=>{const d=new Date(xv*86400000); xticks.push(`<text x="${sx(xv)}" y="${H-8}" text-anchor="middle">${d.toISOString().slice(0,10)}</text>`);});
+ container.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  ${bands}${yticks.join("")}${regLine}
+  <path d="${path}" fill="none" stroke="var(--verde)" stroke-width="2.2"/>
+  ${points}${xticks.join("")}
+  <text x="${ml}" y="${mt-4}" font-weight="700" fill="var(--ink)">${ylabel}${band? ' · '+(band.norma||'') : ''}</text>
+ </svg>`;
+}
+
 $("#btn-trend")?.addEventListener?.("click", ()=>{
  const tag = $("#trend-tag").value.trim();
  const param = $("#trend-param").value;
+ const eq = EQUIPOS.find(e=>e.tag===tag);
+ if(!eq){toast("TAG no encontrado."); return;}
  const meds = MEDICIONES.filter(m=>m.tag===tag).sort((a,b)=>a.fecha_iso.localeCompare(b.fecha_iso));
  const xs=[], ys=[];
  for(const m of meds){
-  const val = (param.startsWith("desbalance"))? (computeDerived(m)[param]) : m[param];
+  let val = (param.startsWith("desbalance"))? (computeDerived(m)[param]) : m[param];
   if(val!=null && !isNaN(val) && m.fecha_iso){
    xs.push(new Date(m.fecha_iso).getTime()/86400000);
    ys.push(Number(val));
   }
  }
- const {umbral, direccion} = limiteParaParametro(param);
+ if(xs.length<2){$("#trend-out").innerHTML=`<p class="hint">Sin datos suficientes para ${tag} · ${param}.</p>`;return;}
+ const band = ventanaFor(eq.familia, param);
  const cont = document.createElement("div");
- drawLineChart(cont, xs, ys, `${param} · ${tag||''}`, direccion==="above"? umbral*0.9 : umbral*1.1, umbral);
- $("#trend-out").innerHTML = "";
- $("#trend-out").appendChild(cont);
+ drawTrendWithBands(cont, xs, ys, `${param} · ${tag} (${eq.familia})`, band);
+ $("#trend-out").innerHTML=""; $("#trend-out").appendChild(cont);
 });
 
-function renderTendencias(){
- $("#trend-out").innerHTML = '<p class="hint">Seleccione TAG y parámetro y presione <b>Trazar</b>.</p>';
- // Heatmap
- renderHeatmap();
- // Pareto
- renderPareto();
+/* ---- Gráfica 2: Comparativa fases ---- */
+$("#btn-bar")?.addEventListener?.("click", ()=>{
+ const tag = $("#bar-tag").value.trim();
+ const meds = MEDICIONES.filter(m=>m.tag===tag && m.I_F1!=null).sort((a,b)=>b.fecha_iso.localeCompare(a.fecha_iso));
+ if(!meds.length){$("#bar-out").innerHTML='<p class="hint">Sin mediciones de corriente para este TAG.</p>';return;}
+ const last = meds[0];
+ const vals = [last.I_F1, last.I_F2, last.I_F3];
+ const eq = EQUIPOS.find(e=>e.tag===tag);
+ const I_nom = eq?.I || 0;
+ const avg = vals.reduce((a,b)=>a+b)/3;
+ const unbal = Math.max(...vals.map(v=>Math.abs(v-avg)))/avg*100;
+ const W=520, H=240, ml=60, mr=20, mt=30, mb=40;
+ const iw=W-ml-mr, ih=H-mt-mb;
+ const ymax = Math.max(...vals, I_nom||1)*1.15;
+ const sy=y=>mt+ih-(y/ymax)*ih;
+ const bw = iw/3 - 12;
+ const colors = ["#0f6d44","#0e6c9a","#b0410f"];
+ let bars = "";
+ ["F1","F2","F3"].forEach((lbl,i)=>{
+  const x = ml + i*(iw/3) + 6;
+  const h = ih - (sy(vals[i])-mt);
+  bars += `<rect x="${x}" y="${sy(vals[i])}" width="${bw}" height="${h}" fill="${colors[i]}" rx="4"/>`;
+  bars += `<text x="${x+bw/2}" y="${sy(vals[i])-6}" text-anchor="middle" font-weight="700" fill="var(--ink)">${vals[i].toFixed(1)} A</text>`;
+  bars += `<text x="${x+bw/2}" y="${H-mb+16}" text-anchor="middle" font-size="11" font-weight="700">${lbl}</text>`;
+ });
+ // Línea promedio
+ const yAvg = sy(avg);
+ bars += `<line x1="${ml}" x2="${W-mr}" y1="${yAvg}" y2="${yAvg}" stroke="var(--ink-soft)" stroke-dasharray="4 3"/><text x="${W-mr-4}" y="${yAvg-3}" text-anchor="end" font-size="10" fill="var(--ink-soft)">prom ${avg.toFixed(1)} A</text>`;
+ if(I_nom>0){
+  const yN = sy(I_nom);
+  bars += `<line x1="${ml}" x2="${W-mr}" y1="${yN}" y2="${yN}" stroke="var(--alarm)" stroke-dasharray="4 3"/><text x="${W-mr-4}" y="${yN-3}" text-anchor="end" font-size="10" fill="var(--alarm)">I_nom ${I_nom}A</text>`;
+ }
+ const bcls = unbal>10?"alarm":unbal>5?"warn":"ok";
+ $("#bar-out").innerHTML = `<div style="margin-bottom:10px"><span class="badge ${bcls}">Desbalance NEMA MG-1: ${unbal.toFixed(2)}%</span> · Carga: ${I_nom? ((avg/I_nom)*100).toFixed(1)+'% de nominal' : 'sin nominal'}</div>
+  <svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${bars}
+  <text x="${ml}" y="${mt-6}" font-weight="700" fill="var(--ink)">Corriente por fase — ${tag} · ${(last.fecha_iso||'').slice(0,10)}</text></svg>`;
+});
+
+/* ---- Gráfica 3: Control chart ---- */
+$("#btn-ctrl")?.addEventListener?.("click", ()=>{
+ const tag = $("#ctrl-tag").value.trim();
+ const param = $("#ctrl-param").value;
+ const eq = EQUIPOS.find(e=>e.tag===tag);
+ if(!eq){toast("TAG no encontrado."); return;}
+ const meds = MEDICIONES.filter(m=>m.tag===tag && m[param]!=null).sort((a,b)=>a.fecha_iso.localeCompare(b.fecha_iso));
+ if(meds.length<3){$("#ctrl-out").innerHTML='<p class="hint">Se necesitan ≥3 mediciones.</p>';return;}
+ const ys = meds.map(m=>Number(m[param]));
+ const xs = meds.map(m=>new Date(m.fecha_iso).getTime()/86400000);
+ const band = ventanaFor(eq.familia, param);
+ const mean = ys.reduce((a,b)=>a+b)/ys.length;
+ const std = Math.sqrt(ys.reduce((a,y)=>a+(y-mean)**2,0)/ys.length);
+ const ucl = mean + 3*std, lcl = Math.max(0, mean-3*std);
+ const W=760, H=260, ml=52, mr=90, mt=18, mb=32;
+ const iw=W-ml-mr, ih=H-mt-mb;
+ const xmin=Math.min(...xs), xmax=Math.max(...xs);
+ const ymin = Math.min(lcl, ...ys, band? band.verde_max:Infinity)*0.9;
+ const ymax = Math.max(ucl, ...ys, band? band.rojo_min:0)*1.1;
+ const sx=x=>ml+((x-xmin)/(xmax-xmin||1))*iw;
+ const sy=y=>mt+ih-((y-ymin)/(ymax-ymin))*ih;
+ let path="";
+ xs.forEach((x,i)=>{path+=(i?" L":"M")+sx(x)+" "+sy(ys[i]);});
+ const points=xs.map((x,i)=>{
+  const y = ys[i];
+  const out = (band && (y>=band.rojo_min || y<=band.amarillo_max*0));  // sólo destaca rojo
+  const c = (band && y>=band.rojo_min)?"var(--alarm)": (band && y>band.amarillo_max)?"var(--warn)":"var(--verde)";
+  return `<circle cx="${sx(x)}" cy="${sy(ys[i])}" r="4.2" fill="${c}" stroke="#fff" stroke-width="1.5"/>`;
+ }).join("");
+ let lines = `<line x1="${ml}" x2="${W-mr}" y1="${sy(mean)}" y2="${sy(mean)}" stroke="var(--verde-dark)" stroke-width="1.4"/>`;
+ lines += `<text x="${W-mr+4}" y="${sy(mean)+3}" font-size="10" fill="var(--verde-dark)">CL ${mean.toFixed(2)}</text>`;
+ if(ucl<ymax){lines += `<line x1="${ml}" x2="${W-mr}" y1="${sy(ucl)}" y2="${sy(ucl)}" stroke="var(--ink-soft)" stroke-dasharray="4 2"/>`;
+   lines += `<text x="${W-mr+4}" y="${sy(ucl)+3}" font-size="10" fill="var(--ink-soft)">UCL ${ucl.toFixed(2)}</text>`;}
+ if(band){
+  lines += `<line x1="${ml}" x2="${W-mr}" y1="${sy(band.amarillo_max)}" y2="${sy(band.amarillo_max)}" stroke="var(--warn)" stroke-dasharray="4 3"/><text x="${W-mr+4}" y="${sy(band.amarillo_max)+3}" fill="var(--warn)" font-size="10">Alerta ${band.amarillo_max}</text>`;
+  lines += `<line x1="${ml}" x2="${W-mr}" y1="${sy(band.rojo_min)}" y2="${sy(band.rojo_min)}" stroke="var(--alarm)" stroke-dasharray="4 3"/><text x="${W-mr+4}" y="${sy(band.rojo_min)+3}" fill="var(--alarm)" font-size="10">Alarma ${band.rojo_min}</text>`;
+ }
+ const yticks=[]; for(let i=0;i<=4;i++){const yv=ymin+(ymax-ymin)*i/4; yticks.push(`<text x="${ml-6}" y="${sy(yv)+3}" text-anchor="end">${yv.toFixed(2)}</text>`);}
+ $("#ctrl-out").innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  ${lines}${yticks.join("")}
+  <path d="${path}" fill="none" stroke="var(--verde)" stroke-width="2"/>${points}
+  <text x="${ml}" y="${mt-4}" font-weight="700" fill="var(--ink)">Carta de control — ${tag} · ${param}</text></svg>`;
+});
+
+/* ---- Gráfica 4: Scatter I vs T ---- */
+function renderScatter(){
+ const pts = [];
+ for(const m of MEDICIONES){
+  const ib = computeDerived(m).corriente_avg;
+  if(ib && m.temp_max_c) pts.push({x:ib, y:Number(m.temp_max_c), tag:m.tag});
+ }
+ if(pts.length<3){$("#scatter-out").innerHTML='<p class="hint">Se necesitan ≥3 mediciones con I y T.</p>';return;}
+ const W=760, H=280, ml=52, mr=20, mt=18, mb=36;
+ const iw=W-ml-mr, ih=H-mt-mb;
+ const xmin=0, xmax=Math.max(...pts.map(p=>p.x))*1.1;
+ const ymin=Math.min(...pts.map(p=>p.y))*0.9, ymax=Math.max(...pts.map(p=>p.y))*1.05;
+ const sx=x=>ml+((x-xmin)/(xmax-xmin||1))*iw;
+ const sy=y=>mt+ih-((y-ymin)/(ymax-ymin))*ih;
+ // Fam a color
+ const famCol = {motor:"#0e6c9a", transformador:"#a03a12", tablero:"#6c1fb0", interruptor:"#0f6d44", ccm:"#c9a300", arrancador:"#8a4a00", subestacion:"#9a1b30"};
+ const dots = pts.map(p=>{
+  const eq = EQUIPOS.find(e=>e.tag===p.tag);
+  const c = famCol[eq?.familia] || "#333";
+  return `<circle cx="${sx(p.x)}" cy="${sy(p.y)}" r="3" fill="${c}" opacity="0.72"><title>${p.tag}: ${p.x.toFixed(0)}A / ${p.y.toFixed(1)}°C</title></circle>`;
+ }).join("");
+ const yticks=[]; for(let i=0;i<=4;i++){const yv=ymin+(ymax-ymin)*i/4; yticks.push(`<text x="${ml-6}" y="${sy(yv)+3}" text-anchor="end">${yv.toFixed(0)}</text>`);}
+ const xticks=[]; for(let i=0;i<=4;i++){const xv=xmin+(xmax-xmin)*i/4; xticks.push(`<text x="${sx(xv)}" y="${H-8}" text-anchor="middle">${xv.toFixed(0)}A</text>`);}
+ $("#scatter-out").innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+  ${yticks.join("")}${xticks.join("")}
+  ${dots}
+  <text x="${ml}" y="${mt-4}" font-weight="700" fill="var(--ink)">Correlación I (A) ↔ T (°C) — ${pts.length} puntos</text>
+  <text x="${ml-40}" y="${mt+ih/2}" transform="rotate(-90 ${ml-40} ${mt+ih/2})" text-anchor="middle" font-size="10" fill="var(--ink-soft)">Temperatura °C</text>
+ </svg>
+ <div class="legend">${Object.entries(famCol).map(([k,c])=>`<span><span class="sw" style="background:${c}"></span>${k}</span>`).join("")}</div>`;
+}
+
+function renderUrgency(){
+ // Recomputar con MEDICIONES actuales si hay; si no, usar pre-calculado (TENDENCIAS)
+ let items;
+ if(MEDICIONES.length){
+  // Recompute in-line: group by tag+param, ≥3 puntos, aplicar ventana
+  const groups = new Map();
+  for(const m of MEDICIONES){
+   const fecha = new Date(m.fecha_iso).getTime()/86400000;
+   ["temp_max_c","delta_t_c","IP","THD_V_pct","THD_I_pct","vibracion_rms_mms"].forEach(p=>{
+    if(m[p]!=null){
+     const key = m.tag+"::"+p;
+     if(!groups.has(key)) groups.set(key,{tag:m.tag, param:p, pts:[]});
+     groups.get(key).pts.push([fecha, Number(m[p])]);
+    }
+   });
+  }
+  items = [];
+  for(const g of groups.values()){
+   if(g.pts.length<3) continue;
+   g.pts.sort((a,b)=>a[0]-b[0]);
+   const xs = g.pts.map(p=>p[0]), ys = g.pts.map(p=>p[1]);
+   const n = xs.length, mx = xs.reduce((a,b)=>a+b)/n, my = ys.reduce((a,b)=>a+b)/n;
+   let num=0, den=0;
+   for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)**2;}
+   if(den===0) continue;
+   const slope = num/den;
+   const eq = EQUIPOS.find(e=>e.tag===g.tag);
+   if(!eq) continue;
+   const band = ventanaFor(eq.familia, g.param);
+   if(!band) continue;
+   const ult = ys[ys.length-1];
+   const sentido = band.sentido||"above";
+   let estado = "normal";
+   let dias = null;
+   if(sentido==="above"){
+    if(ult>=band.rojo_min) estado="alarma";
+    else if(ult>band.amarillo_max) estado="alerta";
+    if(slope>0 && ult<band.rojo_min) dias = Math.round((band.rojo_min-ult)/slope);
+   } else {
+    if(ult<=band.rojo_min) estado="alarma";
+    else if(ult<=band.amarillo_max) estado="alerta";
+    if(slope<0 && ult>band.rojo_min) dias = Math.round((ult-band.rojo_min)/Math.abs(slope));
+   }
+   items.push({tag:g.tag, familia:eq.familia, sector:eq.sector, parametro:g.param, valor:ult, slope, r2:0, estado, dias_a_alarma:dias});
+  }
+  items.sort((a,b)=>{
+   const rank = e=>e.estado==="alarma"?-1: (e.dias_a_alarma??999999);
+   return rank(a)-rank(b);
+  });
+  items = items.slice(0,20);
+ } else {
+  items = TENDENCIAS.slice(0,20).map(t=>({...t, valor:t.valor_actual, slope:t.pendiente_por_dia}));
+ }
+ if(!items.length){$("#urgency-out").innerHTML='<p class="hint">Aún no hay tendencias que reportar.</p>';return;}
+ $("#urgency-out").innerHTML = `<table><thead><tr><th>#</th><th>TAG</th><th>Familia</th><th>Sector</th><th>Parámetro</th><th>Valor</th><th>Pendiente/día</th><th>Estado</th><th>Días a alarma</th></tr></thead><tbody>${
+  items.map((t,i)=>{
+   const b = t.estado==="alarma"?"alarm":t.estado==="alerta"?"warn":"ok";
+   return `<tr><td class="mono">${i+1}</td><td class="tag">${t.tag}</td><td>${t.familia}</td><td>${t.sector||''}</td><td>${t.parametro}</td><td class="mono">${Number(t.valor).toFixed(3)}</td><td class="mono">${Number(t.slope).toFixed(4)}</td><td><span class="badge ${b}">${t.estado}</span></td><td class="mono">${t.dias_a_alarma??'—'}</td></tr>`;
+  }).join("")
+ }</tbody></table>`;
 }
 function renderHeatmap(){
  const lastByTag = {};
