@@ -265,22 +265,44 @@ footer.foot b{color:var(--ink-soft)}
  </div>
 </section>
 
-<!-- DIAGNOSTICO (manual) -->
+<!-- DIAGNOSTICO (Fase 4 ampliada) -->
 <section id="view-diagnostico" class="hide">
  <div class="card">
   <div class="card-title"><span class="n">1</span> Motor de diagnóstico basado en reglas normativas</div>
-  <p class="hint" style="margin-top:0;line-height:1.55">Ejecuta el motor sobre cualquier medición histórica o una lectura ad-hoc para obtener: estado (Normal/Alerta/Alarma), modo de falla probable, acción recomendada y norma sustentante. La lógica está en <span class="mono">reglas de decisión</span> — no ML.</p>
-  <div class="field"><label>Medición existente (para re-dictaminar)</label>
-   <select id="diag-med"></select>
+  <p class="hint" style="margin-top:0;line-height:1.55">Ejecuta el catálogo Fase 4 sobre cualquier medición para obtener: estado, modo de falla, causa probable, mecanismo físico, acción, prioridad y norma sustentante. Lógica <span class="mono">DSL determinístico</span> — no ML.</p>
+  <div class="grid2">
+   <div class="field"><label>Medición existente</label>
+    <select id="diag-med"></select></div>
+   <div class="field"><label>Filtro por prioridad</label>
+    <select id="diag-prio"><option value="">Todas</option><option>inmediata</option><option>proximo_paro</option><option>programar</option><option>rutina</option></select></div>
   </div>
   <div class="btn-row">
    <button class="btn" id="btn-diag-run">Ejecutar diagnóstico</button>
+   <button class="btn btn-ghost" id="btn-diag-all">Diagnosticar TODAS las mediciones</button>
   </div>
   <div id="diag-result"></div>
  </div>
+
  <div class="card">
-  <div class="card-title"><span class="n">2</span> Matriz FMEA (extracto)</div>
+  <div class="card-title"><span class="n">2</span> Catálogo de reglas activas <span class="right" id="reglas-count">—</span></div>
+  <p class="hint" style="margin-top:0">Reglas del motor de diagnóstico Fase 4. Filtre por familia para ver las que aplican a cada tipo de equipo.</p>
+  <div class="filterbar">
+   <select id="reglas-familia"><option value="">Todas las familias</option></select>
+   <input id="reglas-q" placeholder="Buscar en descripción/acción…">
+  </div>
+  <div id="reglas-table"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Matriz FMEA/FMECA <span class="right">S×O×D = RPN</span></div>
+  <p class="hint" style="margin-top:0">Modos de falla por familia con escalas Severidad/Ocurrencia/Detectabilidad y Risk Priority Number. RPN &gt;200 acción prioritaria; 100-200 mitigar; &lt;100 monitoreo rutinario.</p>
   <div id="fmea-table"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">4</span> Catálogo de acciones RCM <span class="right" id="acciones-count">—</span></div>
+  <p class="hint" style="margin-top:0">Acciones alineadas a RCM: preventivas (P), predictivas (D), correctivas (C), rediseño (R).</p>
+  <div id="acciones-table"></div>
  </div>
 </section>
 
@@ -445,6 +467,9 @@ const MATRIZ = __MATRIZ__;
 const VENTANAS = __VENTANAS__;
 const TENDENCIAS = __TENDENCIAS__;
 const SYN_MEDS = __SYN_MEDS__;
+const REGLAS_CAT = __REGLAS__;
+const FMEA_CAT = __FMEA__;
+const ACCIONES_CAT = __ACCIONES__;
 
 /* ---------- IndexedDB simple ---------- */
 const IDB_NAME="sicm_ele_idb", IDB_STORE="kv";
@@ -532,8 +557,9 @@ function computeDerived(m){
  return d;
 }
 
-/* ---------- Motor de diagnóstico (Fase 4) ---------- */
-const REGLAS = [
+/* ---------- Motor de diagnóstico (Fase 4 · refactor con catálogo externo) ---------- */
+// Compatibilidad: REGLAS_LEGACY se mantiene por defecto, y REGLAS_CAT.reglas es el catálogo completo.
+const REGLAS_LEGACY = [
  // Termografía
  {id:"R-TE-01", cond:m=>m.delta_t_c!=null && m.delta_t_c>15,
   estado:"alarma", modo:"Conexión eléctrica con calentamiento severo (deficiencia mayor)",
@@ -597,16 +623,66 @@ const REGLAS = [
   norma:"IEEE 519 (aplicar tabla por PCC)"},
 ];
 
+/* ---- Evaluador DSL (JSON) para reglas del catálogo externo ---- */
+function _resolveVar(name, ctx){
+ if(name.startsWith("eq.")) return (ctx.eq||{})[name.slice(3)];
+ if(name in ctx.d) return ctx.d[name];
+ return ctx.m[name];
+}
+function _evalCond(cond, ctx){
+ if(!cond || typeof cond !== "object") return false;
+ if("and" in cond) return cond.and.every(c=>_evalCond(c,ctx));
+ if("or"  in cond) return cond.or.some(c=>_evalCond(c,ctx));
+ if("not" in cond) return !_evalCond(cond.not, ctx);
+ if(!("var" in cond)) return false;
+ const v = _resolveVar(cond.var, ctx);
+ if(v == null || v === undefined) return !!cond.isnull;
+ if("gt" in cond) return v > cond.gt;
+ if("gte" in cond) return v >= cond.gte;
+ if("lt" in cond) return v < cond.lt;
+ if("lte" in cond) return v <= cond.lte;
+ if("eq" in cond) return v === cond.eq;
+ if("between" in cond) return v >= cond.between[0] && v <= cond.between[1];
+ return false;
+}
+
+const _PRIO = {"inmediata":0,"proximo_paro":1,"programar":2,"rutina":3};
+
 function diagnosticar(m){
  const d = computeDerived(m);
+ const eq = EQUIPOS.find(e=>e.tag===m.tag) || {};
+ const ctx = {m, eq, d};
  const findings = [];
- const merged = {...m, ...d};
- for(const r of REGLAS){
-  try{ if(r.cond(merged)) findings.push({...r}); }catch(e){}
+ // Motor primario: catálogo externo (Fase 4)
+ for(const r of REGLAS_CAT.reglas){
+  if(r.familia && eq.familia && !r.familia.includes(eq.familia)) continue;
+  try{
+   if(_evalCond(r.condicion, ctx)){
+    // Buscar acciones RCM ligadas vía FMEA modes
+    const acciones_ids = ACCIONES_CAT.acciones
+     .filter(a => FMEA_CAT.modos.some(fm => a.modo===fm.id && (fm.reglas||[]).includes(r.id)))
+     .map(a => a.id);
+    findings.push({
+     regla_id: r.id,
+     estado: r.estado,
+     modo_falla: r.modo_falla,
+     causa_probable: r.causa_probable,
+     mecanismo: r.mecanismo_fisico,
+     accion: r.accion,
+     prioridad: r.prioridad || "programar",
+     norma: r.norma,
+     acciones_recomendadas: acciones_ids,
+    });
+   }
+  }catch(e){/* silencio */}
  }
- // Sort worst first
- const order = {alarma:0, alerta:1, normal:2};
- findings.sort((a,b)=>order[a.estado]-order[b.estado]);
+ // Ordenar por prioridad + severidad
+ findings.sort((a,b)=>{
+  const p = (_PRIO[a.prioridad]||9) - (_PRIO[b.prioridad]||9);
+  if(p!==0) return p;
+  const order = {alarma:0, alerta:1, normal:2};
+  return (order[a.estado]||9) - (order[b.estado]||9);
+ });
  let estado_global = "normal";
  if(findings.some(f=>f.estado==="alarma")) estado_global="alarma";
  else if(findings.some(f=>f.estado==="alerta")) estado_global="alerta";
@@ -836,10 +912,14 @@ function renderDiagResult(sel, m){
    <dt>% Desbalance V</dt><dd>${der.desbalance_v_pct==null?'—':fmt(der.desbalance_v_pct,2)+' %'}</dd>
   </dl>`;
  if(d.hallazgos.length){
-  html += `<h4 style="margin-top:14px">Hallazgos (${d.hallazgos.length})</h4><table><thead><tr><th>Regla</th><th>Estado</th><th>Modo probable</th><th>Acción</th><th>Norma</th></tr></thead><tbody>${
+  html += `<h4 style="margin-top:14px">Hallazgos (${d.hallazgos.length})</h4><table><thead><tr><th>Regla</th><th>Estado</th><th>Prioridad</th><th>Modo · causa · mecanismo</th><th>Acción</th><th>Norma</th></tr></thead><tbody>${
    d.hallazgos.map(h=>{
     const b = h.estado==="alarma"?"alarm":h.estado==="alerta"?"warn":"ok";
-    return `<tr><td class="mono">${h.id}</td><td><span class="badge ${b}">${h.estado}</span></td><td>${h.modo}</td><td>${h.accion}</td><td style="font-size:11px;color:var(--ink-soft)">${h.norma}</td></tr>`;
+    const rid = h.regla_id || h.id || '';
+    const mp = h.modo_falla || h.modo || '';
+    const causa = h.causa_probable? `<br><span class="hint" style="font-size:11px">Causa: ${h.causa_probable}</span>`:'';
+    const mec = h.mecanismo? `<br><span class="hint" style="font-size:11px;font-style:italic">${h.mecanismo}</span>`:'';
+    return `<tr><td class="mono">${rid}</td><td><span class="badge ${b}">${h.estado}</span></td><td><span class="pill">${h.prioridad||'—'}</span></td><td><b>${mp}</b>${causa}${mec}</td><td style="font-size:12px">${h.accion}</td><td style="font-size:11px;color:var(--ink-soft)">${h.norma}</td></tr>`;
    }).join("")
   }</tbody></table>`;
  } else {
@@ -850,13 +930,87 @@ function renderDiagResult(sel, m){
 }
 
 function renderDiagnosticoTab(){
+ // 1. Selector mediciones
  const sel = $("#diag-med");
  sel.innerHTML = `<option value="">— seleccione una medición —</option>` +
-  MEDICIONES.slice().reverse().map(m=>`<option value="${m.id_medicion}">${(m.fecha_iso||"").replace("T"," ")} · ${m.tag} · ${m.id_actividad}</option>`).join("");
- $("#fmea-table").innerHTML = `<table><thead><tr><th>Familia</th><th>Modo de falla</th><th>Detección</th><th>Severidad</th><th>Acción</th></tr></thead><tbody>${
-  FMEA_ROWS.map(r=>`<tr><td>${r.familia}</td><td>${r.modo}</td><td>${r.detec}</td><td>${r.severidad}</td><td>${r.accion}</td></tr>`).join("")
- }</tbody></table>`;
+  MEDICIONES.slice().reverse().slice(0,500).map(m=>`<option value="${m.id_medicion}">${(m.fecha_iso||"").replace("T"," ")} · ${m.tag} · ${m.id_actividad}</option>`).join("");
+
+ // 2. Catálogo de reglas
+ $("#reglas-count").textContent = `${REGLAS_CAT.reglas.length} reglas`;
+ const famSel = $("#reglas-familia");
+ if(famSel.children.length<=1){
+  const fams = new Set();
+  REGLAS_CAT.reglas.forEach(r=>(r.familia||[]).forEach(f=>fams.add(f)));
+  famSel.innerHTML = '<option value="">Todas las familias</option>' + Array.from(fams).sort().map(f=>`<option>${f}</option>`).join("");
+ }
+ const drawReglas = ()=>{
+  const q = ($("#reglas-q").value||"").toLowerCase();
+  const f = famSel.value;
+  const rows = REGLAS_CAT.reglas.filter(r=>{
+   if(f && !(r.familia||[]).includes(f)) return false;
+   if(q){
+    const hay = ((r.descripcion||'')+' '+(r.modo_falla||'')+' '+(r.accion||'')+' '+(r.norma||'')).toLowerCase();
+    if(!hay.includes(q)) return false;
+   }
+   return true;
+  });
+  $("#reglas-table").innerHTML = `<div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Estado</th><th>Prioridad</th><th>Modo de falla</th><th>Familia</th><th>Acción</th><th>Norma</th></tr></thead><tbody>${
+   rows.map(r=>{
+    const b = r.estado==="alarma"?"alarm":r.estado==="alerta"?"warn":"ok";
+    return `<tr><td class="mono">${r.id}</td><td><span class="badge ${b}">${r.estado}</span></td><td><span class="pill">${r.prioridad||'—'}</span></td><td><b>${r.modo_falla||r.descripcion||''}</b><br><span class="hint">${r.causa_probable||''}</span></td><td>${(r.familia||[]).join(', ')}</td><td style="font-size:12px">${r.accion||''}</td><td style="font-size:11px;color:var(--ink-soft)">${r.norma||''}</td></tr>`;
+   }).join("")
+  }</tbody></table></div>`;
+ };
+ $("#reglas-q").oninput = drawReglas;
+ famSel.onchange = drawReglas;
+ drawReglas();
+
+ // 3. FMEA
+ const rowsF = FMEA_CAT.modos.slice().sort((a,b)=>(b.RPN||0)-(a.RPN||0));
+ $("#fmea-table").innerHTML = `<div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Familia</th><th>Modo de falla</th><th>Efecto</th><th>Detección</th><th>S</th><th>O</th><th>D</th><th>RPN</th></tr></thead><tbody>${
+  rowsF.map(r=>{
+   const rpn = r.RPN||0;
+   const bg = rpn>=200?"#fdeaeb":rpn>=100?"#fff5e8":"#e5f4ec";
+   const col = rpn>=200?"var(--alarm)":rpn>=100?"var(--warn)":"var(--ok)";
+   return `<tr><td class="mono">${r.id}</td><td>${r.familia}</td><td><b>${r.modo_falla}</b></td><td style="font-size:12px">${r.efecto}</td><td style="font-size:12px">${r.deteccion}</td><td class="mono">${r.S}</td><td class="mono">${r.O}</td><td class="mono">${r.D}</td><td class="mono" style="background:${bg};color:${col};font-weight:700;text-align:center">${rpn}</td></tr>`;
+  }).join("")
+ }</tbody></table></div>`;
+
+ // 4. Acciones RCM
+ $("#acciones-count").textContent = `${ACCIONES_CAT.acciones.length} acciones`;
+ const tipoColor = {P_preventiva:"#0f6d44", D_predictiva_condicion:"#0e6c9a", C_correctiva:"#c26200", R_rediseño:"#9a1b30"};
+ $("#acciones-table").innerHTML = `<div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Modo FMEA</th><th>Tipo</th><th>Título</th><th>Frecuencia</th><th>Duración</th><th>Recursos</th></tr></thead><tbody>${
+  ACCIONES_CAT.acciones.map(a=>`<tr><td class="mono">${a.id}</td><td class="mono">${a.modo}</td><td><span class="pill" style="background:${tipoColor[a.tipo]||'#999'};color:#fff">${(a.tipo||'').split('_')[0]}</span></td><td><b>${a.titulo}</b><br><span class="hint">${a.detalle||''}</span></td><td>${a.frecuencia||'—'}</td><td class="mono">${a.duracion_hr||'—'} h</td><td style="font-size:11px">${(a.recursos||[]).join(', ')}</td></tr>`).join("")
+ }</tbody></table></div>`;
 }
+
+$("#btn-diag-all")?.addEventListener?.("click", ()=>{
+ if(!MEDICIONES.length){toast("Sin mediciones. Cargue el dataset sintético primero."); return;}
+ const prioFilter = $("#diag-prio").value;
+ let alarma=0, alerta=0, normal=0;
+ const modosByCount = {};
+ for(const m of MEDICIONES){
+  m._diag = diagnosticar(m);
+  if(m._diag.estado==="alarma") alarma++;
+  else if(m._diag.estado==="alerta") alerta++;
+  else normal++;
+  for(const h of m._diag.hallazgos){
+   if(prioFilter && h.prioridad!==prioFilter) continue;
+   const k = `${h.regla_id} · ${h.modo_falla}`;
+   modosByCount[k] = (modosByCount[k]||0)+1;
+  }
+ }
+ guardarDatos();
+ const items = Object.entries(modosByCount).sort((a,b)=>b[1]-a[1]).slice(0,25);
+ $("#diag-result").innerHTML = `<div class="result-box ok" style="margin-top:12px">
+  <h4>Diagnóstico global de ${MEDICIONES.length} mediciones</h4>
+  <p><span class="badge ok">${normal} normal</span> · <span class="badge warn">${alerta} alerta</span> · <span class="badge alarm">${alarma} alarma</span></p>
+  <h4 style="margin-top:14px">Top modos de falla activados${prioFilter?` (prioridad: ${prioFilter})`:''}</h4>
+  <table><thead><tr><th>Modo</th><th style="text-align:right">Ocurrencias</th></tr></thead><tbody>${
+   items.map(([k,n])=>`<tr><td>${k}</td><td class="mono" style="text-align:right"><b>${n}</b></td></tr>`).join("")
+  }</tbody></table></div>`;
+ toast(`Diagnóstico completo: ${alarma} alarmas, ${alerta} alertas.`);
+});
 $("#btn-diag-run")?.addEventListener?.("click", ()=>{
  const id = $("#diag-med").value;
  const m = MEDICIONES.find(x=>x.id_medicion===id);

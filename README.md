@@ -192,6 +192,33 @@ Botón *"Cargar dataset sintético"* pobla la PWA con las 600 mediciones para ex
 - `data/normalized/pareto_hallazgos.json` — conteo de modos por parámetro y familia
 - `reports/fase3_tendencias.md` — reporte narrativo con top-20, metodología, aviso de honestidad
 
+## FASE 4 — Motor de diagnóstico basado en reglas normativas (entregado)
+
+Refactor del motor embebido de Fase 1 (11 reglas hardcodeadas) a un catálogo completo con arquitectura RCM + FMEA/FMECA:
+
+**Catálogo de reglas** (`data/normalized/reglas_diagnostico.json`) — **36 reglas** en DSL JSON con operadores lógicos compuestos (and/or/not) y comparadores (gt/gte/lt/lte/eq/between/isnull). Cada regla incluye: `familia`, `descripción`, `condición`, `estado`, `modo_falla`, `causa_probable`, `mecanismo_físico`, `acción`, `prioridad` (rutina/programar/próximo_paro/inmediata) y `norma`. Cubre motor, transformador aceite/seco, tablero, interruptor, arrancador, CCM, VFD, baterías, SFI, tierras, pararrayos y turbogenerador. Incluye reglas compuestas ejemplares:
+- `R-MOT-005` desbalance I >10% con V balanceado → falla interna estator (no alimentador)
+- `R-MOT-011` MCSA sidebands ±2·s·f + vibración → barras rotas confirmadas
+- `R-COMP-001` alta vibración + alta T rodamiento → falla incipiente confirmada por dos técnicas
+- `R-COMP-003` DGA C2H4 + CH4 altos → Duval T3 sobrecalentamiento >700°C
+
+**Matriz FMEA/FMECA formal** (`data/normalized/fmea.json`) — **20 modos de falla** con Severidad · Ocurrencia · Detectabilidad (escalas 1-10) y Risk Priority Number (RPN = S×O×D). Incluye referencias cruzadas a las reglas que detectan cada modo, causa, efecto, mecanismo, controles preventivos y norma base. Top 3 por RPN:
+1. `FM-TRA-04` OLTC transformador · RPN 216 (S9·O4·D6)
+2. `FM-SFI-01` autonomía SFI degradada · RPN 180 (S9·O5·D4)
+3. `FM-MOT-04` cortocircuito espiras estator · RPN 180 (S10·O3·D6)
+
+**Catálogo de acciones RCM** (`data/normalized/acciones_rcm.json`) — **25 acciones** clasificadas como Preventivas (P), Predictivas de condición (D), Correctivas (C) o Rediseño (R), con frecuencia, duración estimada, recursos requeridos y detalle técnico ejecutable en campo.
+
+**Motor Python canónico** (`scripts/diagnostico.py`) con función `diagnosticar(medicion, equipo, catalogo)` que devuelve `{estado, hallazgos:[…], derivadas}`. Ejecutable en batch para reportes. El motor JS de la PWA implementa el **mismo DSL** garantizando equivalencia funcional.
+
+**PWA pestaña Diagnóstico ampliada** — 4 tarjetas:
+1. Motor de diagnóstico con selector de medición y filtro por prioridad + botón "Diagnosticar TODAS" con top-25 modos y agregado por estado
+2. Catálogo de 36 reglas navegable (filtrable por familia y búsqueda por texto)
+3. Matriz FMEA completa ordenada por RPN con codificación de color por severidad
+4. Catálogo de 25 acciones RCM con badges por tipo
+
+Al aplicar el motor a las 600 mediciones sintéticas: 439 normales, 161 en alerta (dominadas por `R-TAB-002` calentamiento moderado y `R-MOT-010` vibración zona B — coherente con los perfiles de degradación normal + 15% bad actors).
+
 ## Rama y estado
 
-Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades) y Fase 3 entregadas.
+Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades), Fase 3 y Fase 4 entregadas.

@@ -18,6 +18,9 @@ matriz = load("data/normalized/matriz_sector_familia.json")
 
 ventanas = load("data/normalized/ventanas_operativas.json")
 tendencias = load("data/normalized/tendencias.json")
+reglas = load("data/normalized/reglas_diagnostico.json")
+fmea = load("data/normalized/fmea.json")
+acciones = load("data/normalized/acciones_rcm.json")
 # Extract just the mediciones array from synthetic dataset for embed
 import json as _j
 syn_wrap = _j.loads(load("data/normalized/mediciones_sinteticas.json"))
@@ -34,6 +37,9 @@ out = (tpl
  .replace("__VENTANAS__", ventanas)
  .replace("__TENDENCIAS__", tendencias)
  .replace("__SYN_MEDS__", syn_meds)
+ .replace("__REGLAS__", reglas)
+ .replace("__FMEA__", fmea)
+ .replace("__ACCIONES__", acciones)
 )
 target = ROOT / "app/sicm-ele.html"
 target.write_text(out, encoding="utf-8")
