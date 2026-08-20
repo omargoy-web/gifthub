@@ -160,7 +160,8 @@ footer.foot b{color:var(--ink-soft)}
  <div class="max">
   <button data-tab="dashboard" class="active">Panel</button>
   <button data-tab="consolidado">Consolidado (Fase 2)</button>
-  <button data-tab="capturar">Capturar medición</button>
+  <button data-tab="capturar">Cargar recorridos</button>
+  <button data-tab="expediente">Expediente por activo</button>
   <button data-tab="diagnostico">Diagnóstico</button>
   <button data-tab="vida">Vida remanente</button>
   <button data-tab="tendencias">Tendencias (Fase 3)</button>
@@ -216,53 +217,98 @@ footer.foot b{color:var(--ink-soft)}
  </div>
 </section>
 
-<!-- CAPTURAR -->
+<!-- CARGAR RECORRIDOS (Fase de operación real) -->
 <section id="view-capturar" class="hide">
  <div class="card">
-  <div class="card-title"><span class="n">1</span> Datos del equipo</div>
-  <div class="grid2">
-   <div class="field"><label>TAG del equipo <span class="req">*</span></label>
-    <input id="cap-tag" list="lst-tags" autocomplete="off" placeholder="Buscar por TAG…">
-    <datalist id="lst-tags"></datalist>
-    <div class="hint" id="cap-tag-info">—</div>
-   </div>
-   <div class="field"><label>Actividad predictiva <span class="req">*</span></label>
-    <select id="cap-act"></select>
-    <div class="hint" id="cap-act-info">—</div>
-   </div>
+  <div class="card-title"><span class="n">1</span> Importar archivos JSON de tablets</div>
+  <p style="margin:0 0 12px;font-size:13px;line-height:1.55">El personal captura las lecturas directamente en las tablets con la PWA <b>recorridos-ebv-sicm</b>. Aquí se cargan los archivos JSON que producen, poblando la base de datos sin retrabajo. <b>Selección múltiple soportada.</b></p>
+  <div style="border:2px dashed var(--line-strong);border-radius:12px;padding:22px;text-align:center;background:#fbfcfb" id="drop-zone">
+   <div style="font-size:32px;line-height:1">📥</div>
+   <div style="font-weight:700;margin:6px 0 2px">Arrastre uno o varios archivos .json aquí</div>
+   <div class="hint">o haga clic para seleccionarlos</div>
+   <input type="file" id="fin-recorridos-mass" accept=".json,application/json" multiple hidden>
+   <div style="margin-top:12px"><label class="btn" style="cursor:pointer;display:inline-block" for="fin-recorridos-mass">Seleccionar archivos JSON</label></div>
   </div>
-  <div class="grid2">
-   <div class="field"><label>Fecha de medición</label><input id="cap-fecha" type="datetime-local"></div>
-   <div class="field"><label>Operario / cabo</label><input id="cap-operario" placeholder="Nombre"></div>
-  </div>
+  <div id="import-preview" style="margin-top:12px"></div>
  </div>
 
  <div class="card">
-  <div class="card-title"><span class="n">2</span> Lecturas <span class="right">(deje en blanco lo que no aplique)</span></div>
-  <div class="grid3">
-   <div class="field"><label>Corriente F1 (A)</label><input id="cap-i1" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>Corriente F2 (A)</label><input id="cap-i2" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>Corriente F3 (A)</label><input id="cap-i3" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>V L1-L2 (V)</label><input id="cap-v12" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>V L2-L3 (V)</label><input id="cap-v23" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>V L3-L1 (V)</label><input id="cap-v31" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>Temp. máxima (°C)</label><input id="cap-tmax" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>Δ T (°C referencia)</label><input id="cap-dt" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>R aislamiento (MΩ)</label><input id="cap-r" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>IP</label><input id="cap-ip" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>DAR</label><input id="cap-dar" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>THD V (%)</label><input id="cap-thdv" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>THD I (%)</label><input id="cap-thdi" type="number" step="0.1" inputmode="decimal"></div>
-   <div class="field"><label>Vib. RMS (mm/s)</label><input id="cap-vibrms" type="number" step="0.01" inputmode="decimal"></div>
-   <div class="field"><label>Vib. pico (mm/s)</label><input id="cap-vibpk" type="number" step="0.01" inputmode="decimal"></div>
+  <div class="card-title"><span class="n">2</span> Revisión y corrección antes de asentar <span class="right" id="revision-count">—</span></div>
+  <p class="hint" style="margin-top:0">Todo lo detectado en los archivos se muestra aquí para verificar. Edite en línea cualquier valor erróneo; los cambios se marcan y quedan trazables. Marque los renglones a descartar antes de confirmar.</p>
+  <div class="filterbar">
+   <input id="rev-q" placeholder="Filtrar por TAG / operario / folio…">
+   <select id="rev-filter"><option value="">Todos</option><option value="valid">Solo válidos</option><option value="warn">Con advertencias</option><option value="edited">Editados</option><option value="discard">Descartados</option></select>
+   <button class="btn btn-ghost" id="btn-revision-reset">Reiniciar revisión</button>
+   <button class="btn" id="btn-revision-confirm" disabled>Asentar en la base de datos</button>
   </div>
-  <div class="field"><label>Observaciones</label><textarea id="cap-obs" rows="3" placeholder="Notas de campo, condición aparente…"></textarea></div>
-  <div class="btn-row">
-   <button class="btn" id="btn-guardar">Guardar medición y diagnosticar</button>
-   <button class="btn btn-ghost" id="btn-limpiar">Limpiar</button>
-  </div>
-  <div id="cap-result"></div>
+  <div id="revision-out"></div>
  </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">3</span> Historial de lotes importados</div>
+  <div id="lotes-out"></div>
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">4</span> Captura manual (sólo casos excepcionales)</div>
+  <p class="hint" style="margin-top:0;font-style:italic">Reservado para lecturas puntuales fuera de recorrido. La vía normal es cargar el JSON del tablet.</p>
+  <details><summary style="cursor:pointer;padding:8px 0;font-weight:600;color:var(--verde)">Mostrar formulario manual</summary>
+   <div style="padding-top:12px">
+    <div class="grid2">
+     <div class="field"><label>TAG del equipo <span class="req">*</span></label>
+      <input id="cap-tag" list="lst-tags" autocomplete="off" placeholder="Buscar por TAG…">
+      <datalist id="lst-tags"></datalist>
+      <div class="hint" id="cap-tag-info">—</div>
+     </div>
+     <div class="field"><label>Actividad predictiva <span class="req">*</span></label>
+      <select id="cap-act"></select>
+      <div class="hint" id="cap-act-info">—</div>
+     </div>
+    </div>
+    <div class="grid2">
+     <div class="field"><label>Fecha</label><input id="cap-fecha" type="datetime-local"></div>
+     <div class="field"><label>Operario / ficha</label><input id="cap-operario" placeholder="Nombre — ficha"></div>
+    </div>
+    <div class="grid3">
+     <div class="field"><label>Corriente F1 (A)</label><input id="cap-i1" type="number" step="0.01"></div>
+     <div class="field"><label>Corriente F2 (A)</label><input id="cap-i2" type="number" step="0.01"></div>
+     <div class="field"><label>Corriente F3 (A)</label><input id="cap-i3" type="number" step="0.01"></div>
+     <div class="field"><label>V L1-L2 (V)</label><input id="cap-v12" type="number" step="0.1"></div>
+     <div class="field"><label>V L2-L3 (V)</label><input id="cap-v23" type="number" step="0.1"></div>
+     <div class="field"><label>V L3-L1 (V)</label><input id="cap-v31" type="number" step="0.1"></div>
+     <div class="field"><label>Temp. max (°C)</label><input id="cap-tmax" type="number" step="0.1"></div>
+     <div class="field"><label>Δ T (°C)</label><input id="cap-dt" type="number" step="0.1"></div>
+     <div class="field"><label>R aisl. (MΩ)</label><input id="cap-r" type="number" step="0.1"></div>
+     <div class="field"><label>IP</label><input id="cap-ip" type="number" step="0.01"></div>
+     <div class="field"><label>DAR</label><input id="cap-dar" type="number" step="0.01"></div>
+     <div class="field"><label>THD V (%)</label><input id="cap-thdv" type="number" step="0.1"></div>
+     <div class="field"><label>THD I (%)</label><input id="cap-thdi" type="number" step="0.1"></div>
+     <div class="field"><label>Vib. RMS (mm/s)</label><input id="cap-vibrms" type="number" step="0.01"></div>
+     <div class="field"><label>Vib. pico (mm/s)</label><input id="cap-vibpk" type="number" step="0.01"></div>
+    </div>
+    <div class="field"><label>Observaciones</label><textarea id="cap-obs" rows="2"></textarea></div>
+    <div class="btn-row">
+     <button class="btn" id="btn-guardar">Guardar y diagnosticar</button>
+     <button class="btn btn-ghost" id="btn-limpiar">Limpiar</button>
+    </div>
+    <div id="cap-result"></div>
+   </div>
+  </details>
+ </div>
+</section>
+
+<!-- EXPEDIENTE POR ACTIVO -->
+<section id="view-expediente" class="hide">
+ <div class="card">
+  <div class="card-title"><span class="n">1</span> Buscar activo</div>
+  <div class="filterbar">
+   <input id="exp-tag" list="lst-tags" placeholder="TAG del equipo o subestación (SEP01, SE-015, TR-…)">
+   <button class="btn" id="btn-exp-abrir">Abrir expediente</button>
+   <button class="btn btn-ghost" id="btn-exp-export">Exportar expediente (JSON)</button>
+  </div>
+  <div class="hint" style="margin-top:6px">El expediente incluye datos de placa, todo el histórico de mediciones, diagnósticos, tendencia, operarios que intervinieron y lugar. Para subestaciones se agregan todos los equipos asociados.</div>
+ </div>
+ <div id="exp-body"></div>
 </section>
 
 <!-- DIAGNOSTICO (Fase 4 ampliada) -->
@@ -431,7 +477,7 @@ footer.foot b{color:var(--ink-soft)}
   <div class="btn-row">
    <button class="btn" id="btn-export">Exportar respaldo (JSON)</button>
    <label class="btn btn-ghost" style="cursor:pointer">Importar respaldo<input type="file" id="fin-restore" accept=".json" hidden></label>
-   <label class="btn btn-ghost" style="cursor:pointer">Importar recorridos SICM-INS<input type="file" id="fin-recorridos" accept=".json" hidden></label>
+   <button class="btn btn-ghost" id="btn-go-import">Importar recorridos (ir a pestaña)</button>
    <button class="btn btn-danger" id="btn-purge">Vaciar mediciones</button>
   </div>
   <div id="cfg-status" class="hint" style="margin-top:10px"></div>
@@ -27140,14 +27186,22 @@ function idbGet(k){return idbOpen().then(db=>new Promise((res,rej)=>{const q=db.
 function idbSet(k,v){return idbOpen().then(db=>new Promise((res,rej)=>{const t=db.transaction(IDB_STORE,"readwrite");t.objectStore(IDB_STORE).put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>rej(t.error)}))}
 
 const KEY_MED="sicm_ele_mediciones_v1";
+const KEY_LOTES="sicm_ele_lotes_v1";      // historial de importaciones
+const KEY_REVISION="sicm_ele_revision_v1"; // buffer de revisión antes de asentar
 let MEDICIONES=[];
+let LOTES=[];        // [{id, filename, imported_at, total, ok, warnings}]
+let REVISION=[];     // [{_rid, ...campos_medicion, _issues:[], _discard:bool, _edited:bool, _origen}]
 
 async function cargarDatos(){
  try{MEDICIONES = (await idbGet(KEY_MED)) || [];}catch(e){MEDICIONES=[]}
+ try{LOTES = (await idbGet(KEY_LOTES)) || [];}catch(e){LOTES=[]}
+ try{REVISION = (await idbGet(KEY_REVISION)) || [];}catch(e){REVISION=[]}
  refreshHeader();
 }
 async function guardarDatos(){
  try{await idbSet(KEY_MED, MEDICIONES);}catch(e){toast("Error al guardar. Exporte respaldo.");}
+ try{await idbSet(KEY_LOTES, LOTES);}catch(e){}
+ try{await idbSet(KEY_REVISION, REVISION);}catch(e){}
  refreshHeader();
 }
 
@@ -27365,7 +27419,8 @@ function switchTab(name){
  $$("main > section").forEach(s=>s.classList.toggle("hide", s.id!=="view-"+name));
  if(name==="dashboard") renderDashboard();
  if(name==="consolidado") renderConsolidado();
- if(name==="capturar") renderCapturar();
+ if(name==="capturar"){ renderCapturar(); _setupDropZone(); renderRevision(); renderLotes(); }
+ if(name==="expediente"){ /* nada al abrir */ }
  if(name==="diagnostico") renderDiagnosticoTab();
  if(name==="vida") $("#vida-result").innerHTML="";
  if(name==="tendencias") renderTendencias();
@@ -27500,6 +27555,543 @@ function renderConsolidado(){
    paramList.map(p=>`<tr><td>${paramLabel[p]}</td><td><span class="badge ok">${counts[p].normal}</span></td><td><span class="badge warn">${counts[p].alerta}</span></td><td><span class="badge alarm">${counts[p].alarma}</span></td><td><span class="badge gray">${counts[p].sin_dato}</span></td></tr>`).join("")
   }</tbody></table>`;
  }
+}
+
+/* =====================================================================
+   IMPORTACIÓN MASIVA DE ARCHIVOS JSON (recorridos-ebv-sicm)
+   ===================================================================== */
+
+// Parser tolerante: acepta el esquema de recorridos-ebv-sicm y variantes.
+// Devuelve array de "candidatos" de medición con _issues y trazabilidad.
+function parseRecorridoJSON(raw, filename){
+ const out = [];
+ let payload = raw;
+ // Puede venir envuelto: {schema, exported_at, mediciones|recorridos|data|entries: [...]}
+ if(raw && typeof raw==="object" && !Array.isArray(raw)){
+  payload = raw.mediciones || raw.recorridos || raw.data || raw.entries || raw.items ||
+            (Array.isArray(raw.registros)?raw.registros:null) || raw.recorrido || raw;
+ }
+ const arr = Array.isArray(payload) ? payload : [payload];
+
+ for(const rec of arr){
+  if(!rec || typeof rec!=="object") continue;
+
+  // Metadata a nivel de recorrido
+  const folio = rec.folio || rec.id || rec.numero || null;
+  const creado = rec.creado || rec.fecha || rec.timestamp || rec.date || rec.fecha_iso || null;
+  const operario = rec.operario || rec.realizo || rec.padOperario || rec.usuario || rec.realizo_recorrido || null;
+  const operarioFicha = rec.operarioFicha || rec.ficha || rec.numero_ficha || null;
+  const ingeniero = rec.ingeniero || rec.padSICM || rec.responsableOperativo || rec.responsable || null;
+  const sector = rec.sector || rec.padSector || (folio? _sectorFromFolio(folio) : null);
+  const planta = rec.planta || rec.area || rec.padOperativo || null;
+  const tipo = rec.tipo || rec.formato || rec.categoria || null;
+  const gps = rec.gps || (rec.lat && rec.lng? {lat:rec.lat, lng:rec.lng, acc:rec.acc||null} : null);
+
+  // Los items son múltiples equipos verificados en un recorrido
+  const items = rec.items || rec.equipos || rec.item || rec.verificados || [rec];
+  const itemsArr = Array.isArray(items) ? items : [items];
+
+  for(const it of itemsArr){
+    if(!it || typeof it!=="object") continue;
+    const tag = it.tag || it.TAG || it.equipo || rec.tag || null;
+    if(!tag) continue;  // No podemos anclar sin TAG
+
+    // Diagnóstico ya venido en el archivo (si el operario lo hizo en tablet)
+    const veredicto = it.veredicto || rec.veredicto || null;
+    const modo = it.modo_falla || rec.modo_falla || it.modo_falla_otro || rec.modo_falla_otro || null;
+    const obs = it.observaciones || rec.observaciones || "";
+    const accion = it.accion || rec.accion || null;
+    const prioridad = it.prioridad || rec.prioridad || null;
+
+    // Lecturas — heurística tolerante para varios nombres
+    const g = (k, ...alts)=>{
+      for(const key of [k, ...alts]){
+        if(key in it && it[key]!=null && it[key]!=="") return _numOrStr(it[key]);
+        if(key in rec && rec[key]!=null && rec[key]!=="") return _numOrStr(rec[key]);
+      }
+      return null;
+    };
+
+    const item = {
+      _rid: (crypto.randomUUID? crypto.randomUUID() : ("R"+Date.now()+"_"+Math.random().toString(36).slice(2,8))),
+      _origen: {archivo: filename, folio, creado, operario, ingeniero, sector, planta, tipo, gps},
+      _issues: [], _edited: false, _discard: false,
+
+      id_medicion: "IMP-"+(folio||"NF")+"-"+(tag.replace(/\s+/g,"_"))+"-"+(Date.now()%1e6),
+      tag: String(tag).trim(),
+      id_actividad: _actividadPara(tipo, it, rec),
+      fecha_iso: (creado||"").slice(0,16),
+      operario: [operario, operarioFicha].filter(Boolean).join(" · "),
+      ingeniero: ingeniero || "",
+      sector: sector || null,
+      planta: planta || "",
+      folio: folio || "",
+      gps: gps,
+
+      // Lecturas eléctricas / mecánicas normalizadas
+      I_F1: g("I_F1","Ia","IA","corriente_F1","ia"),
+      I_F2: g("I_F2","Ib","IB","corriente_F2","ib"),
+      I_F3: g("I_F3","Ic","IC","corriente_F3","ic"),
+      V_L1L2: g("V_L1L2","VAB","Vab","vab","voltaje_L1L2"),
+      V_L2L3: g("V_L2L3","VBC","Vbc","vbc","voltaje_L2L3"),
+      V_L3L1: g("V_L3L1","VCA","Vca","vca","voltaje_L3L1"),
+      temp_max_c: g("temp_max_c","tempMax","tmax","temperatura","temp_devanado","T_devanado","tempDev"),
+      temp_rodamiento_c: g("temp_rodamiento_c","tempRod","T_rodamiento","temp_LC","temp_LV","temp_cuerpo"),
+      delta_t_c: g("delta_t_c","deltaT","dt","dT"),
+      R_aislamiento_MOhm: g("R_aislamiento_MOhm","Raisl","R_aisl","megger","aislamiento"),
+      IP: g("IP","indice_polarizacion"),
+      DAR: g("DAR","indice_absorcion"),
+      THD_V_pct: g("THD_V_pct","thdV","THD_V","distorsion_V"),
+      THD_I_pct: g("THD_I_pct","thdI","THD_I","distorsion_I"),
+      vibracion_rms_mms: g("vibracion_rms_mms","vibRMS","vib_rms","velocidad_rms","vel_LL","vel_LC"),
+      vibracion_pico_mms: g("vibracion_pico_mms","vibPk","vib_pico","velocidad_pico"),
+      // Aceite / DGA
+      rigidez_dielectrica_D1816_kV: g("rigidez_dielectrica_D1816_kV","rigidez","kV_D1816"),
+      contenido_agua_ppm: g("contenido_agua_ppm","agua_ppm","H2O_ppm"),
+      acidez_D664_mgKOHg: g("acidez_D664_mgKOHg","acidez","D664"),
+      DGA_H2_ppm: g("DGA_H2_ppm","H2","hidrogeno"),
+      DGA_CH4_ppm: g("DGA_CH4_ppm","CH4","metano"),
+      DGA_C2H2_ppm: g("DGA_C2H2_ppm","C2H2","acetileno"),
+      DGA_C2H4_ppm: g("DGA_C2H4_ppm","C2H4","etileno"),
+      DGA_CO_ppm: g("DGA_CO_ppm","CO","monoxido"),
+      // Baterías / SFI
+      voltaje_flotacion_por_celda_V: g("voltaje_flotacion_por_celda_V","V_celda","volt_celda"),
+      autonomia_min: g("autonomia_min","autonomia"),
+      resistencia_tierra_ohm: g("resistencia_tierra_ohm","R_tierra","tierra_ohm"),
+      corriente_fuga_uA: g("corriente_fuga_uA","fuga_uA"),
+      resistencia_contactos_uohm_pct_fabrica: g("resistencia_contactos_uohm_pct_fabrica","R_contactos_pct"),
+
+      veredicto, modo_falla_reportado: modo, accion_reportada: accion, prioridad_reportada: prioridad,
+      observaciones: obs,
+    };
+
+    // Validaciones básicas → issues
+    if(!item.fecha_iso) item._issues.push("Sin fecha");
+    if(!EQUIPOS.find(e=>e.tag===item.tag)){
+     item._issues.push("TAG no encontrado en censo");
+    }
+    if(!item.operario) item._issues.push("Sin operario");
+    if(item.sector==null) item._issues.push("Sin sector");
+    // Sin lecturas útiles
+    const numeric = ["I_F1","I_F2","I_F3","V_L1L2","V_L2L3","V_L3L1","temp_max_c","delta_t_c",
+     "R_aislamiento_MOhm","IP","DAR","THD_V_pct","THD_I_pct","vibracion_rms_mms","rigidez_dielectrica_D1816_kV",
+     "DGA_H2_ppm","DGA_CH4_ppm","DGA_C2H2_ppm","DGA_C2H4_ppm","DGA_CO_ppm","voltaje_flotacion_por_celda_V",
+     "autonomia_min","resistencia_tierra_ohm","corriente_fuga_uA","resistencia_contactos_uohm_pct_fabrica"];
+    const hasReading = numeric.some(k => item[k]!=null);
+    if(!hasReading && !veredicto) item._issues.push("Sin lecturas ni veredicto");
+    out.push(item);
+  }
+ }
+ return out;
+}
+
+function _sectorFromFolio(folio){
+ // Ej: ROLM-SCM-SICM-S08-ELE-IAT-ELE3-0001-140826 → sector 8
+ const m = String(folio).match(/-S(\d{1,2})-/);
+ return m ? Number(m[1]) : null;
+}
+
+function _numOrStr(v){
+ if(v==null || v==="") return null;
+ if(typeof v==="number") return v;
+ const s = String(v).trim();
+ if(s==="") return null;
+ // Extraer número si viene con unidad
+ const m = s.match(/-?\d+(?:\.\d+)?/);
+ if(m){
+  const n = Number(m[0]);
+  return isNaN(n) ? s : n;
+ }
+ return s;
+}
+
+function _actividadPara(tipo, it, rec){
+ // Mapea tipos de recorrido a IDs de ACTIVIDADES
+ const t = String(tipo||"").toUpperCase();
+ const rmap = {
+  "EBV":"IEA-SUB","SEC":"IEA-SUB","MIT":"IEA-SUB","SCD":"IEA-SUB","ESD":"IEA-SUB",
+  "TERMO":"IEA-TAB","TERMOGRAFIA":"IEA-TAB","IAT":"IEA-INT","IATS":"IEA-INT",
+  "VIB":"MMR-VIB","VME":"MMR-VIB","VIBRACION":"MMR-VIB",
+  "MCSA":"MMR-MON","ACEITE":"IEA-TRA","DGA":"IEA-TRA","RIG":"DIE-RIG",
+  "BAT":"IEA-BAT","SFI":"IEA-SFI","REL":"IEA-REL","TIE":"IEA-SUB",
+ };
+ for(const k in rmap){ if(t.includes(k)) return rmap[k]; }
+ // Por familia del equipo
+ const eq = EQUIPOS.find(e=>e.tag === (it?.tag || rec?.tag));
+ if(eq){
+  const fmap = {motor:"MMR-VIB", transformador:"IEA-TRA", transformador_seco:"IEA-TRS",
+   transformador_aceite:"IEA-TRA", interruptor:"IEA-INT", tablero:"IEA-TAB",
+   arrancador:"IEA-ARR", ccm:"MMR-CCM", subestacion:"IEA-SUB", relevador:"IEA-REL",
+   baterias:"IEA-BAT", ups_sfi:"IEA-SFI"};
+  if(fmap[eq.familia]) return fmap[eq.familia];
+ }
+ return "IEA-SUB";
+}
+
+/* ---- Manejo de la zona de drop y file picker ---- */
+async function _leerArchivosJSON(fileList){
+ const files = Array.from(fileList).filter(f=>/\.json$/i.test(f.name));
+ if(!files.length){ toast("No se detectaron archivos .json"); return; }
+ let totalItems = 0, badFiles = 0;
+ const nuevoLote = {id:"L"+Date.now(), archivos:[], imported_at:new Date().toISOString(), total:0};
+ for(const f of files){
+  try{
+   const txt = await f.text();
+   const raw = JSON.parse(txt);
+   const items = parseRecorridoJSON(raw, f.name);
+   totalItems += items.length;
+   nuevoLote.archivos.push({filename:f.name, n:items.length});
+   REVISION.push(...items);
+  }catch(e){
+   badFiles++;
+   console.warn("Error parseando", f.name, e);
+  }
+ }
+ nuevoLote.total = totalItems;
+ LOTES.push(nuevoLote);
+ await guardarDatos();
+ toast(`${files.length} archivo(s) procesado(s) · ${totalItems} candidatos a asentar${badFiles?` · ${badFiles} inválido(s)`:""}`);
+ renderRevision();
+ renderLotes();
+}
+
+function _setupDropZone(){
+ const dz = $("#drop-zone");
+ if(!dz || dz._setup) return;
+ dz._setup = true;
+ ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); e.stopPropagation(); dz.style.background="#eef8f2"; dz.style.borderColor="var(--verde)";}));
+ ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev, e=>{e.preventDefault(); e.stopPropagation(); dz.style.background="#fbfcfb"; dz.style.borderColor="var(--line-strong)";}));
+ dz.addEventListener("drop", async e=>{
+  await _leerArchivosJSON(e.dataTransfer.files);
+ });
+ dz.addEventListener("click", ()=>$("#fin-recorridos-mass").click());
+ $("#fin-recorridos-mass").addEventListener("change", async e=>{
+  await _leerArchivosJSON(e.target.files);
+  e.target.value = "";
+ });
+}
+
+/* ---- Renderer de revisión ---- */
+function renderRevision(){
+ $("#revision-count").textContent = REVISION.length ? `${REVISION.length} candidatos` : "sin candidatos";
+ const q = ($("#rev-q")?.value||"").toLowerCase();
+ const filtro = $("#rev-filter")?.value || "";
+ let items = REVISION.filter(r=>{
+  if(q){
+   const hay = ((r.tag||"")+" "+(r.operario||"")+" "+(r.folio||"")+" "+(r.planta||"")).toLowerCase();
+   if(!hay.includes(q)) return false;
+  }
+  if(filtro==="valid") return !r._issues.length && !r._discard;
+  if(filtro==="warn") return r._issues.length && !r._discard;
+  if(filtro==="edited") return r._edited;
+  if(filtro==="discard") return r._discard;
+  return true;
+ });
+ const btn = $("#btn-revision-confirm");
+ if(btn) btn.disabled = !REVISION.some(r=>!r._discard);
+
+ if(!REVISION.length){
+  $("#revision-out").innerHTML = '<p class="hint">Aún no hay candidatos cargados. Arrastre archivos JSON en la caja superior.</p>';
+  return;
+ }
+ const editable = ["fecha_iso","tag","operario","sector","planta","folio","id_actividad",
+  "I_F1","I_F2","I_F3","V_L1L2","V_L2L3","V_L3L1","temp_max_c","delta_t_c","IP","THD_I_pct","THD_V_pct","vibracion_rms_mms"];
+ const cols = ["fecha_iso","tag","operario","sector","planta","folio","id_actividad","lecturas","estado","acciones"];
+ const rows = items.slice(0,200).map(r=>{
+  const clsRow = r._discard? "opacity:0.4":r._issues.length? "background:#fff7e6":r._edited?"background:#eef8f2":"";
+  const cells = cols.map(c=>{
+   if(c==="lecturas"){
+    const parts = [];
+    if(r.I_F1!=null) parts.push(`I=${r.I_F1}/${r.I_F2}/${r.I_F3}A`);
+    if(r.V_L1L2!=null) parts.push(`V=${r.V_L1L2}/${r.V_L2L3}/${r.V_L3L1}V`);
+    if(r.temp_max_c!=null) parts.push(`T=${r.temp_max_c}°C`);
+    if(r.delta_t_c!=null) parts.push(`ΔT=${r.delta_t_c}°C`);
+    if(r.IP!=null) parts.push(`IP=${r.IP}`);
+    if(r.vibracion_rms_mms!=null) parts.push(`vib=${r.vibracion_rms_mms}`);
+    return `<td style="font-family:var(--mono);font-size:11px">${parts.join(" · ")||'<span class="hint">—</span>'}</td>`;
+   }
+   if(c==="estado"){
+    const badges = [];
+    if(r._discard) badges.push('<span class="badge gray">descartado</span>');
+    if(r._edited) badges.push('<span class="badge ok">editado</span>');
+    r._issues.forEach(i=>badges.push(`<span class="badge warn" title="${i}">${i}</span>`));
+    if(!badges.length) badges.push('<span class="badge ok">OK</span>');
+    return `<td>${badges.join(" ")}</td>`;
+   }
+   if(c==="acciones"){
+    return `<td><button class="btn btn-ghost" style="padding:4px 8px;font-size:11px" data-editar="${r._rid}">Editar</button> <button class="btn btn-danger" style="padding:4px 8px;font-size:11px" data-toggle="${r._rid}">${r._discard?'Restaurar':'Descartar'}</button></td>`;
+   }
+   const val = r[c] ?? "";
+   return `<td style="font-size:12px">${val}</td>`;
+  }).join("");
+  return `<tr style="${clsRow}">${cells}</tr>`;
+ }).join("");
+ $("#revision-out").innerHTML = `<div style="overflow-x:auto"><table><thead><tr>${
+  cols.map(c=>`<th>${c==="fecha_iso"?"Fecha":c==="id_actividad"?"Actividad":c[0].toUpperCase()+c.slice(1)}</th>`).join("")
+ }</tr></thead><tbody>${rows}</tbody></table></div>
+ <div class="hint" style="margin-top:8px">Mostrando ${Math.min(items.length,200)} de ${items.length}</div>`;
+
+ // Bind acciones
+ $$("#revision-out [data-toggle]").forEach(b=>b.addEventListener("click", async ()=>{
+  const r = REVISION.find(x=>x._rid===b.dataset.toggle);
+  if(!r) return;
+  r._discard = !r._discard;
+  await guardarDatos();
+  renderRevision();
+ }));
+ $$("#revision-out [data-editar]").forEach(b=>b.addEventListener("click", ()=>openEditar(b.dataset.editar)));
+}
+
+/* ---- Modal edición inline ---- */
+function openEditar(rid){
+ const r = REVISION.find(x=>x._rid===rid);
+ if(!r) return;
+ const overlay = document.createElement("div");
+ overlay.style.cssText = "position:fixed;inset:0;background:rgba(15,28,23,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px";
+ const editable = [
+  ["tag","TAG"],["fecha_iso","Fecha (ISO)"],["operario","Operario"],["ingeniero","Ingeniero"],
+  ["sector","Sector"],["planta","Planta"],["folio","Folio"],["id_actividad","ID Actividad"],
+  ["I_F1","I F1 (A)"],["I_F2","I F2 (A)"],["I_F3","I F3 (A)"],
+  ["V_L1L2","V L1-L2"],["V_L2L3","V L2-L3"],["V_L3L1","V L3-L1"],
+  ["temp_max_c","Temp max (°C)"],["delta_t_c","Δ T (°C)"],["temp_rodamiento_c","Temp rodamiento (°C)"],
+  ["R_aislamiento_MOhm","R aisl. (MΩ)"],["IP","IP"],["DAR","DAR"],
+  ["THD_V_pct","THD V (%)"],["THD_I_pct","THD I (%)"],
+  ["vibracion_rms_mms","Vib RMS (mm/s)"],["vibracion_pico_mms","Vib pico (mm/s)"],
+  ["rigidez_dielectrica_D1816_kV","Rigidez D-1816 (kV)"],["contenido_agua_ppm","Agua (ppm)"],
+  ["acidez_D664_mgKOHg","Acidez (mgKOH/g)"],
+  ["DGA_H2_ppm","DGA H2 (ppm)"],["DGA_CH4_ppm","DGA CH4 (ppm)"],["DGA_C2H2_ppm","DGA C2H2 (ppm)"],
+  ["DGA_C2H4_ppm","DGA C2H4 (ppm)"],["DGA_CO_ppm","DGA CO (ppm)"],
+  ["observaciones","Observaciones"],
+ ];
+ overlay.innerHTML = `<div style="background:#fff;border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+   <h3 style="margin:0;font-size:16px">Editar registro</h3>
+   <button class="btn btn-ghost" id="edit-close">Cerrar</button>
+  </div>
+  <div class="hint" style="margin-bottom:10px">Origen: <span class="mono">${r._origen?.archivo||"—"}</span> · Folio <span class="mono">${r.folio||"—"}</span></div>
+  ${r._issues.length?`<div class="result-box warn" style="margin-bottom:12px"><h4>Advertencias del importador</h4><ul style="margin:0 0 0 20px">${r._issues.map(i=>`<li>${i}</li>`).join("")}</ul></div>`:""}
+  <div class="grid2">
+   ${editable.map(([k,label])=>{
+    const v = r[k] ?? "";
+    return `<div class="field"><label>${label}</label><input data-k="${k}" value="${String(v).replace(/"/g,'&quot;')}"></div>`;
+   }).join("")}
+  </div>
+  <div class="btn-row">
+   <button class="btn" id="edit-save">Guardar cambios</button>
+   <button class="btn btn-ghost" id="edit-cancel">Cancelar</button>
+  </div>
+ </div>`;
+ document.body.appendChild(overlay);
+ const cerrar = ()=>overlay.remove();
+ overlay.querySelector("#edit-close").onclick = cerrar;
+ overlay.querySelector("#edit-cancel").onclick = cerrar;
+ overlay.querySelector("#edit-save").onclick = async ()=>{
+  editable.forEach(([k])=>{
+   const inp = overlay.querySelector(`[data-k="${k}"]`);
+   if(!inp) return;
+   let v = inp.value.trim();
+   if(v==="") { r[k]=null; return; }
+   // numérico si aplica
+   const numFields = ["sector","I_F1","I_F2","I_F3","V_L1L2","V_L2L3","V_L3L1","temp_max_c",
+    "delta_t_c","temp_rodamiento_c","R_aislamiento_MOhm","IP","DAR","THD_V_pct","THD_I_pct",
+    "vibracion_rms_mms","vibracion_pico_mms","rigidez_dielectrica_D1816_kV","contenido_agua_ppm",
+    "acidez_D664_mgKOHg","DGA_H2_ppm","DGA_CH4_ppm","DGA_C2H2_ppm","DGA_C2H4_ppm","DGA_CO_ppm"];
+   if(numFields.includes(k)){ const n = Number(v); r[k] = isNaN(n)?v:n; }
+   else r[k] = v;
+  });
+  r._edited = true;
+  // Re-validar
+  r._issues = [];
+  if(!r.fecha_iso) r._issues.push("Sin fecha");
+  if(!EQUIPOS.find(e=>e.tag===r.tag)) r._issues.push("TAG no encontrado en censo");
+  if(!r.operario) r._issues.push("Sin operario");
+  if(r.sector==null) r._issues.push("Sin sector");
+  await guardarDatos();
+  cerrar();
+  renderRevision();
+  toast("Cambios guardados.");
+ };
+}
+
+/* ---- Confirmar y asentar ---- */
+$(document).addEventListener?.("DOMContentLoaded",()=>{}); // just to be safe
+
+async function _confirmarAsentar(){
+ const asentar = REVISION.filter(r=>!r._discard);
+ if(!asentar.length){toast("Nada que asentar"); return;}
+ if(!confirm(`Asentar ${asentar.length} mediciones en la base de datos? Los registros descartados NO se guardarán.`)) return;
+ let n = 0;
+ for(const r of asentar){
+  // Limpiar campos internos antes de persistir
+  const {_rid, _issues, _discard, _edited, _origen, ...med} = r;
+  med._diag = diagnosticar(med);
+  MEDICIONES.push(med);
+  n++;
+ }
+ // Guarda historial de lote consumido
+ const lastLote = LOTES[LOTES.length-1] || {};
+ lastLote.confirmado_at = new Date().toISOString();
+ lastLote.confirmados = n;
+ lastLote.descartados = REVISION.length - n;
+ // Limpiar buffer de revisión
+ REVISION = [];
+ await guardarDatos();
+ renderRevision();
+ renderLotes();
+ renderConsolidado();
+ renderDashboard();
+ toast(`✓ ${n} mediciones asentadas en la base.`);
+}
+
+function renderLotes(){
+ if(!LOTES.length){ $("#lotes-out").innerHTML='<p class="hint">Sin lotes importados aún.</p>'; return; }
+ const rows = LOTES.slice().reverse().slice(0,20).map(l=>{
+  const fs = (l.archivos||[]).map(a=>`${a.filename} (${a.n})`).join(", ");
+  return `<tr>
+   <td class="mono" style="font-size:11px">${l.id}</td>
+   <td>${(l.imported_at||"").slice(0,16).replace("T"," ")}</td>
+   <td style="font-size:11px">${fs}</td>
+   <td class="mono">${l.total||0}</td>
+   <td class="mono">${l.confirmados??"—"}</td>
+   <td class="mono">${l.descartados??"—"}</td>
+  </tr>`;
+ }).join("");
+ $("#lotes-out").innerHTML = `<table><thead><tr><th>ID lote</th><th>Fecha import</th><th>Archivos</th><th>Total</th><th>Asentados</th><th>Descartados</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* =====================================================================
+   EXPEDIENTE POR ACTIVO
+   ===================================================================== */
+function abrirExpediente(tag){
+ tag = String(tag||"").trim();
+ if(!tag){ $("#exp-body").innerHTML='<p class="hint">Ingrese un TAG.</p>'; return; }
+ const eq = EQUIPOS.find(e=>e.tag===tag);
+ if(!eq){ $("#exp-body").innerHTML=`<div class="result-box warn"><h4>TAG no encontrado</h4><p>El TAG <span class="tag">${tag}</span> no existe en el censo. Verifique en la pestaña Censo.</p></div>`; return; }
+
+ const esSub = eq.familia === "subestacion";
+ // Si es subestación, agregamos también las mediciones de sus equipos asociados
+ let tagsRelacionados = [tag];
+ if(esSub){
+  // Buscar equipos cuyo ubicacion contiene el tag/base de la SE
+  const seBase = tag.replace("SE-","S_");
+  const seRe = new RegExp("-(?:"+tag+"|"+seBase+")-", "i");
+  tagsRelacionados = EQUIPOS.filter(e=> e.familia!=="subestacion" && (e.ubicacion? seRe.test(e.ubicacion) : false)).map(e=>e.tag);
+  if(!tagsRelacionados.length) tagsRelacionados = [tag]; // fallback
+ }
+
+ const medsEq = MEDICIONES.filter(m=>tagsRelacionados.includes(m.tag)).sort((a,b)=>(b.fecha_iso||"").localeCompare(a.fecha_iso||""));
+ const alarmas = medsEq.filter(m=>m._diag?.estado==="alarma").length;
+ const alertas = medsEq.filter(m=>m._diag?.estado==="alerta").length;
+ const normales = medsEq.filter(m=>m._diag?.estado==="normal").length;
+
+ // Operarios que intervinieron
+ const operarios = Array.from(new Set(medsEq.map(m=>m.operario).filter(Boolean)));
+ const plantas = Array.from(new Set(medsEq.map(m=>m.planta).filter(Boolean)));
+ const ultima = medsEq[0];
+
+ const placa = Object.entries({
+  Familia:eq.familia, Sector:eq.sector, Planta:eq.planta, SAP:eq.sap,
+  "Criticidad ABC":eq.crit_abc, "Nivel tensión":eq.NT,
+  "V (V)":eq.V, "I nom (A)":eq.I, "HP":eq.HP, "kVA":eq.kVA, "Clase aisl.":eq.clase, "RPM":eq.rpm
+ }).filter(([k,v])=>v!=null && v!=="");
+
+ let html = `<div class="card">
+  <div class="card-title"><span class="n">A</span> Ficha del activo <span class="right"><span class="pill">${eq.familia}</span></span></div>
+  <h2 style="margin:0;font-size:20px" class="tag">${tag}</h2>
+  <p style="margin:4px 0 12px;color:var(--ink-soft)">${eq.denom||""}</p>
+  <div class="kpi-grid">
+   ${placa.map(([k,v])=>`<div class="kpi"><div class="lbl">${k}</div><div class="val" style="font-size:16px">${v}</div></div>`).join("")}
+  </div>
+  ${esSub?`<p class="hint" style="margin-top:12px"><b>Subestación</b> · agrega ${tagsRelacionados.length} equipos asociados en los renglones históricos.</p>`:""}
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">B</span> Historial resumido</div>
+  <div class="kpi-grid">
+   <div class="kpi"><div class="lbl">Mediciones</div><div class="val">${medsEq.length}</div></div>
+   <div class="kpi"><div class="lbl">Normales</div><div class="val" style="color:var(--ok)">${normales}</div></div>
+   <div class="kpi"><div class="lbl">Alertas</div><div class="val" style="color:var(--warn)">${alertas}</div></div>
+   <div class="kpi"><div class="lbl">Alarmas</div><div class="val" style="color:var(--alarm)">${alarmas}</div></div>
+   <div class="kpi"><div class="lbl">Última medición</div><div class="val" style="font-size:14px">${(ultima?.fecha_iso||"—").slice(0,10)}</div></div>
+   <div class="kpi"><div class="lbl">Operarios distintos</div><div class="val">${operarios.length}</div></div>
+  </div>
+  ${operarios.length?`<p class="hint" style="margin-top:8px">Operarios: ${operarios.join(" · ")}</p>`:""}
+  ${plantas.length?`<p class="hint" style="margin-top:2px">Ubicaciones registradas: ${plantas.slice(0,3).join(" · ")}${plantas.length>3?" · +"+(plantas.length-3):""}</p>`:""}
+ </div>
+
+ <div class="card">
+  <div class="card-title"><span class="n">C</span> Historial completo de mediciones</div>
+  ${medsEq.length? `<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Operario</th><th>Planta</th><th>Folio</th>${esSub?"<th>TAG equipo</th>":""}<th>Actividad</th><th>Lecturas</th><th>Estado</th></tr></thead><tbody>${
+   medsEq.map(m=>{
+    const dst = m._diag?.estado || "sin_diag";
+    const b = dst==="alarma"?"alarm":dst==="alerta"?"warn":dst==="normal"?"ok":"gray";
+    const parts=[];
+    if(m.I_F1!=null) parts.push(`I=${m.I_F1}/${m.I_F2}/${m.I_F3}A`);
+    if(m.temp_max_c!=null) parts.push(`T=${m.temp_max_c}°C`);
+    if(m.delta_t_c!=null) parts.push(`ΔT=${m.delta_t_c}°C`);
+    if(m.vibracion_rms_mms!=null) parts.push(`vib=${m.vibracion_rms_mms}mm/s`);
+    if(m.IP!=null) parts.push(`IP=${m.IP}`);
+    const act = ACTIVIDADES.find(a=>a.id===m.id_actividad)?.nombre || m.id_actividad || "—";
+    return `<tr>
+     <td>${(m.fecha_iso||"").replace("T"," ").slice(0,16)}</td>
+     <td style="font-size:12px">${m.operario||"—"}</td>
+     <td style="font-size:12px">${m.planta||"—"}</td>
+     <td class="mono" style="font-size:11px">${m.folio||""}</td>
+     ${esSub?`<td class="tag" style="font-size:12px">${m.tag}</td>`:""}
+     <td style="font-size:11px">${act}</td>
+     <td class="mono" style="font-size:11px">${parts.join(" · ")||"—"}</td>
+     <td><span class="badge ${b}">${dst}</span></td>
+    </tr>`;
+   }).join("")
+  }</tbody></table></div>` : '<p class="hint">Este activo aún no tiene mediciones ingestadas.</p>'}
+ </div>`;
+
+ // Últimos hallazgos activos
+ const findings = [];
+ for(const m of medsEq.slice(0,20)){
+  for(const h of (m._diag?.hallazgos||[])){
+   findings.push({...h, fecha: m.fecha_iso, tag: m.tag, operario: m.operario});
+  }
+ }
+ if(findings.length){
+  html += `<div class="card"><div class="card-title"><span class="n">D</span> Últimos hallazgos del motor de diagnóstico</div>
+   <table><thead><tr><th>Fecha</th><th>Regla</th><th>Estado</th><th>Prioridad</th><th>Modo · causa</th><th>Acción</th></tr></thead><tbody>${
+    findings.slice(0,15).map(h=>{
+     const b = h.estado==="alarma"?"alarm":h.estado==="alerta"?"warn":"ok";
+     return `<tr><td>${(h.fecha||"").slice(0,10)}</td><td class="mono">${h.regla_id||""}</td><td><span class="badge ${b}">${h.estado}</span></td><td><span class="pill">${h.prioridad||"—"}</span></td><td><b>${h.modo_falla||""}</b><br><span class="hint" style="font-size:11px">${h.causa_probable||""}</span></td><td style="font-size:12px">${h.accion||""}</td></tr>`;
+    }).join("")
+   }</tbody></table>
+  </div>`;
+ }
+
+ // Tendencia sparkline si hay serie
+ const paramsPref = ["temp_max_c","vibracion_rms_mms","delta_t_c","IP","THD_I_pct"];
+ let sparkHtml = "";
+ for(const p of paramsPref){
+  const serie = medsEq.filter(m=>m[p]!=null).map(m=>({t:new Date(m.fecha_iso).getTime()/86400000, y:Number(m[p])})).sort((a,b)=>a.t-b.t);
+  if(serie.length>=3){
+   const c = document.createElement("div");
+   drawTrendWithBands(c, serie.map(s=>s.t), serie.map(s=>s.y), `${p} · ${tag}`, ventanaFor(eq.familia,p));
+   sparkHtml += `<div class="card"><div class="card-title"><span class="n">E</span> Tendencia — ${p}</div>${c.innerHTML}</div>`;
+   break; // mostrar el primero disponible
+  }
+ }
+ html += sparkHtml;
+
+ $("#exp-body").innerHTML = html;
+}
+
+function exportarExpediente(tag){
+ tag = String(tag||"").trim();
+ const eq = EQUIPOS.find(e=>e.tag===tag);
+ if(!eq){toast("TAG no encontrado"); return;}
+ const meds = MEDICIONES.filter(m=>m.tag===tag);
+ const pack = {schema:"sicm-ele/expediente", exportado_at:new Date().toISOString(), equipo:eq, mediciones:meds};
+ const blob = new Blob([JSON.stringify(pack,null,2)],{type:"application/json"});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a"); a.href=url; a.download=`expediente_${tag.replace(/[^a-z0-9-]/gi,"_")}.json`; a.click();
+ URL.revokeObjectURL(url);
+ toast(`Expediente ${tag} exportado (${meds.length} mediciones).`);
 }
 
 /* ---------- CAPTURAR ---------- */
@@ -28185,32 +28777,25 @@ $("#fin-restore")?.addEventListener?.("change", async (ev)=>{
   await guardarDatos(); renderConfig(); toast("Respaldo restaurado.");
  }catch(e){toast("Error: "+e.message);}
 });
-$("#fin-recorridos")?.addEventListener?.("change", async (ev)=>{
- const f = ev.target.files?.[0]; if(!f) return;
- try{
-  const obj = JSON.parse(await f.text());
-  const arr = Array.isArray(obj)?obj:(obj.recorridos||obj.data||[]);
-  let n=0;
-  for(const r of arr){
-   // Best-effort: crear una medicion "INSP" por cada recorrido
-   const m = {
-    id_medicion:"IMP-"+(r.folio||Date.now())+"-"+(n++),
-    tag: r.tag || (r.item?.tag) || (r.folio||""),
-    id_actividad: "INSP",
-    fecha_iso: r.creado || r.fecha || new Date().toISOString().slice(0,16),
-    operario: r.operario || "",
-    observaciones: r.observaciones || JSON.stringify(r).slice(0,200),
-   };
-   m._diag = diagnosticar(m);
-   MEDICIONES.push(m);
-  }
-  await guardarDatos(); renderConfig(); toast(`Importadas ${n} entradas de recorridos.`);
- }catch(e){toast("Error: "+e.message);}
-});
+$("#btn-go-import")?.addEventListener?.("click", ()=>switchTab("capturar"));
 $("#btn-purge")?.addEventListener?.("click", async ()=>{
  if(!confirm("Vaciar TODAS las mediciones locales?")) return;
  MEDICIONES = []; await guardarDatos(); renderConfig(); toast("Mediciones vaciadas.");
 });
+
+/* ---------- Binds Fase 4b: importación / revisión / expediente ---------- */
+$("#rev-q")?.addEventListener?.("input", renderRevision);
+$("#rev-filter")?.addEventListener?.("change", renderRevision);
+$("#btn-revision-reset")?.addEventListener?.("click", async ()=>{
+ if(!REVISION.length){toast("No hay revisión pendiente"); return;}
+ if(!confirm("¿Descartar todos los candidatos pendientes de revisión?")) return;
+ REVISION = []; await guardarDatos(); renderRevision();
+});
+$("#btn-revision-confirm")?.addEventListener?.("click", _confirmarAsentar);
+
+$("#btn-exp-abrir")?.addEventListener?.("click", ()=>abrirExpediente($("#exp-tag").value));
+$("#btn-exp-export")?.addEventListener?.("click", ()=>exportarExpediente($("#exp-tag").value));
+$("#exp-tag")?.addEventListener?.("keydown", e=>{ if(e.key==="Enter") abrirExpediente($("#exp-tag").value); });
 
 /* ---------- Boot ---------- */
 (async ()=>{
