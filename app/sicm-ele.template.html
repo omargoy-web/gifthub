@@ -530,6 +530,11 @@ const SYN_MEDS = __SYN_MEDS__;
 const REGLAS_CAT = __REGLAS__;
 const FMEA_CAT = __FMEA__;
 const ACCIONES_CAT = __ACCIONES__;
+// Mediciones REALES ingestadas por el pipeline server-side, ya horneadas en el HTML.
+// Se cargan automáticamente en la base local la primera vez que se abre este build.
+const INGEST_MEDS = __INGEST_MEDS__;
+const INGEST_META = __INGEST_META__;
+const KEY_INGEST_MARK = "sicm_ele_ingest_v1_mark"; // marca por hash para no re-cargar
 
 /* ---------- IndexedDB simple ---------- */
 const IDB_NAME="sicm_ele_idb", IDB_STORE="kv";
@@ -2574,6 +2579,29 @@ $("#btn-ins-refresh")?.addEventListener?.("click", renderInspeccionCatalog);
 /* ---------- Boot ---------- */
 (async ()=>{
  await cargarDatos();
+ // Hornear mediciones ingestadas server-side (una sola vez por versión del bundle).
+ // Fusiona por id_medicion para no duplicar.
+ try{
+  if(INGEST_META.total > 0){
+   const mark = await idbGet(KEY_INGEST_MARK).catch(()=>null);
+   const currentMark = INGEST_META.ingestados_at + "|" + INGEST_META.total;
+   if(mark !== currentMark){
+    const yaExisten = new Set(MEDICIONES.map(m=>m.id_medicion));
+    let n = 0;
+    for(const m of INGEST_MEDS){
+     if(yaExisten.has(m.id_medicion)) continue;
+     // Recalcular _diag con el motor JS (usa el mismo catálogo)
+     try{ m._diag = diagnosticar(m); }catch(_){ if(!m._diag) m._diag={estado:"sin_diag",hallazgos:[]}; }
+     MEDICIONES.push(m); n++;
+    }
+    if(n>0){
+     await idbSet(KEY_MED, MEDICIONES).catch(()=>{});
+     await idbSet(KEY_INGEST_MARK, currentMark).catch(()=>{});
+     setTimeout(()=>toast(`✓ ${n} mediciones pre-procesadas cargadas (${INGEST_META.archivos_procesados.length} archivos).`), 800);
+    }
+   }
+  }
+ }catch(e){ console.warn("Ingest boot:", e); }
  switchTab("dashboard");
 })();
 </script>
