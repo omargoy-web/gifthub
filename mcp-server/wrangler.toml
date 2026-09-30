@@ -1,0 +1,11 @@
+# Opcional: solo si despliegas con wrangler o con la integración de GitHub de Cloudflare.
+# Si pegas worker.js en el editor del panel de Cloudflare, este archivo no se usa.
+name = "asistente-ing"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+
+# El secreto AUTH_TOKEN NO va aquí. Se crea en el panel:
+# Workers & Pages > asistente-ing > Settings > Variables and Secrets > Add (tipo Secret).
+
+[observability]
+enabled = true
