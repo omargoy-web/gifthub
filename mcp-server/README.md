@@ -52,6 +52,18 @@ Si esto falla, se sabe en una hora y no después de semanas de desarrollo.
    - *"Usa la herramienta ping del servidor ASISTENTE-ING."*
    - *"Usa eco con el texto: motor 15 HP."*
 
+## Paso 4 (alternativa) · Conectar con Claude
+
+El mismo servidor sirve para Claude sin cambios: Claude admite servidores MCP remotos sin OAuth propio.
+Útil como banco de pruebas: si funciona aquí y no en Spark, el servidor está bien y el obstáculo es de Spark.
+
+1. **claude.ai** → **Settings** → **Connectors** → **Add custom connector**.
+2. Nombre `ASISTENTE-ING`, URL `https://asistente-ing.<tu-subdominio>.workers.dev/mcp/<TU_TOKEN>`; deja vacíos los campos avanzados de OAuth.
+3. En un chat activa el conector y pide: *"Usa la herramienta ping."*
+4. En iOS/Android se usan los conectores ya agregados desde la web.
+
+Nota: el plan Free limita a un conector personalizado. Aplica la misma regla de confidencialidad que con Spark.
+
 ## Criterio de aceptación de la Fase 0
 
 | # | Prueba | Resultado esperado |
