@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="2210" viewBox="0 0 1920 2210" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2c3e50"/></marker></defs>
+<rect width="1920" height="2210" fill="#ffffff"/>
+<text x="960.0" y="40" font-size="24" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">PROCEDIMIENTO DE ULTRASONIDO PASIVO — UP15000 + ULTRATREND DMS</text>
+<text x="960.0" y="68" font-size="15" font-weight="normal" fill="#566573" text-anchor="middle" font-style="normal">Diagrama de flujo por responsabilidad (Sección 7)  ·  Refinería Olmeca · SICM</text>
+<rect x="20" y="140" width="340" height="2066" fill="#f7f9fb" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="20" y="96" width="340" height="44" fill="#2c3e50"/>
+<text x="190.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">ING. ESPECIALISTA</text>
+<rect x="360" y="140" width="340" height="2066" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="360" y="96" width="340" height="44" fill="#2c3e50"/>
+<text x="530.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">CABO ELECTRICISTA</text>
+<rect x="700" y="140" width="500" height="2066" fill="#f7f9fb" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="700" y="96" width="500" height="44" fill="#2c3e50"/>
+<text x="950.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">OPERARIO ESPEC.</text>
+<rect x="1200" y="140" width="700" height="2066" fill="#fbfcfd" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1200" y="96" width="700" height="44" fill="#2c3e50"/>
+<text x="1550.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">DESCRIPCIÓN</text>
+<line x1="20" y1="260" x2="1900" y2="260" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="380" x2="1900" y2="380" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="500" x2="1900" y2="500" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="620" x2="1900" y2="620" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="740" x2="1900" y2="740" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="860" x2="1900" y2="860" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="980" x2="1900" y2="980" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1100" x2="1900" y2="1100" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1220" x2="1900" y2="1220" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1340" x2="1900" y2="1340" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1460" x2="1900" y2="1460" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1580" x2="1900" y2="1580" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1700" x2="1900" y2="1700" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1820" x2="1900" y2="1820" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1940" x2="1900" y2="1940" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<rect x="95.0" y="177.0" width="190" height="46" rx="23" fill="#27ae60" stroke="#1e8449" stroke-width="2.5"/>
+<text x="190" y="206" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">INICIO</text>
+<rect x="55.0" y="284.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="315" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.1 Emitir Orden SAP</text>
+<text x="190" y="335" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">PM01 + Ruta DMS</text>
+<rect x="55.0" y="404.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="435" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.2 Configurar UP15000</text>
+<text x="190" y="455" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">SCM + Electrical + 40kHz</text>
+<rect x="395.0" y="524.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="555" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.3 PTP + AST</text>
+<text x="530" y="575" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">NFPA 70E / NOM-029</text>
+<rect x="395.0" y="644.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="675" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.4 Verificar gabinetes</text>
+<text x="530" y="695" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">CERRADOS y energizados</text>
+<rect x="735.0" y="764.0" width="250" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="860" y="785" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.5 ESCANEO GROSS</text>
+<text x="860" y="805" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Sensibilidad alta (S=70)</text>
+<text x="860" y="825" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Barrido general del equipo</text>
+<polygon points="860,874.0 990.0,920 860,966.0 730.0,920" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
+<text x="860" y="915" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Señal</text>
+<text x="860" y="935" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">detectada?</text>
+<rect x="735.0" y="1004.0" width="250" height="72" rx="10" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5"/>
+<text x="860" y="1035" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.6 ESCANEO FINE</text>
+<text x="860" y="1055" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Reducir S, localizar fuente</text>
+<rect x="1015.0" y="1012.0" width="170" height="56" rx="10" fill="#e8f8f0" stroke="#27ae60" stroke-width="2.5"/>
+<text x="1100" y="1045" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">SAVE “Normal”</text>
+<rect x="735.0" y="1124.0" width="250" height="72" rx="10" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5"/>
+<text x="860" y="1155" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.7 ESCUCHAR</text>
+<text x="860" y="1175" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Identificar firma acústica</text>
+<rect x="735.0" y="1244.0" width="250" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="860" y="1275" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.8 Grabar WAV + Foto</text>
+<text x="860" y="1295" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">FFT → Record → Save</text>
+<rect x="735.0" y="1364.0" width="250" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="860" y="1395" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.9 Registrar Temp IR</text>
+<text x="860" y="1415" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">+ datos complementarios</text>
+<rect x="395.0" y="1484.0" width="270" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="530" y="1515" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10 Cierre campo</text>
+<text x="530" y="1535" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Remover SD, levantar área</text>
+<rect x="55.0" y="1599.0" width="270" height="82" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="1625" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.11 Análisis DMS</text>
+<text x="190" y="1645" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">+ Spectralyzer (FFT)</text>
+<text x="190" y="1665" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Clasificar firma acústica</text>
+<polygon points="190,1714.0 320.0,1760 190,1806.0 60.0,1760" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
+<text x="190" y="1755" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Arcing</text>
+<text x="190" y="1775" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">detectado?</text>
+<rect x="395.0" y="1724.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="1755" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">ALERTA INMEDIATA</text>
+<text x="530" y="1775" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Notificar operación</text>
+<rect x="55.0" y="1839.0" width="270" height="82" rx="10" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5"/>
+<text x="190" y="1865" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.12 Reporte</text>
+<text x="190" y="1885" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Anexo 9.3 + SAP PM01</text>
+<text x="190" y="1905" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">→ TECO / IW21</text>
+<rect x="95.0" y="1977.0" width="190" height="46" rx="23" fill="#e74c3c" stroke="#b03a2e" stroke-width="2.5"/>
+<text x="190" y="2006" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">FIN</text>
+<path d="M190,223.0 V284.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,356.0 V404.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,476.0 V500.0 H530 V524.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,596.0 V644.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,716.0 V740.0 H860 V764.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,836.0 V874.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,966.0 V1004.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="838" y="988.0" font-size="15" font-weight="bold" fill="#b03a2e" text-anchor="middle" font-style="normal">Sí</text>
+<path d="M990,920 H1100 V1012.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="1020" y="910" font-size="15" font-weight="bold" fill="#1e8449" text-anchor="middle" font-style="normal">No</text>
+<path d="M860,1076.0 V1124.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1196.0 V1244.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1316.0 V1364.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1436.0 V1460.0 H530 V1484.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M1100,1068.0 V1460.0 H860" fill="none" stroke="#2c3e50" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M530,1556.0 V1577.5 H190 V1599.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,1681.0 V1714.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M320,1760 H395.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="352" y="1750" font-size="15" font-weight="bold" fill="#b03a2e" text-anchor="middle" font-style="normal">Sí</text>
+<path d="M190,1806.0 V1839.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="168" y="1822.0" font-size="15" font-weight="bold" fill="#1e8449" text-anchor="middle" font-style="normal">No</text>
+<path d="M530,1796.0 V1822.5 H190" fill="none" stroke="#2c3e50" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M190,1921.0 V1977.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="1215" y="298.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="298.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1235" y="326.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.1  </tspan>Emitir orden SAP. Preparar ruta Electrical en Ultratrend DMS.</text>
+<rect x="1215" y="408.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="408.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1235" y="436.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.2  </tspan>SD card → Encender → Setup: Application=Electrical, SCM, 40 kHz, S=70.</text>
+<text x="1235" y="457.0" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: Fig. 2 — Seleccionar “Electrical” en menú Applications</text>
+<rect x="1215" y="528.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="528.0" width="7" height="64" rx="3" fill="#e74c3c"/>
+<text x="1235" y="556.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.3  </tspan>Verificar etiqueta de arco (IEEE 1584). PPE Category. PTP + AST 100%.</text>
+<text x="1235" y="577.0" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">ACTIVIDAD CRÍTICA — Distancias NFPA 70E Table 130.4(E)(a)</text>
+<rect x="1215" y="648.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="648.0" width="7" height="64" rx="3" fill="#e74c3c"/>
+<text x="1235" y="676.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.4  </tspan>Verificar que TODOS los gabinetes estén CERRADOS y asegurados.</text>
+<text x="1235" y="697.0" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">NUNCA insertar el UP15000 en aberturas de equipo eléctrico</text>
+<rect x="1215" y="768.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="768.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1235" y="796.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.5  </tspan>Técnica Gross-to-Fine: escanear en todas direcciones a distancia segura.</text>
+<text x="1235" y="817.0" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: Fig. 3 — Ajustar S=70, codos pegados al cuerpo, distancia segura</text>
+<rect x="1215" y="888.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="888.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1235" y="916.0" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿hay emisión acústica anormal? Sí → 7.6 Escaneo Fine.</text>
+<text x="1235" y="937.0" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">No → guardar “Normal” y pasar a 7.10 Cierre de campo.</text>
+<rect x="1215" y="997.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="997.5" width="7" height="85" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1025.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.6  </tspan>Reducir sensibilidad progresivamente. Usar rubber focusing probe. Aislar la fuente</text>
+<text x="1235" y="1046.5" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">exacta del sonido. Mantener distancia segura.</text>
+<text x="1235" y="1067.5" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">Rama No: SAVE “Normal” (sin hallazgo) y continuar en 7.10.</text>
+<rect x="1215" y="1138.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1138.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1166.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.7  </tspan>Corona = zumbido estable | Tracking = crepitar | Arcing = estallidos | PD = pulsos.</text>
+<rect x="1215" y="1248.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1248.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1276.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.8  </tspan>Tocar FFT → Record → Confirmar WAV. Tomar foto con cámara integrada.</text>
+<text x="1235" y="1297.0" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: Fig. 3 — Grabar WAV desde pantalla FFT del analizador espectral</text>
+<rect x="1215" y="1378.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1378.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1406.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.9  </tspan>Registrar temperatura IR y datos complementarios del equipo.</text>
+<rect x="1215" y="1498.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1498.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1526.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10  </tspan>Remover SD y levantar el área de trabajo.</text>
+<rect x="1215" y="1608.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1608.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1636.0" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.11  </tspan>Descargar datos. Analizar FFT para clasificar: Corona / Tracking / Arcing / PD.</text>
+<text x="1235" y="1657.0" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: Fig. 9 — Espectro FFT en DMS. Fig. 10 — Tendencia dB en Chart tab.</text>
+<rect x="1215" y="1728.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1728.0" width="7" height="64" rx="3" fill="#e74c3c"/>
+<text x="1235" y="1756.0" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">ARCING = FALLA ACTIVA. Notificar operación. Evaluar desenergización.</text>
+<text x="1235" y="1777.0" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">Sí → ALERTA INMEDIATA y luego 7.12  |  No → 7.12 directo</text>
+<rect x="1215" y="1858.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1858.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1235" y="1886.5" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.12  </tspan>Reporte: Anexo 9.3 + SAP PM01 → TECO / IW21.</text>
+<rect x="1215" y="2080" width="670" height="118" rx="10" fill="#f8f9f9" stroke="#aeb6bf" stroke-width="1.4"/>
+<text x="1550" y="2104" font-size="14.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">SIMBOLOGÍA (PSIG-002 Anexo 9.5)</text>
+<rect x="1240" y="2119" width="34" height="18" rx="9" fill="#27ae60" stroke="#1e8449" stroke-width="2"/>
+<text x="1286" y="2133" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="start" font-style="normal">Inicio / Fin</text>
+<rect x="1240" y="2149" width="34" height="18" rx="4" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2"/>
+<text x="1286" y="2163" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="start" font-style="normal">Proceso / Actividad</text>
+<polygon points="1477,2117 1494,2128 1477,2139 1460,2128" fill="#fef9e7" stroke="#f5a623" stroke-width="2"/>
+<text x="1506" y="2133" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="start" font-style="normal">Decisión</text>
+<rect x="1460" y="2149" width="34" height="18" rx="4" fill="#fcf3cf" stroke="#f5b041" stroke-width="2"/>
+<text x="1506" y="2163" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="start" font-style="normal">Documento / Registro</text>
+<rect x="1665" y="2119" width="34" height="18" rx="4" fill="#fadbd8" stroke="#e74c3c" stroke-width="2"/>
+<text x="1711" y="2133" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="start" font-style="normal">Actividad crítica SSPA</text>
+</svg>
