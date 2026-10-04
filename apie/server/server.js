@@ -13,6 +13,14 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(here, "..");
+
+// Carga apie/server/.env si existe. Las variables ya definidas en el sistema tienen prioridad.
+try {
+  for (const line of (await fs.readFile(path.join(here, ".env"), "utf8")).split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, "$2");
+  }
+} catch {}
 const PORT = Number(process.env.PORT || 8080);
 const MODEL = process.env.APIE_MODEL || "claude-opus-5-5";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";

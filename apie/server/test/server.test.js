@@ -30,7 +30,8 @@ test("HTTP: health, chat sin sesión, pemex 501, traversal bloqueado", async () 
     assert.ok([401, 503].includes(c.status));
     assert.equal((await fetch(base + "/api/auth/pemex", { method: "POST" })).status, 501);
     assert.equal((await fetch(base + "/server/server.js")).status, 404);
-    assert.equal((await fetch(base + "/%2e%2e/README.md")).status, 404);
+    assert.equal((await fetch(base + "/..%2fREADME.md")).status, 404); // ../ codificado: no debe salir de apie/
+    assert.equal((await fetch(base + "/..%2f..%2fetc%2fpasswd")).status, 404);
     assert.equal((await fetch(base + "/")).status, 200);
   } finally { server.close(); }
 });
