@@ -3,3 +3,5 @@ __pycache__/
 .DS_Store
 data/normalized/raw_dump/
 data/raw/recorridos-ebv-sicm.html
+apie/server/node_modules/
+apie/server/.env
