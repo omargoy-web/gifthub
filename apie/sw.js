@@ -3,7 +3,7 @@
 const VERSION = "apie-v1";
 const SHELL = [
   "./", "index.html", "legal.html", "manifest.webmanifest", "css/apie.css", "icons/icon.svg",
-  "js/config.js", "js/store.js", "js/ui.js", "js/data.js", "js/google.js", "js/ai.js", "js/app.js",
+  "js/config.js", "js/store.js", "js/ui.js", "js/data.js", "js/google.js", "js/ai.js", "js/legal.js", "js/app.js",
   "js/screens/dashboard.js", "js/screens/tasks.js", "js/screens/calendar.js", "js/screens/assets.js",
   "js/screens/knowledge.js", "js/screens/learning.js", "data/seed.js",
 ];

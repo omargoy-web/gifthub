@@ -2,6 +2,31 @@
 
 > **Antes de empezar:** APIE hoy solo habla con **Claude**. Gemini **no está integrado**: si das de alta una clave de Gemini, la app no la usa. La sección 5 explica cómo obtenerla por si se agrega como segundo proveedor.
 
+## 0. Si no puedes instalar Node.js: usa el archivo HTML único
+
+`apie/dist/apie.html` es **toda la app en un solo archivo** (1.5 MB, con los 10,930 activos). No necesita Node, servidor ni instalación.
+
+**En la PC:** descarga el archivo y dale doble clic. Se abre en Chrome o Edge y funciona sin red. Los datos se guardan en ese navegador.
+
+**En el celular Android:** pásate el archivo (correo, Drive, cable USB o WhatsApp "a ti mismo"), guárdalo en Descargas y ábrelo con Chrome desde la app Archivos. [Probable] Si se abre como vista previa sin funcionar, usa "Abrir con → Chrome".
+
+**En iPhone:** [Probable] no es confiable. iOS casi no permite ejecutar un HTML local. Para iPhone necesitas que el archivo esté en una dirección HTTPS (sección 3, B2).
+
+**Qué NO hace este modo** (los navegadores lo exigen por seguridad):
+- No se instala como app con ícono ni tiene el modo offline de la instalación; hay que reabrir el archivo.
+- No entra con Google ni sincroniza Calendar, Drive o Sheets. Las fallas quedan en la bandeja local y se exportan desde Ajustes.
+- Cada copia del archivo guarda sus datos aparte: no se comparten entre PC y celular. Usa "Exportar respaldo" para moverlos.
+
+**Asistente IA en este modo:**
+1. Crea la cuenta y la clave de API como en la sección 4.1.
+2. En la app: **Ajustes → Clave de API de Claude** → pega `sk-ant-…` → Guardar.
+3. ⚠ La clave se guarda **en el dispositivo**: quien tenga el teléfono desbloqueado puede leerla. Crea una clave exclusiva para APIE con un **límite de gasto bajo** (por ejemplo 10 USD/mes) y bórrala de Ajustes si pierdes el equipo. No pegues una clave de la empresa con presupuesto amplio.
+4. La red corporativa puede bloquear `api.anthropic.com`; en ese caso el asistente dará el error de conexión y el resto de la app sigue funcionando.
+
+Para regenerar el archivo tras cambios: `python3 scripts/build_apie_single.py` (solo requiere Python).
+
+---
+
 El celular **no corre el servidor**. El servidor corre en una PC (o en la nube) y el celular lo abre en el navegador. La API key de Claude vive solo en esa PC, nunca en el teléfono.
 
 ```

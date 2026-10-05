@@ -38,7 +38,7 @@ apie/
 
 Sin framework ni build: JavaScript plano, así se audita en una tarde y abre en cualquier navegador de la flotilla. El censo se embebe como JS (`window.APIE_SEED`) para que funcione incluso desde `file://`.
 
-> Paso a paso para celular y alta de cuentas de IA: [`INSTALACION.md`](INSTALACION.md).
+> Paso a paso para celular y alta de cuentas de IA: [`INSTALACION.md`](INSTALACION.md). Sin Node: abre `dist/apie.html` (archivo único).
 
 ## Ejecutar
 

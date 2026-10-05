@@ -189,7 +189,10 @@
             <span class="pill ${G.connected() ? "st-normal" : "st-sin_dx"}">${G.connected() ? icon("check") + "Conectado" : !G.configured() ? "No configurado" : "Desconectado"}</span></div>
           ${G.configured() ? `<div class="btn-row"><button class="btn ${G.connected() ? "" : "primary"}" id="gconn">${G.connected() ? "Reconectar" : "Conectar Google"}</button>${G.connected() ? `<button class="btn ghost" id="gdis">Desconectar</button>` : ""}</div>`
             : `<p class="honest">Define <code>googleClientId</code> y <code>sheetId</code> en <code>js/config.js</code>. Ver README.</p>`}
-          <div class="meta" style="justify-content:space-between;margin-top:8px"><span>${icon("bot")} Asistente IA (proxy APIE)</span><span class="pill ${AI.isAvailable() ? "st-normal" : "st-sin_dx"}">${AI.isAvailable() ? icon("check") + "Disponible" : "No disponible"}</span></div>
+          <div class="meta" style="justify-content:space-between;margin-top:8px"><span>${icon("bot")} Asistente IA (${AI.mode() === "proxy" ? "servidor APIE" : "clave local"})</span><span class="pill ${AI.isAvailable() ? "st-normal" : "st-sin_dx"}">${AI.isAvailable() ? icon("check") + "Disponible" : "Sin configurar"}</span></div>
+          ${AI.mode() === "proxy" ? "" : `<label class="field" style="margin-top:8px"><span>Clave de API de Claude ${AI.getKey() ? "· guardada " + esc(AI.maskKey()) : ""}</span><input type="password" id="aikey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-…"></label>
+            <div class="btn-row"><button class="btn primary" id="aisave">Guardar clave</button>${AI.getKey() ? `<button class="btn ghost" id="aidel">Quitar clave</button>` : ""}</div>
+            <p class="honest">La clave se guarda solo en este dispositivo. Quien use el teléfono desbloqueado puede leerla: usa una clave dedicada con límite de gasto bajo en Claude Console.</p>`}
           <div class="meta" style="margin-top:8px">${icon("flag")} Bandeja de salida: ${outbox} falla(s) pendientes de enviar a Sheets</div>
         </div>
         <h2 class="section">Modo campo</h2>
@@ -210,6 +213,12 @@
       const gc = $("#gconn", v); if (gc) gc.onclick = async () => {
         try { const prof = await G.signIn(G.connected() ? "" : "consent"); if (s.provider === "local") Store.set("session", { ...s, ...prof }); toast("Google conectado"); renderShell(); go("ajustes"); } catch (e) { toast(e.message); }
       };
+      const ks = $("#aisave", v); if (ks) ks.onclick = async () => {
+        const k = $("#aikey", v).value.trim();
+        if (!/^sk-ant-/.test(k)) return toast("La clave debe empezar con sk-ant-");
+        await AI.setKey(k); toast("Clave guardada"); render();
+      };
+      const kd = $("#aidel", v); if (kd) kd.onclick = async () => { await AI.setKey(""); toast("Clave eliminada"); render(); };
       const gd = $("#gdis", v); if (gd) gd.onclick = () => { G.signOut(); render(); };
       $("#exp", v).onclick = () => {
         const dump = {}; ["tasks", "events", "eventNotes", "faults", "annotations", "bookmarks", "learning"].forEach((k) => (dump[k] = Store.get(k)));
@@ -230,7 +239,7 @@
     const s = sheet({
       title, full: true,
       body: `<div class="chat" id="chat"><div class="msg ai">${esc(context ? "Tengo el contexto de: " + context.split("\n")[0].slice(0, 120) + "\n¿Qué necesitas?" : "Pregunta sobre diagnóstico, normas, ajustes de protección o procedimientos. Verifica siempre contra la norma y el procedimiento vigente antes de ejecutar en campo.")}</div></div>
-        ${AI.isAvailable() ? "" : `<p class="honest">El proxy de IA no responde. Las preguntas no se enviarán hasta configurar <code>apie/server</code>.</p>`}`,
+        ${AI.isAvailable() ? "" : `<p class="honest">Asistente IA sin configurar. Pega tu clave de API en Ajustes para usarlo.</p>`}`,
       footer: `<form class="chat-input" id="cf" style="width:100%"><textarea id="ci" rows="1" placeholder="Escribe tu consulta…" enterkeyhint="send"></textarea><button class="btn primary" aria-label="Enviar">${icon("send")}</button></form>`,
     });
     const chat = $("#chat", s.el), ci = $("#ci", s.el);

@@ -16,7 +16,7 @@ page.on("console", (m) => m.type() === "error" && !/Failed to load resource/.tes
 const shot = (n) => page.screenshot({ path: `${SP}/shots/${n}.png` });
 const step = async (name, fn) => { try { await fn(); console.log("OK  ", name); } catch (e) { console.log("FAIL", name, e.message.split("\n")[0]); errs.push(name); } };
 
-await page.goto(B + "/index.html");
+await page.goto(B + (process.env.ENTRY || "/index.html"));
 await shot("01-login");
 await step("login PEMEX (modo local)", async () => {
   await page.fill("[name=user]", "539555"); await page.fill("[name=pass]", "x");
