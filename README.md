@@ -219,6 +219,10 @@ Refactor del motor embebido de Fase 1 (11 reglas hardcodeadas) a un catálogo co
 
 Al aplicar el motor a las 600 mediciones sintéticas: 439 normales, 161 en alerta (dominadas por `R-TAB-002` calentamiento moderado y `R-MOT-010` vibración zona B — coherente con los perfiles de degradación normal + 15% bad actors).
 
+## APIE — app móvil de productividad (nuevo)
+
+`apie/` contiene una PWA móvil para el ingeniero de mantenimiento eléctrico: panel de KPIs, programador de tareas, calendario con minutas, visor de los 10,930 activos del censo, base de conocimientos, centro de aprendizaje y asistente IA vía proxy propio. Reutiliza `data/normalized/` a través de `scripts/build_apie_seed.py`. Detalle, configuración y limitaciones en [`apie/README.md`](apie/README.md).
+
 ## Rama y estado
 
 Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades), Fase 3 y Fase 4 entregadas.
