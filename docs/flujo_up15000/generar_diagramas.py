@@ -152,7 +152,7 @@ class Svg:
         r1 = NROWS if r1 is None else r1
         P = C["PITCH"]
         body_h = (r1 - r0) * P
-        leg_h = 150 if legend else 30
+        leg_h = 30
         Ht = TOP + body_h + leg_h
         off = P * r0
         o = [f'<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="{W}" height="{Ht}" viewBox="0 0 {W} {Ht}" font-family="{FONT}">',
@@ -178,16 +178,16 @@ class Svg:
         if cont_next:
             o.append(f'<text x="{C["CX"][2]}" y="{TOP+body_h+22}" font-size="{C["LBL"]}" font-weight="bold" fill="#b03a2e" text-anchor="middle">{escape(cont_next)}</text>')
         if cont_prev:
-            o.append(f'<text x="{C["CX"][2]-16}" y="{TOP+22}" font-size="{C["LBL"]}" font-weight="bold" fill="#b03a2e" text-anchor="end">{escape(cont_prev)}</text>')
+            o.append(f'<text x="{C["CX"][2]+16}" y="{TOP+22}" font-size="{C["LBL"]}" font-weight="bold" fill="#b03a2e" text-anchor="start">{escape(cont_prev)}</text>')
         if legend:
-            o.append(self.legend_svg(TOP + body_h + 14))
+            o.append(self.legend_svg(TOP + (NROWS - 1 - r0) * P + P // 2 - 59))
         o.append("</svg>")
         open(name, "w", encoding="utf-8").write("\n".join(o))
         return W, Ht
 
 
 def electrico(mode):
-    configure(mode, 16)
+    configure(mode, 17)
     d = Svg()
     b = d.box
     op, nx, nw = C["OPW"], C["NCX"], C["NW"]
@@ -203,12 +203,13 @@ def electrico(mode):
     b("s7", 8, 2, "field", "7.6 ESCUCHAR", ["Identificar firma acústica"], w=op)
     b("s8", 9, 2, "crit", "7.7.1 Grabar WAV + Foto", ["FFT → Record → Save"], w=op)
     b("s9", 10, 2, "proc2", "7.7.4 Registrar Temp IR", ["+ datos complementarios"], w=op)
-    b("s10", 11, 1, "proc2", "7.8 Cierre campo", ["Remover SD, levantar área"])
-    b("s11", 12, 0, "proc", "7.9.1 Análisis DMS", ["+ Spectralyzer (FFT)", "Clasificar firma acústica"], h=82)
-    b("dec2", 13, 0, "dec", "¿Arcing", ["detectado?"], shape="dec")
-    b("alert", 13, 1, "crit", "ALERTA INMEDIATA", ["Notificar operación"], w=C["BW"] - (40 if C["W"] < 1500 else 0))
-    b("s12", 14, 0, "doc", "7.9.5 Reporte", ["Anexo 9.3 + SAP PM01", "→ TECO / IW21"], h=82)
-    b("fin", 15, 0, "term_fin", "FIN", shape="term")
+    b("dec3", 11, 2, "dec", "¿Más puntos", ["en la ruta?"], shape="dec")
+    b("s10", 12, 1, "proc2", "7.8 Cierre campo", ["Remover SD, levantar área"])
+    b("s11", 13, 0, "proc", "7.9.1 Análisis DMS", ["+ Spectralyzer (FFT)", "Clasificar firma acústica"], h=82)
+    b("dec2", 14, 0, "dec", "¿Arcing", ["detectado?"], shape="dec")
+    b("alert", 14, 1, "crit", "ALERTA INMEDIATA", ["Notificar operación"], w=C["BW"] - (40 if C["W"] < 1500 else 0))
+    b("s12", 15, 0, "doc", "7.9.5 Reporte", ["Anexo 9.3 + SAP PM01", "→ TECO / IW21"], h=82)
+    b("fin", 16, 0, "term_fin", "FIN", shape="term")
     P = d.pos
     dh = C["DEC"][0] / 2
     for a, c in [("ini", "s1"), ("s1", "s2"), ("s2", "s3"), ("s3", "s4"), ("s4", "s5"), ("s5", "dec")]:
@@ -217,9 +218,13 @@ def electrico(mode):
     d.path(f"M{P['dec'][0]+dh},{P['dec'][5]} H{P['norm'][0]} V{P['norm'][1]}", "No", P["dec"][0] + dh + 24, P["dec"][5] - 10, "#1e8449")
     for a, c in [("s6", "s7"), ("s7", "s8"), ("s8", "s9")]:
         d.down(a, c)
-    m = (P["s9"][2] + P["s10"][1]) / 2
-    d.path(f"M{P['s9'][0]},{P['s9'][2]} V{m} H{P['s10'][0]} V{P['s10'][1]}")
+    d.down("s9", "dec3")
+    m = (P["s9"][2] + P["dec3"][1]) / 2
     d.path(f"M{P['norm'][0]},{P['norm'][2]} V{m} H{P['s9'][0]}", arrow=False)
+    xl = C["LANES"][2][0] - 30  # lazo de regreso al siguiente punto de la ruta
+    yd = P["dec3"][5]
+    d.path(f"M{P['dec3'][0]-dh},{yd} H{xl} V{P['s5'][5]} H{P['s5'][3]}", "Sí", (xl + P['dec3'][0] - dh) / 2, yd - 10, "#b03a2e")
+    d.down("dec3", "s10", "No", P["dec3"][0] + 24, P["dec3"][2] + 18, "#1e8449")
     d.down("s10", "s11"); d.down("s11", "dec2")
     y13 = P["dec2"][5]
     d.path(f"M{P['dec2'][0]+dh},{y13} H{P['alert'][3]}", "Sí", P["dec2"][0] + dh + (14 if C["W"] < 1500 else 22), y13 - 14, "#b03a2e")
@@ -245,17 +250,19 @@ def electrico(mode):
     D(9, "7.7", "Tocar FFT → Record → Confirmar WAV. Tomar foto con cámara integrada.",
       note="NOTA: Fig. 4 — Grabar WAV desde pantalla FFT del analizador espectral")
     D(10, "7.7.4", "Registrar temperatura IR del punto (emisividad según superficie) y datos complementarios.")
-    D(11, "7.8", "Verificar registros, HOME → Remove SD y levantar el área de trabajo.")
-    D(12, "7.9", "Descargar datos. Analizar FFT y Time Waveform para clasificar: Corona / Tracking / Arcing / PD / Conexión floja.",
+    D(11, "", "Decisión: ¿quedan puntos de la ruta por inspeccionar? Sí → regresar a 7.4 con el siguiente punto.",
+      extra="No → 7.8 Cierre en campo (7.8.1: verificar registros guardados).")
+    D(12, "7.8", "HOME → Remove SD y levantar el área de trabajo.")
+    D(13, "7.9", "Descargar datos. Analizar FFT y Time Waveform para clasificar: Corona / Tracking / Arcing / PD / Conexión floja.",
       note="NOTA: Fig. 6 — Espectro FFT en DMS. Fig. 7 — Tendencia dB en Chart tab.")
-    D(13, "", "ARCING = FALLA ACTIVA. Notificar operación. Evaluar desenergización.",
+    D(14, "", "ARCING = FALLA ACTIVA. Notificar operación, evaluar desenergización y permanecer en el área hasta que se decida (7.8.3).",
       crit="Sí → ALERTA INMEDIATA y luego 7.9.5  |  No → 7.9.5 directo")
-    D(14, "7.9.5", "Reporte conforme Anexo 9.3. Registrar en SAP PM01 → TECO; abrir IW21 si hay arcing o PD (7.9.6).")
+    D(15, "7.9.5", "Reporte conforme Anexo 9.3. Registrar en SAP PM01 → TECO; abrir IW21 si hay arcing o PD (7.9.6).")
     return d
 
 
 def dinamico(mode):
-    configure(mode, 15)
+    configure(mode, 16)
     d = Svg()
     b = d.box
     op, op2, nx, nw = C["OPW"], C["OPW2"], C["NCX"], C["NW"]
@@ -270,12 +277,13 @@ def dinamico(mode):
     b("norm", 7, 2, "ok", "SAVE “Normal”", [], w=nw, h=56, cx=nx)
     b("s7", 8, 2, "crit", "7.10.6 Grabar WAV + Foto", ["+ Temp IR + corriente/carga"], w=op)
     b("s8", 9, 2, "field", "7.10.7 Lubricar (si aplica)", ["Dosis pequeñas, vigilar dB"], w=op)
-    b("s9", 10, 1, "proc2", "7.10.8 Cierre campo", ["Remove SD, levantar área"])
-    b("s10", 11, 0, "proc", "7.10.9 Análisis DMS", ["+ Spectralyzer (FFT / onda)", "Correlación vibración / IR"], h=82)
-    b("dec2", 12, 0, "dec", "¿Alarma o", ["Crítico (≥ +12 dB)?"], shape="dec")
-    b("alert", 12, 1, "crit", "AVISO A OPERACIÓN", ["Evaluar paro / intervención"], w=C["BW"] - (20 if C["W"] < 1500 else 0))
-    b("s11", 13, 0, "doc", "7.10.10 Reporte", ["Anexo 9.8 + SAP PM01", "→ TECO / IW21"], h=82)
-    b("fin", 14, 0, "term_fin", "FIN", shape="term")
+    b("dec3", 10, 2, "dec", "¿Más puntos", ["en la ruta?"], shape="dec")
+    b("s9", 11, 1, "proc2", "7.10.8 Cierre campo", ["Remove SD, levantar área"])
+    b("s10", 12, 0, "proc", "7.10.9 Análisis DMS", ["+ Spectralyzer (FFT / onda)", "Correlación vibración / IR"], h=82)
+    b("dec2", 13, 0, "dec", "¿Alarma o", ["Crítico (≥ +12 dB)?"], shape="dec")
+    b("alert", 13, 1, "crit", "AVISO A OPERACIÓN", ["Evaluar paro / intervención"], w=C["BW"] - (20 if C["W"] < 1500 else 0))
+    b("s11", 14, 0, "doc", "7.10.10 Reporte", ["Anexo 9.8 + SAP PM01", "→ TECO / IW21"], h=82)
+    b("fin", 15, 0, "term_fin", "FIN", shape="term")
     P = d.pos
     dh = C["DEC"][0] / 2
     for a, c in [("ini", "s1"), ("s1", "s2"), ("s2", "s3"), ("s3", "s4"), ("s4", "s5"), ("s5", "dec")]:
@@ -284,9 +292,13 @@ def dinamico(mode):
     d.path(f"M{P['dec'][0]+dh},{P['dec'][5]} H{P['norm'][0]} V{P['norm'][1]}", "No", P["dec"][0] + dh + 24, P["dec"][5] - 10, "#1e8449")
     for a, c in [("s6", "s7"), ("s7", "s8")]:
         d.down(a, c)
-    m = (P["s8"][2] + P["s9"][1]) / 2
-    d.path(f"M{P['s8'][0]},{P['s8'][2]} V{m} H{P['s9'][0]} V{P['s9'][1]}")
+    d.down("s8", "dec3")
+    m = (P["s8"][2] + P["dec3"][1]) / 2
     d.path(f"M{P['norm'][0]},{P['norm'][2]} V{m} H{P['s8'][0]}", arrow=False)
+    xl = C["LANES"][2][0] - 30  # lazo de regreso al siguiente punto de la ruta
+    yd = P["dec3"][5]
+    d.path(f"M{P['dec3'][0]-dh},{yd} H{xl} V{P['s5'][5]} H{P['s5'][3]}", "Sí", (xl + P['dec3'][0] - dh) / 2, yd - 10, "#b03a2e")
+    d.down("dec3", "s9", "No", P["dec3"][0] + 24, P["dec3"][2] + 18, "#1e8449")
     d.down("s9", "s10"); d.down("s10", "dec2")
     y = P["dec2"][5]
     d.path(f"M{P['dec2'][0]+dh},{y} H{P['alert'][3]}", "Sí", P["dec2"][0] + dh + (14 if C["W"] < 1500 else 22), y - 14, "#b03a2e")
@@ -311,12 +323,14 @@ def dinamico(mode):
     D(8, "7.10.6", "FFT → Record (≥30 s) → Confirmar WAV. Foto del punto y de la placa. Temperatura IR, RPM, corriente y carga del motor para correlación.")
     D(9, "7.10.7", "Solo si el programa de lubricación lo autoriza: engrasar en dosis pequeñas vigilando dB; detener al volver cerca de la línea base. NO sobrelubricar.",
       extra="Si el dB no baja o aparecen clics/crepitar: no es falta de grasa → Alarma/Crítico.")
-    D(10, "7.10.8", "Verificar registros, HOME → Remove SD, limpiar STM y levantar el área. Informar de inmediato hallazgos Alarma o Crítico.")
-    D(11, "7.10.9", "Descargar datos. Tendencia dB vs línea base. Time Waveform (impactos, factor de cresta) y FFT (BPFO, BPFI, BSF, FTF y múltiplos de 1× RPM). Correlacionar con vibración, IR, MCSA y aceite.",
+    D(10, "", "Decisión: ¿quedan puntos de la ruta por medir? Sí → regresar a 7.10.4 con el siguiente punto.",
+      extra="No → 7.10.8 Cierre en campo.")
+    D(11, "7.10.8", "Verificar registros, HOME → Remove SD, limpiar STM y levantar el área. Informar de inmediato hallazgos Alarma o Crítico.")
+    D(12, "7.10.9", "Descargar datos. Tendencia dB vs línea base. Time Waveform (impactos, factor de cresta) y FFT (BPFO, BPFI, BSF, FTF y múltiplos de 1× RPM). Correlacionar con vibración, IR, MCSA y aceite.",
       note="NOTA: comparar LA vs LOA y contra equipos idénticos")
-    D(12, "", "Alarma (+12 dB) o Crítico (+16 dB): notificar operación y evaluar intervención / paro. Aviso SAP IW21 prioridad 2 (Alarma) o 1 (Crítico).",
+    D(13, "", "Alarma (+12 dB) o Crítico (+16 dB): notificar operación y evaluar intervención / paro. Aviso SAP IW21 prioridad 2 (Alarma) o 1 (Crítico).",
       crit="Sí → AVISO A OPERACIÓN y luego 7.10.10  |  No → 7.10.10 directo")
-    D(13, "7.10.10", "Reporte conforme Anexo 9.8. Registrar en SAP PM01 → TECO. Actualizar línea base si hubo cambio de rodamiento o intervención.")
+    D(14, "7.10.10", "Reporte conforme Anexo 9.8. Registrar en SAP PM01 → TECO. Actualizar línea base si hubo cambio de rodamiento o intervención.")
     return d
 
 
@@ -335,12 +349,12 @@ if __name__ == "__main__":
     sizes = {}
     e = electrico("doc")
     sizes["e1"] = e.assemble("doc/diagrama_8_1_hoja1.svg", E_TITLE, E_SUB + " (hoja 1 de 2)", 0, 8, legend=False,
-                             cont_next="▼ continúa en la hoja 2 de 2")
-    sizes["e2"] = e.assemble("doc/diagrama_8_1_hoja2.svg", E_TITLE, E_SUB + " (hoja 2 de 2)", 8, 16, legend=True,
-                             cont_prev="▲ viene de la hoja 1 de 2")
+                             cont_next="▼ continúa en hoja 2")
+    sizes["e2"] = e.assemble("doc/diagrama_8_1_hoja2.svg", E_TITLE, E_SUB + " (hoja 2 de 2)", 8, 17, legend=True,
+                             cont_prev="▲ viene de hoja 1")
     d = dinamico("doc")
     sizes["d1"] = d.assemble("doc/diagrama_8_2_hoja1.svg", D_TITLE, D_SUB + " (hoja 1 de 2)", 0, 8, legend=False,
-                             cont_next="▼ continúa en la hoja 2 de 2")
-    sizes["d2"] = d.assemble("doc/diagrama_8_2_hoja2.svg", D_TITLE, D_SUB + " (hoja 2 de 2)", 8, 15, legend=True,
-                             cont_prev="▲ viene de la hoja 1 de 2")
+                             cont_next="▼ continúa en hoja 2")
+    sizes["d2"] = d.assemble("doc/diagrama_8_2_hoja2.svg", D_TITLE, D_SUB + " (hoja 2 de 2)", 8, 16, legend=True,
+                             cont_prev="▲ viene de hoja 1")
     print("SVG OK", sizes)
