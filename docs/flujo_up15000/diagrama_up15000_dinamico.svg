@@ -1,0 +1,239 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" width="1920" height="2612" viewBox="0 0 1920 2612" font-family="DejaVu Sans, Liberation Sans, Arial, sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2c3e50"/></marker><clipPath id="cl"><rect x="0" y="140" width="1920" height="2432"/></clipPath></defs>
+<rect width="1920" height="2612" fill="#ffffff"/>
+<text x="960.0" y="40" font-size="24" font-weight="bold" fill="#2c3e50" text-anchor="middle">PROCEDIMIENTO DE ULTRASONIDO DE CONTACTO — EQUIPO DINÁMICO (UP15000 + STM)</text>
+<text x="960.0" y="68" font-size="15" fill="#566573" text-anchor="middle">Diagrama de flujo 8.2 · Actividad 7.10 · Rodamientos, chumaceras y daño mecánico en motores · PEO-006</text>
+<rect x="20" y="140" width="340" height="2468" fill="#f7f9fb" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="20" y="96" width="340" height="44" fill="#2c3e50"/>
+<text x="190.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">ING. ESPECIALISTA</text>
+<rect x="360" y="140" width="340" height="2468" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="360" y="96" width="340" height="44" fill="#2c3e50"/>
+<text x="530.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">CABO ELECTRICISTA</text>
+<rect x="700" y="140" width="500" height="2468" fill="#f7f9fb" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="700" y="96" width="500" height="44" fill="#2c3e50"/>
+<text x="950.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">OPERARIO ESPEC.</text>
+<rect x="1200" y="140" width="700" height="2468" fill="#fbfcfd" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1200" y="96" width="700" height="44" fill="#2c3e50"/>
+<text x="1550.0" y="124" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">DESCRIPCIÓN</text>
+<line x1="20" y1="268" x2="1900" y2="268" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="396" x2="1900" y2="396" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="524" x2="1900" y2="524" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="652" x2="1900" y2="652" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="780" x2="1900" y2="780" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="908" x2="1900" y2="908" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1036" x2="1900" y2="1036" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1164" x2="1900" y2="1164" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1292" x2="1900" y2="1292" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1420" x2="1900" y2="1420" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1548" x2="1900" y2="1548" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1676" x2="1900" y2="1676" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1804" x2="1900" y2="1804" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="1932" x2="1900" y2="1932" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="2060" x2="1900" y2="2060" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="2188" x2="1900" y2="2188" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="2316" x2="1900" y2="2316" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<line x1="20" y1="2444" x2="1900" y2="2444" stroke="#e5e9ed" stroke-width="1" stroke-dasharray="4 5"/>
+<g clip-path="url(#cl)"><g transform="translate(0,0)">
+<rect x="95.0" y="181.0" width="190" height="46" rx="23" fill="#27ae60" stroke="#1e8449" stroke-width="2.5"/>
+<text x="190" y="210" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">INICIO</text>
+<rect x="55.0" y="296.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="327" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.1 Orden SAP + Ruta</text>
+<text x="190" y="346" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">PM01 + ruta Mechanical (DMS)</text>
+<rect x="55.0" y="424.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="455" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.2 Configurar UP15000</text>
+<text x="190" y="474" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">STM + Bearing + 38 kHz</text>
+<rect x="395.0" y="552.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="583" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.3 PTP + AST</text>
+<text x="530" y="602" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Partes giratorias / Tipo A</text>
+<rect x="395.0" y="680.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="711" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.3 Verificar equipo</text>
+<text x="530" y="730" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">En operación, guardas instaladas</text>
+<rect x="710.0" y="808.0" width="300" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="860" y="829" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.4 MEDIR POR CONTACTO</text>
+<text x="860" y="848" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">STM en LA / LOA</text>
+<text x="860" y="867" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Presión y punto constantes</text>
+<polygon points="860,926.0 990.0,972 860,1018.0 730.0,972" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
+<text x="860" y="967" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Δ dB ≥ +8 o</text>
+<text x="860" y="986" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">sonido anormal?</text>
+<rect x="735.0" y="1064.0" width="250" height="72" rx="10" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5"/>
+<text x="860" y="1095" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.5 ESCUCHAR</text>
+<text x="860" y="1114" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Clasificar nivel y sonido</text>
+<rect x="1015.0" y="1072.0" width="170" height="56" rx="10" fill="#e8f8f0" stroke="#27ae60" stroke-width="2.5"/>
+<text x="1100" y="1105" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">SAVE “Normal”</text>
+<rect x="735.0" y="1192.0" width="250" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="860" y="1223" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.6 Grabar WAV + Foto</text>
+<text x="860" y="1242" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">+ Temp IR + corriente/carga</text>
+<rect x="735.0" y="1320.0" width="250" height="72" rx="10" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5"/>
+<text x="860" y="1351" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.7 Lubricar (si aplica)</text>
+<text x="860" y="1370" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Dosis pequeñas, vigilar dB</text>
+<polygon points="860,1438.0 990.0,1484 860,1530.0 730.0,1484" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
+<text x="860" y="1479" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Más puntos</text>
+<text x="860" y="1498" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">en la ruta?</text>
+<rect x="735.0" y="1576.0" width="250" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="860" y="1607" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.8.1 Verificar registros</text>
+<text x="860" y="1626" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Guardados en la ruta</text>
+<rect x="395.0" y="1704.0" width="270" height="72" rx="10" fill="#eaf2f8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="530" y="1735" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.8 Cierre campo</text>
+<text x="530" y="1754" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Remove SD, levantar área</text>
+<rect x="55.0" y="1827.0" width="270" height="82" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="1853" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.9 Análisis DMS</text>
+<text x="190" y="1872" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">+ Spectralyzer (FFT / onda)</text>
+<text x="190" y="1891" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Correlación vibración / IR</text>
+<path d="M55.0,1960.0 H325.0 V2024.0 Q257.5,2040.0 190,2028.0 T55.0,2028.0 Z" fill="#fcf3cf" stroke="#f5b041" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="190" y="1991" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.10.1 Reporte</text>
+<text x="190" y="2010" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Anexo 9.8</text>
+<polygon points="190,2078.0 320.0,2124 190,2170.0 60.0,2124" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
+<text x="190" y="2119" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Alarma o</text>
+<text x="190" y="2138" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Crítico (≥ +12 dB)?</text>
+<rect x="55.0" y="2216.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="2247" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.10.2 Abrir aviso IW21</text>
+<text x="190" y="2266" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Alarma P2 / Crítico P1</text>
+<rect x="395.0" y="2216.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
+<text x="530" y="2247" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">AVISO A OPERACIÓN</text>
+<text x="530" y="2266" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Evaluar paro / intervención</text>
+<rect x="55.0" y="2344.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
+<text x="190" y="2375" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.10.2 Registrar TECO</text>
+<text x="190" y="2394" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">SAP PM01</text>
+<rect x="95.0" y="2485.0" width="190" height="46" rx="23" fill="#e74c3c" stroke="#b03a2e" stroke-width="2.5"/>
+<text x="190" y="2514" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle" font-style="normal">FIN</text>
+<circle cx="380.0" cy="2124" r="29" fill="#fff" stroke="#2c3e50" stroke-width="2.2"/>
+<text x="380.0" y="2128" font-size="9.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.10.2</text>
+<circle cx="371.0" cy="2380" r="29" fill="#fff" stroke="#2c3e50" stroke-width="2.2"/>
+<text x="371.0" y="2384" font-size="9.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.10.10.2</text>
+<path d="M190,227.0 V296.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,368.0 V424.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,496.0 V524.0 H530 V552.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,624.0 V680.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,752.0 V780.0 H860 V808.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,880.0 V926.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1018.0 V1064.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="838" y="1040.0" font-size="15" font-weight="bold" fill="#b03a2e" text-anchor="middle" font-style="normal">Sí</text>
+<path d="M990.0,972 H1100 V1072.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="1014.0" y="962" font-size="15" font-weight="bold" fill="#1e8449" text-anchor="middle" font-style="normal">No</text>
+<path d="M860,1136.0 V1192.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1264.0 V1320.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M860,1392.0 V1438.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M1100,1128.0 V1415.0 H860" fill="none" stroke="#2c3e50" stroke-width="2.4" stroke-linejoin="round"/>
+<path d="M730.0,1484 H670 V844 H710.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="700.0" y="1474" font-size="15" font-weight="bold" fill="#b03a2e" text-anchor="middle" font-style="normal">Sí</text>
+<path d="M860,1530.0 V1576.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="884" y="1548.0" font-size="15" font-weight="bold" fill="#1e8449" text-anchor="middle" font-style="normal">No</text>
+<path d="M860,1648.0 V1676.0 H530 V1704.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,1776.0 V1801.5 H190 V1827.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,1909.0 V1960.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,2032.0 V2078.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,2170.0 V2216.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="168" y="2188.0" font-size="15" font-weight="bold" fill="#b03a2e" text-anchor="middle" font-style="normal">Sí</text>
+<path d="M325.0,2252 H395.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M530,2288.0 V2316.0 H190 V2344.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M320.0,2124 H351.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<text x="336.0" y="2114" font-size="15" font-weight="bold" fill="#1e8449" text-anchor="middle" font-style="normal">No</text>
+<path d="M342.0,2380 H325.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<path d="M190,2416.0 V2485.0" fill="none" stroke="#2c3e50" stroke-width="2.4" marker-end="url(#ah)" stroke-linejoin="round"/>
+<rect x="1215" y="289.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="289.5" width="7" height="85" rx="3" fill="#2e86c1"/>
+<text x="1233" y="313.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.1  </tspan>Emitir orden SAP PM01 con TAG, RPM y potencia. Preparar ruta</text>
+<text x="1233" y="334.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Mechanical en DMS: puntos por rodamiento/chumacera, geometría, línea</text>
+<text x="1233" y="355.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">base y alarmas (+8 / +12 / +16 dB).</text>
+<rect x="1215" y="407.0" width="670" height="106" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="407.0" width="7" height="106" rx="3" fill="#2e86c1"/>
+<text x="1233" y="430.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.2  </tspan>SD card → Encender → Instalar módulo STM (contacto) → Setup:</text>
+<text x="1233" y="451.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Application=Bearing, 38 kHz, Instrument Setup=Auto → audífonos.</text>
+<text x="1233" y="472.75" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: usar SIEMPRE el mismo ajuste de sensibilidad para comparar contra la línea</text>
+<text x="1233" y="493.75" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">base</text>
+<rect x="1215" y="535.0" width="670" height="106" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="535.0" width="7" height="106" rx="3" fill="#e74c3c"/>
+<text x="1233" y="558.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.3  </tspan>Elaborar PTP y AST (100% de firmas) incluyendo partes</text>
+<text x="1233" y="579.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">giratorias, superficies calientes, ruido y trabajo en altura [TIPO A].</text>
+<text x="1233" y="600.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">ACTIVIDAD CRÍTICA — Prevención de caídas DPI-SSIPA-PCS-0105 en</text>
+<text x="1233" y="621.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">Tipo A</text>
+<rect x="1215" y="663.0" width="670" height="106" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="663.0" width="7" height="106" rx="3" fill="#e74c3c"/>
+<text x="1233" y="686.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.3  </tspan>Confirmar equipo EN OPERACIÓN estable (carga y velocidad como</text>
+<text x="1233" y="707.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">la línea base), guardas instaladas y puntos de contacto limpios.</text>
+<text x="1233" y="728.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">NUNCA retirar guardas ni tocar flechas, acoplamientos o partes</text>
+<text x="1233" y="749.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">giratorias</text>
+<rect x="1215" y="780.5" width="670" height="127" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="780.5" width="7" height="127" rx="3" fill="#2e86c1"/>
+<text x="1233" y="804.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.4  </tspan>Apoyar el STM perpendicular, cerca de la zona de carga del</text>
+<text x="1233" y="825.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">rodamiento, con presión constante. Esperar ≥5 s, leer dB y escuchar</text>
+<text x="1233" y="846.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">≥15 s en cada punto.</text>
+<text x="1233" y="867.25" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: medir LA y LOA del motor y los rodamientos/chumaceras del equipo acoplado;</text>
+<text x="1233" y="888.25" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">punto de referencia en estructura</text>
+<rect x="1215" y="929.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="929.5" width="7" height="85" rx="3" fill="#2e86c1"/>
+<text x="1233" y="953.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿Δ dB ≥ +8 sobre la línea base o sonido anormal? Sí →</text>
+<text x="1233" y="974.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">7.10.5.</text>
+<text x="1233" y="995.25" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">No → guardar “Normal” y pasar a la decisión de más puntos.</text>
+<rect x="1215" y="1036.5" width="670" height="127" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1036.5" width="7" height="127" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1060.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.5  </tspan>Clasificar por Δ dB y por sonido: Normal (&lt;+8) | Alerta (+8) |</text>
+<text x="1233" y="1081.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Alarma (+12) | Crítico (+16). Distinguir lubricación, falla de</text>
+<text x="1233" y="1102.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">pista/elemento rodante, chumacera y daño mecánico.</text>
+<text x="1233" y="1123.25" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: la calidad del sonido es la herramienta PRIMARIA; el dB solo no clasifica</text>
+<text x="1233" y="1144.25" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">la falla (Anexo 9.9)</text>
+<rect x="1215" y="1185.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1185.5" width="7" height="85" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1209.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.6  </tspan>FFT → Record (≥30 s) → Confirmar WAV. Foto del punto y de la</text>
+<text x="1233" y="1230.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">placa. Temperatura IR, RPM, corriente y carga del motor para</text>
+<text x="1233" y="1251.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">correlación.</text>
+<rect x="1215" y="1292.5" width="670" height="127" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1292.5" width="7" height="127" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1316.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.7  </tspan>Solo si el programa de lubricación lo autoriza: engrasar en</text>
+<text x="1233" y="1337.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">dosis pequeñas vigilando dB; detener al volver cerca de la línea base.</text>
+<text x="1233" y="1358.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">NO sobrelubricar.</text>
+<text x="1233" y="1379.25" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">Si el dB no baja o aparecen clics/crepitar: no es falta de grasa →</text>
+<text x="1233" y="1400.25" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">Alarma/Crítico.</text>
+<rect x="1215" y="1441.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1441.5" width="7" height="85" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1465.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿quedan puntos de la ruta por medir? Sí → regresar a 7.10.4</text>
+<text x="1233" y="1486.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">con el siguiente punto.</text>
+<text x="1233" y="1507.25" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">No → 7.10.8.1 Verificar registros guardados.</text>
+<rect x="1215" y="1580.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1580.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1603.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.8.1  </tspan>Verificar los registros guardados al concluir todos los</text>
+<text x="1233" y="1624.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">puntos de la ruta.</text>
+<rect x="1215" y="1708.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1708.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1731.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.8  </tspan>HOME → Remove SD, limpiar STM y levantar el área. Informar de</text>
+<text x="1233" y="1752.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">inmediato hallazgos Alarma o Crítico (7.10.8.3).</text>
+<rect x="1215" y="1815.0" width="670" height="106" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1815.0" width="7" height="106" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1838.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.9  </tspan>Descargar datos. Tendencia dB vs línea base. Time Waveform</text>
+<text x="1233" y="1859.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">(impactos, factor de cresta) y FFT (BPFO, BPFI, BSF, FTF y múltiplos</text>
+<text x="1233" y="1880.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">de 1× RPM). Correlacionar con vibración, IR, MCSA y aceite.</text>
+<text x="1233" y="1901.75" font-size="12.5" font-weight="normal" fill="#566573" text-anchor="start" font-style="italic">NOTA: comparar LA vs LOA y contra equipos idénticos</text>
+<rect x="1215" y="1974.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1974.5" width="7" height="43" rx="3" fill="#2e86c1"/>
+<text x="1233" y="1998.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.10.1  </tspan>Emitir el reporte de inspección conforme al Anexo 9.8.</text>
+<rect x="1215" y="2081.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="2081.5" width="7" height="85" rx="3" fill="#e74c3c"/>
+<text x="1233" y="2105.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿nivel Alarma (+12 dB) o Crítico (+16 dB)? Sí → 7.10.10.2</text>
+<text x="1233" y="2126.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Abrir aviso IW21; No → 7.10.10.2 Registrar TECO.</text>
+<text x="1233" y="2147.25" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">Crítico: notificar a operación y evaluar paro</text>
+<rect x="1215" y="2220.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="2220.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1233" y="2243.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.10.2  </tspan>Abrir aviso IW21 (Alarma = prioridad 2; Crítico = prioridad</text>
+<text x="1233" y="2264.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">1). El Cabo notifica a operación y se evalúa paro o intervención.</text>
+<rect x="1215" y="2348.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="2348.0" width="7" height="64" rx="3" fill="#2e86c1"/>
+<text x="1233" y="2371.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.10.10.2  </tspan>Registrar en SAP PM01 → TECO. Actualizar la línea base si</text>
+<text x="1233" y="2392.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">hubo cambio de rodamiento o intervención.</text>
+</g></g>
+<rect x="1215" y="2448" width="670" height="122" rx="10" fill="#f8f9f9" stroke="#aeb6bf" stroke-width="1.4"/>
+<text x="1550.0" y="2472" font-size="14.5" font-weight="bold" fill="#2c3e50" text-anchor="middle">SIMBOLOGÍA (PSGI-02, Anexo 9.14)</text>
+<rect x="1237.0" y="2489" width="30" height="18" rx="9" fill="#27ae60" stroke="#1e8449" stroke-width="2"/>
+<text x="1277.0" y="2503" font-size="13.5" fill="#2c3e50">Inicio / Terminación</text>
+<rect x="1237.0" y="2515" width="30" height="18" rx="4" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2"/>
+<text x="1277.0" y="2529" font-size="13.5" fill="#2c3e50">Actividad</text>
+<polygon points="1252.0,2539 1267.0,2550 1252.0,2561 1237.0,2550" fill="#fef9e7" stroke="#f5a623" stroke-width="2"/>
+<text x="1277.0" y="2555" font-size="13.5" fill="#2c3e50">Decisión</text>
+<path d="M1460.3333333333333,2489 H1490.3333333333333 V2503 Q1482.3333333333333,2511 1475.3333333333333,2503 T1460.3333333333333,2503 Z" fill="#fcf3cf" stroke="#f5b041" stroke-width="2"/>
+<text x="1500.3333333333333" y="2503" font-size="13.5" fill="#2c3e50">Documento / Registro</text>
+<circle cx="1475.3333333333333" cy="2524" r="10" fill="#fff" stroke="#2c3e50" stroke-width="2"/>
+<text x="1500.3333333333333" y="2529" font-size="13.5" fill="#2c3e50">Conector de actividades</text>
+<path d="M1464.3333333333333,2540 H1486.3333333333333 V2554 L1475.3333333333333,2561 L1464.3333333333333,2554 Z" fill="#fff" stroke="#2c3e50" stroke-width="2"/>
+<text x="1500.3333333333333" y="2555" font-size="13.5" fill="#2c3e50">Conector de hoja</text>
+<rect x="1683.6666666666667" y="2489" width="30" height="18" rx="4" fill="#fadbd8" stroke="#e74c3c" stroke-width="2"/>
+<text x="1723.6666666666667" y="2503" font-size="13.5" fill="#2c3e50">Actividad crítica SSPA</text>
+</svg>
