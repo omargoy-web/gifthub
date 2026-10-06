@@ -87,11 +87,11 @@
 <text x="190" y="2119" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.9.5 Reporte</text>
 <text x="190" y="2138" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Anexo 9.3</text>
 <polygon points="190,2206.0 320.0,2252 190,2298.0 60.0,2252" fill="#fef9e7" stroke="#f5a623" stroke-width="2.5"/>
-<text x="190" y="2247" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Arcing o PD</text>
-<text x="190" y="2266" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">detectado?</text>
+<text x="190" y="2247" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">¿Arcing, PD o</text>
+<text x="190" y="2266" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">fuga de SF₆?</text>
 <rect x="55.0" y="2344.0" width="270" height="72" rx="10" fill="#d6eaf8" stroke="#2e86c1" stroke-width="2.5"/>
 <text x="190" y="2375" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">7.9.6 Abrir aviso IW21</text>
-<text x="190" y="2394" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Arcing = prioridad 1</text>
+<text x="190" y="2394" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Arcing P1 / PD, SF₆ P2</text>
 <rect x="395.0" y="2344.0" width="270" height="72" rx="10" fill="#fadbd8" stroke="#e74c3c" stroke-width="2.5"/>
 <text x="530" y="2375" font-size="15.5" font-weight="bold" fill="#2c3e50" text-anchor="middle" font-style="normal">ALERTA INMEDIATA</text>
 <text x="530" y="2394" font-size="13.5" font-weight="normal" fill="#2c3e50" text-anchor="middle" font-style="normal">Notificar operación</text>
@@ -169,12 +169,14 @@
 <text x="1233" y="1091.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Aislar la fuente exacta del sonido. Mantener distancia segura.</text>
 <text x="1233" y="1112.75" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">Rama No: SAVE “Normal” (sin hallazgo) y continuar en la decisión de</text>
 <text x="1233" y="1133.75" font-size="13.5" font-weight="normal" fill="#1e8449" text-anchor="start" font-style="normal">más puntos.</text>
-<rect x="1215" y="1175.0" width="670" height="106" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
-<rect x="1215" y="1175.0" width="7" height="106" rx="3" fill="#e74c3c"/>
-<text x="1233" y="1198.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.6  </tspan>Corona = zumbido estable | Tracking = crepitar | Arcing =</text>
-<text x="1233" y="1219.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">estallidos | PD = pulsos rítmicos | Conexión floja = zumbido a 120 Hz.</text>
-<text x="1233" y="1240.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">ARCING: reportarlo de inmediato a operación; NO abrir el</text>
-<text x="1233" y="1261.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">gabinete</text>
+<rect x="1215" y="1154.0" width="670" height="148" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
+<rect x="1215" y="1154.0" width="7" height="148" rx="3" fill="#e74c3c"/>
+<text x="1233" y="1177.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.6  </tspan>Corona = zumbido estable | Tracking = crepitar | Arcing =</text>
+<text x="1233" y="1198.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">estallidos | PD = pulsos rítmicos | Conexión floja = zumbido a 120 Hz</text>
+<text x="1233" y="1219.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">| Fuga de SF₆ = siseo continuo localizado (confirmar con detector,</text>
+<text x="1233" y="1240.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">7.6.2 a 7.6.4).</text>
+<text x="1233" y="1261.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">ARCING: reportarlo de inmediato a operación; NO abrir el</text>
+<text x="1233" y="1282.75" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">gabinete</text>
 <rect x="1215" y="1313.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
 <rect x="1215" y="1313.5" width="7" height="85" rx="3" fill="#2e86c1"/>
 <text x="1233" y="1337.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.7  </tspan>Tocar FFT → Record → Confirmar WAV. Tomar foto con cámara</text>
@@ -207,13 +209,13 @@
 <text x="1233" y="2126.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.9.5  </tspan>Emitir el reporte de inspección conforme al Anexo 9.3.</text>
 <rect x="1215" y="2209.5" width="670" height="85" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
 <rect x="1215" y="2209.5" width="7" height="85" rx="3" fill="#e74c3c"/>
-<text x="1233" y="2233.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿se detectó arcing o descarga parcial? Sí → 7.9.6 Abrir</text>
-<text x="1233" y="2254.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">aviso IW21; No → 7.9.6 Registrar TECO.</text>
+<text x="1233" y="2233.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Decisión: ¿se detectó arcing, descarga parcial o fuga de SF₆? Sí →</text>
+<text x="1233" y="2254.25" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">7.9.6 Abrir aviso IW21; No → 7.9.6 Registrar TECO.</text>
 <text x="1233" y="2275.25" font-size="13.5" font-weight="bold" fill="#b03a2e" text-anchor="start" font-style="normal">ARCING = FALLA ACTIVA. Evaluar desenergización con operación</text>
 <rect x="1215" y="2348.0" width="670" height="64" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
 <rect x="1215" y="2348.0" width="7" height="64" rx="3" fill="#2e86c1"/>
-<text x="1233" y="2371.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.9.6  </tspan>Abrir aviso IW21 (arcing = prioridad 1; PD = prioridad 2). El</text>
-<text x="1233" y="2392.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">Cabo da la ALERTA INMEDIATA a operación.</text>
+<text x="1233" y="2371.75" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.9.6  </tspan>Abrir aviso IW21 (arcing = prioridad 1; PD y fuga de SF₆ =</text>
+<text x="1233" y="2392.75" font-size="14.5" font-weight="normal" fill="#1b2631" text-anchor="start" font-style="normal">prioridad 2). El Cabo da la ALERTA INMEDIATA a operación.</text>
 <rect x="1215" y="2486.5" width="670" height="43" rx="8" fill="#ffffff" stroke="#d5dbe0" stroke-width="1.2"/>
 <rect x="1215" y="2486.5" width="7" height="43" rx="3" fill="#2e86c1"/>
 <text x="1233" y="2510.25" font-size="14.5" fill="#1b2631"><tspan font-weight="bold">7.9.6  </tspan>Registrar en SAP PM01 → TECO.</text>

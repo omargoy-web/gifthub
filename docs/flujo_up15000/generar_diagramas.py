@@ -244,8 +244,8 @@ def electrico(mode):
     b("s10", 13, 1, "proc2", "7.8.2 Cierre campo", ["Remover SD, levantar área"])
     b("s11", 14, 0, "proc", "7.9.1 Análisis DMS", ["+ Spectralyzer (FFT)", "Clasificar firma acústica"], h=82)
     b("s12", 15, 0, "doc", "7.9.5 Reporte", ["Anexo 9.3"], h=72)
-    b("dec2", 16, 0, "dec", "¿Arcing o PD", ["detectado?"], shape="dec")
-    b("iw", 17, 0, "proc", "7.9.6 Abrir aviso IW21", ["Arcing = prioridad 1"])
+    b("dec2", 16, 0, "dec", "¿Arcing, PD o", ["fuga de SF₆?"], shape="dec")
+    b("iw", 17, 0, "proc", "7.9.6 Abrir aviso IW21", ["Arcing P1 / PD, SF₆ P2"])
     b("alert", 17, 1, "crit", "ALERTA INMEDIATA", ["Notificar operación"], w=C["BW"] - (40 if C["W"] < 1500 else 0))
     b("s13", 18, 0, "proc", "7.9.6 Registrar TECO", ["SAP PM01"])
     b("fin", 19, 0, "term_fin", "FIN", shape="term")
@@ -283,7 +283,7 @@ def electrico(mode):
       extra="No → guardar “Normal” y pasar a la decisión de más puntos.")
     D(7, "7.5", "Reducir sensibilidad progresivamente. Usar rubber focusing probe. Aislar la fuente exacta del sonido. Mantener distancia segura.",
       extra="Rama No: SAVE “Normal” (sin hallazgo) y continuar en la decisión de más puntos.")
-    D(8, "7.6", "Corona = zumbido estable | Tracking = crepitar | Arcing = estallidos | PD = pulsos rítmicos | Conexión floja = zumbido a 120 Hz.",
+    D(8, "7.6", "Corona = zumbido estable | Tracking = crepitar | Arcing = estallidos | PD = pulsos rítmicos | Conexión floja = zumbido a 120 Hz | Fuga de SF₆ = siseo continuo localizado (confirmar con detector, 7.6.2 a 7.6.4).",
       crit="ARCING: reportarlo de inmediato a operación; NO abrir el gabinete")
     D(9, "7.7", "Tocar FFT → Record → Confirmar WAV. Tomar foto con cámara integrada.",
       note="NOTA: Fig. 4 — Grabar WAV desde pantalla FFT del analizador espectral")
@@ -295,9 +295,9 @@ def electrico(mode):
     D(14, "7.9", "Descargar datos. Analizar FFT y Time Waveform para clasificar: Corona / Tracking / Arcing / PD / Conexión floja.",
       note="NOTA: Fig. 6 — Espectro FFT en DMS. Fig. 7 — Tendencia dB en Chart tab.")
     D(15, "7.9.5", "Emitir el reporte de inspección conforme al Anexo 9.3.")
-    D(16, "", "Decisión: ¿se detectó arcing o descarga parcial? Sí → 7.9.6 Abrir aviso IW21; No → 7.9.6 Registrar TECO.",
+    D(16, "", "Decisión: ¿se detectó arcing, descarga parcial o fuga de SF₆? Sí → 7.9.6 Abrir aviso IW21; No → 7.9.6 Registrar TECO.",
       crit="ARCING = FALLA ACTIVA. Evaluar desenergización con operación")
-    D(17, "7.9.6", "Abrir aviso IW21 (arcing = prioridad 1; PD = prioridad 2). El Cabo da la ALERTA INMEDIATA a operación.")
+    D(17, "7.9.6", "Abrir aviso IW21 (arcing = prioridad 1; PD y fuga de SF₆ = prioridad 2). El Cabo da la ALERTA INMEDIATA a operación.")
     D(18, "7.9.6", "Registrar en SAP PM01 → TECO.")
     return d
 
