@@ -231,6 +231,10 @@ Archivo **único y autocontenido** (2 MB; sin CDN ni peticiones de red, CSP `con
 
 **Base real incluida:** 94 reportes PDF de termografía (Drive «json de temperatura 08102026», 20-jul → 8-oct-2026) → 1,118 activos, ~9,800 lecturas válidas y 1,214 inspecciones. Se omiten lecturas imposibles (<12 °C o >250/300 °C) por error de captura del reporte; las >150 °C en conexiones se marcan «verificar lectura». La mayoría de los equipos tiene **una sola visita**: las tendencias aparecen conforme se agregan datos.
 
+**Corriente y tensión por fase:** además de la temperatura, cada recorrido guarda la corriente (L1/L2/L3; transformadores: primaria/secundaria) y la tensión por fase (solo tableros; los demás formatos traen únicamente la nominal de placa). Se muestran en tarjetas, ficha (con desbalance de I y V, NEMA MG-1), historial de lecturas, gráficas de tendencia ligadas al zoom (con banda ±10 % NMX-J-098) y como eje derecho de la gráfica de temperatura.
+
+**Calidad de datos:** al importar, las celdas en blanco y los valores imposibles por error de tecleo se detectan y se registran (pestaña «Datos y carga» → «Calidad de datos», con exportación a CSV). Reglas: temperatura 12–250 °C (300 °C trafos); tensión 100–15,000 V y cercana a un nivel estándar, y dentro de ±25 % de las otras fases; corriente 0–20,000 A y sin desviarse >4× / <0.25× de la mediana de sus fases; 0 V se descarta si circula corriente (campo sin capturar) y se conserva marcado «revisar» si tampoco hay corriente (barra desenergizada); >150 °C en conexiones se conserva marcado «verificar lectura».
+
 **Actualizar la base día a día** (pestaña «Datos y carga»):
 - Arrastrar **PDF** de termografía (tableros ANSI C37.20, transformadores secos NMX-J-351, arrancadores POE-009) o **JSON** → vista previa con «equipos / total del resumen», lecturas nuevas y duplicadas → «Agregar a la base». Re-subir un reporte no duplica datos (llave TAG + fecha + punto).
 - **Captura diaria manual** por activo (o activo nuevo) con T ambiente, corriente, temperaturas por punto y observaciones; clasifica severidad y crea la inspección.
