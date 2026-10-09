@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-ELE · Salud térmica de activos eléctricos</title>
+<style>
+:root{
+  --guinda:#691C32;--verde:#10312B;--verde2:#004731;--dorado:#BC955C;--gris:#6F7271;--gris2:#4F4F4F;
+  --bg:#F4F1EA;--surface:#FFFFFF;--surface2:#EEE9DF;--text:#1C2220;--muted:#59605D;--line:#D8D2C4;
+  --accent:#691C32;--accent-ink:#FFFFFF;--link:#691C32;--grid:rgba(0,0,0,.09);--axis:#59605D;
+  --ok:#1B7A4B;--ok-bg:#E3F2EA;--warn:#8A5A00;--warn-bg:#FFF1CC;--warn-fill:#E8A800;--crit:#B3202E;--crit-bg:#FBE3E5;--oos:#41627F;--oos-bg:#E2EBF3;
+  --shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.06);
+}
+:root[data-theme="dark"]{
+  --bg:#0C1311;--surface:#15201D;--surface2:#1C2B27;--text:#E9EEEB;--muted:#9BA9A3;--line:#2B3C37;
+  --accent:#BC955C;--accent-ink:#1A1306;--link:#D8B27A;--grid:rgba(255,255,255,.08);--axis:#9BA9A3;
+  --ok:#4CC38A;--ok-bg:rgba(76,195,138,.14);--warn:#F2B21B;--warn-bg:rgba(242,178,27,.15);--warn-fill:#F2B21B;--crit:#FF7A7A;--crit-bg:rgba(255,122,122,.15);--oos:#86AACC;--oos-bg:rgba(134,170,204,.15);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;min-height:100vh}
+button,select,input,textarea{font:inherit;color:inherit}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--dorado);outline-offset:2px}
+.top{background:linear-gradient(90deg,var(--guinda),#4d1424);color:#fff;border-bottom:3px solid var(--dorado);padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.top h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.2px}
+.top .sub{font-size:12px;opacity:.85}
+.top .grow{flex:1;min-width:240px}
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--dorado)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.4)}
+.top .btn.ghost:hover{background:rgba(255,255,255,.12)}
+.tabs{display:flex;gap:2px;background:var(--verde);padding:0 16px;overflow-x:auto;border-bottom:1px solid #000}
+.tabs button{background:none;border:0;color:#cfe0da;padding:11px 16px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-size:13.5px}
+.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:var(--dorado);font-weight:600}
+.tabs button:hover{color:#fff}
+main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+.view[hidden]{display:none}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.bar select,.bar input[type=text],.bar input[type=number],.bar input[type=datetime-local]{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:120px}
+.bar .sp{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:var(--shadow);border-left:4px solid var(--gris)}
+.kpi b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.kpi.ok{border-left-color:var(--ok)}.kpi.warn{border-left-color:var(--warn-fill)}.kpi.crit{border-left-color:var(--crit)}.kpi.oos{border-left-color:var(--oos)}.kpi.gold{border-left-color:var(--dorado)}
+.grid2{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(280px,1fr);gap:14px;align-items:start}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:var(--shadow);cursor:pointer;border-top:4px solid var(--gris);display:flex;flex-direction:column;gap:6px}
+.card:hover{border-color:var(--dorado)}
+.card.s0{border-top-color:var(--ok)}.card.s1{border-top-color:var(--warn-fill)}.card.s2{border-top-color:var(--crit)}.card.s3{border-top-color:var(--oos)}
+.card .h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card .tag{font-weight:700;font-size:15px;word-break:break-word}
+.card .meta{font-size:12px;color:var(--muted)}
+.card .mx{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:12px}
+.card .mx b{font-variant-numeric:tabular-nums;font-size:13px}
+.card .mx span{color:var(--muted)}
+.card svg{width:100%;height:42px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.chip.c0{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.chip.c1{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-fill)}
+.chip.c2{background:var(--crit-bg);color:var(--crit);border-color:var(--crit)}
+.chip.c3{background:var(--oos-bg);color:var(--oos);border-color:var(--oos)}
+.badge{font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);text-transform:uppercase;letter-spacing:.3px}
+.badge.real{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.badge.sim{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-fill)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:12px}
+.panel h2,.panel h3{margin:0 0 8px;font-size:14px}
+.panel h3{font-size:13px}
+.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto}
+.alerts li{display:flex;gap:8px;padding:7px 8px;border-radius:6px;background:var(--surface2);cursor:pointer;font-size:12.5px;align-items:flex-start}
+.alerts li:hover{outline:1px solid var(--dorado)}
+.alerts .t{font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;background:var(--surface2);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface2)}
+tr.sel td{background:var(--surface2);outline:1px solid var(--dorado)}
+.tw{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
+.chartbox{position:relative;height:300px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);margin-bottom:12px}
+.chartbox.tall{height:340px}.chartbox.short{height:190px}
+.chartbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.chartbox .ttl{position:absolute;top:6px;left:62px;font-size:12px;font-weight:600;color:var(--muted);pointer-events:none;z-index:2}
+.chartbox .zb{position:absolute;top:4px;right:6px;display:flex;gap:4px;z-index:2}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--text);border:1px solid var(--dorado);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:var(--shadow);z-index:5;white-space:nowrap;display:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 6px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.checks{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px}
+.checks label{display:flex;gap:4px;align-items:center;cursor:pointer;color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.stat b{font-size:18px;font-variant-numeric:tabular-nums}
+.stat small{display:block;color:var(--muted);font-size:11px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:var(--bg);border-left:3px solid var(--dorado);box-shadow:-8px 0 30px rgba(0,0,0,.35);z-index:50;overflow:auto;padding:0 16px 24px;transform:translateX(105%);transition:transform .2s}
+.drawer.open{transform:none}
+.drawer .dh{position:sticky;top:0;background:var(--guinda);color:#fff;margin:0 -16px 12px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;z-index:2}
+.drawer .dh h2{margin:0;font-size:16px}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:3px 10px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.tl{display:flex;gap:1px;height:20px;margin:4px 0}
+.tl span{flex:1;border-radius:1px;min-width:1px}
+.tl .t0{background:var(--ok)}.tl .t1{background:var(--warn-fill)}.tl .t2{background:var(--crit)}.tl .t3{background:var(--oos)}
+.drop{border:2px dashed var(--dorado);border-radius:12px;padding:30px 16px;text-align:center;background:var(--surface);cursor:pointer}
+.drop.over{background:var(--surface2);border-style:solid}
+.drop b{font-size:15px}
+#dropOverlay{position:fixed;inset:0;background:rgba(105,28,50,.85);color:#fff;display:none;align-items:center;justify-content:center;font-size:24px;font-weight:700;z-index:99;pointer-events:none}
+pre.code{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;max-height:340px}
+.log div{padding:3px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.warnbox{background:var(--warn-bg);border:1px solid var(--warn-fill);color:var(--text);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+.infobox{background:var(--surface2);border-left:4px solid var(--dorado);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+dialog{background:var(--surface);color:var(--text);border:2px solid var(--dorado);border-radius:12px;padding:16px;max-width:min(680px,94vw);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h2{margin:0 0 10px;font-size:16px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.form .full{grid-column:1/-1}
+.form input,.form select,.form textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--text)}
+.gal{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.gal figure{margin:0;width:120px}
+.gal img{width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in}
+.gal figcaption{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.calc label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.calc input,.calc select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.statusbar{position:fixed;left:0;right:0;bottom:0;background:var(--verde);color:#cfe0da;font-size:11.5px;padding:3px 14px;display:flex;gap:16px;z-index:10;flex-wrap:wrap}
+@media print{.top .btn,.tabs,.statusbar,.drawer{display:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="grow">
+    <h1>SICM-ELE · Salud, confiabilidad y análisis predictivo de activos eléctricos críticos</h1>
+    <div class="sub">Refinería Olmeca · Subdirección de Producción de Petrolíferos · Monitoreo de variables térmicas (transformadores · tableros · motores)</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar JSON</button>
+  <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="exec" aria-selected="true">A · Ejecutivo y activos</button>
+  <button role="tab" data-view="trend" aria-selected="false">B · Tendencias</button>
+  <button role="tab" data-view="insp" aria-selected="false">C · Inspecciones y ΔT</button>
+  <button role="tab" data-view="wb" aria-selected="false">D · Confiabilidad Weibull</button>
+  <button role="tab" data-view="data" aria-selected="false">Datos y carga</button>
+</nav>
+
+<main>
+<!-- ============ A. EJECUTIVO ============ -->
+<section id="v-exec" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar">
+    <label>Tipo de equipo<select id="fTipo"></select></label>
+    <label>Planta / unidad<select id="fPlanta"></select></label>
+    <label>Severidad térmica<select id="fSev"></select></label>
+    <label>Buscar TAG<input type="text" id="fQ" placeholder="TR-12, GAM…"></label>
+    <span class="sp"></span>
+    <span class="small muted" id="fCount"></span>
+  </div>
+  <div class="grid2">
+    <div class="cards" id="cards"></div>
+    <div>
+      <div class="panel"><h2>Alertas y diagnóstico automático</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel small"><h3>Criterio del semáforo</h3>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div><span class="chip c0">● Normal</span> T ≤ límite de diseño y ΔT NETA ≤ 3 °C</div>
+          <div><span class="chip c1">▲ Alarma 1 · Precaución</span> T &gt; límite de diseño, ΔT 4–15 °C o dT/dt alto</div>
+          <div><span class="chip c2">■ Alarma 2 · Crítico</span> T ≥ alarma preventiva, ΔT &gt; 15 °C (≥ disparo = ‼)</div>
+          <div><span class="chip c3">◆ Fuera de servicio</span> en mantenimiento / libranza</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ B. TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset"></select></label>
+    <label>Punto principal<select id="tPrimary"></select></label>
+    <label>Suavizado dT/dt<select id="tSmooth"><option value="1">Sin suavizar</option><option value="3" selected>3 muestras</option><option value="5">5 muestras</option></select></label>
+    <label>Umbral dT/dt (°C/h)<input type="number" id="tRate" step="0.1" min="0.1" value="1.5" style="min-width:90px"></label>
+    <label>Margen dinámico (°C)<input type="number" id="tDynM" step="1" min="1" value="15" style="min-width:90px"></label>
+    <span class="sp"></span>
+    <button class="btn sm" data-win="0">Todo</button><button class="btn sm" data-win="14">14 d</button><button class="btn sm" data-win="7">7 d</button><button class="btn sm" data-win="3">72 h</button>
+  </div>
+  <div class="panel"><div class="checks" id="tPoints"></div>
+    <div class="checks" style="margin-top:6px">
+      <label><input type="checkbox" id="tAmb" checked> T ambiente</label>
+      <label><input type="checkbox" id="tLoad" checked> % Carga (eje der.)</label>
+      <label><input type="checkbox" id="tDyn" checked> Umbral dinámico (carga/ambiente)</label>
+      <label><input type="checkbox" id="tHideSim"> Ocultar datos simulados</label>
+    </div></div>
+  <div class="stats" id="tStats"></div>
+  <div class="legend" id="tLegend"></div>
+  <div class="chartbox tall"><div class="ttl">Temperatura (°C) vs. tiempo · rueda = zoom · arrastrar = paneo · doble clic = restablecer</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cT"></canvas><div class="tip"></div></div>
+  <div class="chartbox short"><div class="ttl">Tasa de cambio dT/dt (°C/h) · punto principal</div><canvas id="cD"></canvas><div class="tip"></div></div>
+  <div class="chartbox tall"><div class="ttl">Correlación: temperatura vs. % carga (color = T ambiente)</div><canvas id="cS"></canvas><div class="tip"></div></div>
+</section>
+
+<!-- ============ C. INSPECCIONES ============ -->
+<section id="v-insp" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset" id="iAsset"><option value="">Todos</option></select></label>
+    <label>Tipo de inspección<select id="iTipo"></select></label>
+    <label>Severidad<select id="iSev"></select></label>
+    <label>Buscar<input type="text" id="iQ" placeholder="folio, hallazgo…"></label>
+    <span class="sp"></span>
+    <button class="btn pri" id="btnNewInsp">＋ Nueva inspección</button>
+  </div>
+  <div class="grid2">
+    <div class="tw" style="max-height:560px"><table id="iTable"></table></div>
+    <div>
+      <div class="panel" id="iViewer"><h2>Visor de hallazgo</h2><p class="muted">Selecciona una inspección de la bitácora.</p></div>
+      <div class="panel"><h2>Calculadora ΔT · clasificación NETA</h2>
+        <div class="calc">
+          <label>T componente (°C)<input type="number" step="0.1" id="cTc"></label>
+          <label>T referencia (°C)<input type="number" step="0.1" id="cTr"></label>
+          <label>Referencia<select id="cMode"><option value="sim">Componente similar</option><option value="amb">Temperatura ambiente</option></select></label>
+          <label>Carga medida % (opc.)<input type="number" step="1" id="cLoad"></label>
+        </div>
+        <div id="cOut" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ D. WEIBULL ============ -->
+<section id="v-wb" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset"></select></label>
+    <label>Población de falla<select id="wPop"></select></label>
+    <label>Edad del activo (h)<input type="number" id="wAge" min="0" step="1000" style="min-width:130px"></label>
+    <button class="btn sm" id="wAgeReset">Edad por fecha de puesta en marcha</button>
+  </div>
+  <div id="wWarn"></div>
+  <div class="stats" id="wStats"></div>
+  <div class="infobox" id="wInterp"></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(520px,1fr))">
+    <div><div class="chartbox tall"><div class="ttl">Gráfica de probabilidad Weibull (ajuste MRR)</div><canvas id="wP"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">F(t) · probabilidad acumulada de falla</div><canvas id="wF"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">R(t) · confiabilidad</div><canvas id="wR"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">h(t) · tasa de falla instantánea (fallas / 10⁶ h)</div><canvas id="wH"></canvas><div class="tip"></div></div></div>
+  </div>
+  <div class="panel"><h3>Datos de vida de la población</h3><div class="tw" style="max-height:240px"><table id="wTable"></table></div></div>
+</section>
+
+<!-- ============ DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos JSON">
+        <b>Arrastra aquí uno o varios archivos .json</b><br>
+        <span class="muted">o haz clic para seleccionarlos · se fusionan por TAG y se guardan en este navegador (IndexedDB)</span>
+      </div>
+      <input type="file" id="fileIn" accept=".json,application/json" multiple hidden>
+      <div class="panel" style="margin-top:12px"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-termico/v1</code></h2>
+        <p class="small muted">Se aceptan: archivo con <code>activos[]</code>, un arreglo de activos o un activo suelto. Las lecturas duplicadas (tag+ts+punto) se omiten.</p>
+        <pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnSample">⬇ Descargar JSON de ejemplo</button>
+          <button class="btn" id="btnExport2">⬇ Exportar base completa</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos de ejemplo</button>
+          <button class="btn" id="btnWipe">🗑 Vaciar base</button>
+        </div></div>
+      <div class="panel small"><h3>Seguridad</h3>
+        Archivo autocontenido: sin CDN, sin peticiones de red (CSP <code>connect-src 'none'</code>). Los datos nunca salen del equipo; todo texto de los JSON se escapa antes de mostrarse.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-label="Ficha técnica"></aside>
+<dialog id="dlgInsp"></dialog>
+<dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
+<div id="dropOverlay">Suelta los archivos .json para cargarlos</div>
+<div class="statusbar" id="statusbar"></div>
+
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/* =====================================================================
+   UTILIDADES
+   ===================================================================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MXOFF=-6*3600e3, MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const p2=n=>String(n).padStart(2,'0');
+const mx=ms=>new Date(ms+MXOFF);
+const fDate=ms=>{const d=mx(ms);return `${p2(d.getUTCDate())} ${MES[d.getUTCMonth()]} ${d.getUTCFullYear()}`};
+const fDT=ms=>{const d=mx(ms);return `${fDate(ms)} ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}`};
+const toInput=ms=>{const d=mx(ms);return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}T${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}`};
+const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n:null};
+const f1=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toFixed(d);
+function parseTs(v){
+  if(v==null||v==='')return NaN; if(typeof v==='number')return v>1e11?v:v*1000;
+  let s=String(v).trim(), m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[ T,]+(\d{1,2}):(\d{2}))?/);
+  if(m)return Date.UTC(+m[3],+m[2]-1,+m[1],+(m[4]||12),+(m[5]||0))-MXOFF;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))s+='T12:00:00';
+  if(!/([zZ]|[+-]\d\d:?\d\d)$/.test(s))s+='-06:00';
+  return Date.parse(s);
+}
+const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)};
+function download(name,text,mime='application/json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function pearson(x,y){const n=x.length;if(n<3)return null;const mx_=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx_)*(y[i]-my);sxx+=(x[i]-mx_)**2;syy+=(y[i]-my)**2}return sxx&&syy?sxy/Math.sqrt(sxx*syy):null}
+function ols(x,y){const n=x.length;if(n<2)return null;const mx_=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx_)*(y[i]-my);sxx+=(x[i]-mx_)**2;syy+=(y[i]-my)**2}if(!sxx)return null;const b=sxy/sxx,a=my-b*mx_;return{a,b,r2:syy?(sxy*sxy)/(sxx*syy):1}}
+
+/* =====================================================================
+   CONSTANTES DE INGENIERÍA
+   ===================================================================== */
+const SEV=[{k:0,n:'Normal',i:'●'},{k:1,n:'Alarma 1 · Precaución',i:'▲'},{k:2,n:'Alarma 2 · Crítico',i:'■'},{k:3,n:'Fuera de servicio',i:'◆'}];
+const chip=(s,extra='')=>`<span class="chip c${s}">${SEV[s].i} ${SEV[s].n}${extra}</span>`;
+const DEFAULT_THR={
+  Transformador:{diseno:100,alarma:120,disparo:130,ref:'NMX-J-351-ANCE-2016'},
+  Tablero:{diseno:70,alarma:85,disparo:105,ref:'ANSI C37.20 (70 °C / 105 °C mat. especiales)'},
+  Motor:{diseno:70,alarma:85,disparo:105,ref:'ANSI C37.20 / NEMA ICS (conexiones)'},
+  Otro:{diseno:70,alarma:85,disparo:105,ref:'genérico'}
+};
+const CFG={rate:1.5,dynMargin:15,expLoad:1.6};
+const PALETTE=['#2F9E8F','#BC955C','#9A6BC4','#4C8BD6','#E07A45','#7DB544','#C9557C','#8C9399','#D4C04A','#58B6D8','#C97B7B','#6E8B3D'];
+// NETA MTS (Tabla 100.18) — comparación contra componente similar
+function netaSim(dt){const r=Math.round(dt);if(r<1)return{s:0,t:'Sin diferencia significativa',a:'Sin acción.'};
+  if(r<=3)return{s:0,t:'Posible deficiencia (1–3 °C)',a:'Investigar / vigilar en el siguiente recorrido.'};
+  if(r<=15)return{s:1,t:'Probable deficiencia (4–15 °C)',a:'Programar reparación en el próximo paro; verificar par de apriete y contacto.'};
+  return{s:2,t:'Discrepancia mayor (>15 °C)',a:'Reparar de inmediato; evaluar libranza.'}}
+function netaAmb(dt){const r=Math.round(dt);if(r<1)return{s:0,t:'Sin diferencia significativa',a:'Sin acción.'};
+  if(r<=10)return{s:0,t:'Posible deficiencia (1–10 °C vs ambiente)',a:'Investigar / vigilar.'};
+  if(r<=20)return{s:1,t:'Probable deficiencia (11–20 °C vs ambiente)',a:'Programar reparación.'};
+  if(r<=40)return{s:1,t:'Monitoreo continuo (21–40 °C vs ambiente)',a:'Monitorear continuamente hasta corregir.'};
+  return{s:2,t:'Discrepancia mayor (>40 °C vs ambiente)',a:'Reparar de inmediato.'}}
+
+/* =====================================================================
+   ALMACENAMIENTO (IndexedDB con respaldo localStorage)
+   ===================================================================== */
+const Store=(()=>{
+  let db=null;
+  const open=()=>new Promise(res=>{try{const r=indexedDB.open('sicm_termico',1);r.onupgradeneeded=()=>{r.result.createObjectStore('kv');r.result.createObjectStore('imgs')};r.onsuccess=()=>{db=r.result;res(true)};r.onerror=()=>res(false);r.onblocked=()=>res(false)}catch(e){res(false)}});
+  const tx=(st,mode,fn)=>new Promise((res,rej)=>{try{const t=db.transaction(st,mode);const q=fn(t.objectStore(st));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)}catch(e){rej(e)}});
+  return{
+    mode:()=>db?'IndexedDB':'localStorage',
+    open,
+    async get(st,k){if(db)return tx(st,'readonly',s=>s.get(k));try{const v=localStorage.getItem('sicm_'+st+'_'+k);return v?JSON.parse(v):undefined}catch(e){return undefined}},
+    async put(st,k,v){if(db)return tx(st,'readwrite',s=>s.put(v,k));try{localStorage.setItem('sicm_'+st+'_'+k,JSON.stringify(v))}catch(e){toast('Almacenamiento lleno: no se pudo persistir')}},
+    async del(st,k){if(db)return tx(st,'readwrite',s=>s.delete(k));try{localStorage.removeItem('sicm_'+st+'_'+k)}catch(e){}},
+    async clear(){if(db){await tx('kv','readwrite',s=>s.clear());await tx('imgs','readwrite',s=>s.clear())}else{try{Object.keys(localStorage).filter(k=>k.startsWith('sicm_')).forEach(k=>localStorage.removeItem(k))}catch(e){}}}
+  };
+})();
+function toast(msg){const d=document.createElement('div');d.textContent=msg;d.style.cssText='position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--guinda);color:#fff;padding:8px 16px;border-radius:8px;z-index:200;box-shadow:var(--shadow);font-size:13px';document.body.appendChild(d);setTimeout(()=>d.remove(),3500)}
+
+/* =====================================================================
+   BASE NORMALIZADA EN MEMORIA
+   ===================================================================== */
+const emptyDB=()=>({v:1,activos:{},lecturas:[],inspecciones:[],poblaciones:{},archivos:[]});
+let DB=emptyDB(), IX={snaps:new Map(),ev:new Map(),cur:new Map()};
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),150)}
+
+const normTipo=s=>{s=String(s||'').toLowerCase();return /transf|trafo/.test(s)?'Transformador':/tabler|ccm|mcc|cub[ií]culo|interruptor|tdm|swgr|switchgear/.test(s)?'Tablero':/motor|arranc|bomba|ventilador|compresor/.test(s)?'Motor':'Otro'};
+const grupoOf=p=>String(p).replace(/[\s\-–—_]+(F[123]|L[123]|R|S|T|X[0-3]|H[1-3]|U|V|W)$/i,'').trim()||String(p);
+function sevFrom(v){if(typeof v==='number')return Math.max(0,Math.min(3,v|0));const s=String(v||'').toLowerCase();
+  if(/fuera|libranza|mantto|oos/.test(s))return 3; if(/alarma ?2|cr[ií]tic|deficiente|alta|rojo|2/.test(s))return 2;
+  if(/alarma ?1|precauc|condicionad|media|ámbar|ambar|amarillo|1/.test(s))return 1; return 0}
+
+function ingest(obj,fname){
+  const rep={file:fname,warn:[],act:0,lec:0,insp:0,pob:0,dup:0,skip:0,ts:Date.now()};
+  const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,act:rep.act,lec:rep.lec,insp:rep.insp,pob:rep.pob,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,40)};
+  if(!obj||typeof obj!=='object'){rep.warn.push('El archivo no contiene un objeto JSON válido.');pushLog();return rep}
+  let acts=Array.isArray(obj)?obj:Array.isArray(obj.activos)?obj.activos:(obj.tag||obj.id_activo||obj.TAG)?[obj]:null;
+  if(!acts&&!obj.poblaciones){rep.warn.push('Sin "activos" ni "poblaciones": estructura no reconocida (ver esquema en esta pestaña).');pushLog();return rep}
+  const seen=new Set(DB.lecturas.map(r=>r.tag+'|'+r.ts+'|'+r.punto));
+  const seenI=new Set(DB.inspecciones.map(i=>i.id));
+  for(const a of (acts||[])){
+    const tag=String(a.tag||a.TAG||a.id_activo||a.id||'').trim();
+    if(!tag){rep.warn.push('Activo sin TAG omitido.');rep.skip++;continue}
+    const old=DB.activos[tag]||{};
+    const tipo=normTipo(a.tipo||a.Tipo||old.tipo);
+    if(tipo==='Otro')rep.warn.push(`${tag}: tipo "${a.tipo}" no reconocido; se clasificó como "Otro".`);
+    DB.activos[tag]={...old,tag,tipo,
+      planta:a.planta??a.area??old.planta??'—',sector:a.sector??old.sector??null,ubicacion:a.ubicacion??old.ubicacion??'—',
+      sap:a.sap??old.sap??null,gps:a.gps??old.gps??null,estado_operativo:a.estado_operativo??old.estado_operativo??'En servicio',
+      metadatos:{...(old.metadatos||{}),...(a.metadatos||a.placa||{})},
+      umbrales:a.umbrales??old.umbrales??null,umbrales_por_punto:a.umbrales_por_punto??old.umbrales_por_punto??null,
+      poblacion:a.poblacion??old.poblacion??tipo,nota_calidad_dato:a.nota_calidad_dato??old.nota_calidad_dato??null};
+    rep.act++;
+    for(const r of (a.registros||a.lecturas||[])){
+      const ts=parseTs(r.ts??r.timestamp??r.fecha), punto=String(r.punto??r.punto_medicion??'').trim(), t=num(r.temp_c??r.temperatura_c??r.temp);
+      if(!Number.isFinite(ts)||!punto||t==null||t<-60||t>600){rep.skip++;if(rep.warn.length<8)rep.warn.push(`${tag}: lectura inválida omitida (${JSON.stringify(r).slice(0,80)})`);continue}
+      const k=tag+'|'+ts+'|'+punto; if(seen.has(k)){rep.dup++;continue} seen.add(k);
+      DB.lecturas.push({tag,ts,punto,grupo:r.grupo||grupoOf(punto),temp:t,amb:num(r.t_amb_c??r.temp_ambiente_c??r.amb),carga:num(r.carga_pct??r.carga),origen:r.origen==='simulado'?'simulado':(r.origen||'real')});
+      rep.lec++;
+    }
+    for(const r of (a.inspecciones||a.eventos||[])){
+      const ts=parseTs(r.fecha??r.ts); if(!Number.isFinite(ts)){rep.skip++;continue}
+      const tc=num(r.t_comp??r.temp_componente_c), tr=num(r.t_ref??r.temp_referencia_c), id=r.id||('I'+hash(tag+'|'+ts+'|'+(r.tipo||'')+'|'+(r.folio||'')));
+      if(seenI.has(id)){rep.dup++;continue} seenI.add(id);
+      const modo=r.ref_modo||'sim', dT=num(r.delta_t)??(tc!=null&&tr!=null?tc-tr:null);
+      let sev=r.severidad!=null?sevFrom(r.severidad):(dT!=null?(modo==='amb'?netaAmb(dT):netaSim(dT)).s:0);
+      DB.inspecciones.push({id,tag,ts,inspector:r.inspector||'—',tipo:r.tipo||'Termografía',hallazgos:r.hallazgos||'',sev,t_comp:tc,t_ref:tr,ref_modo:modo,delta_t:dT,ttf_h:num(r.tiempo_hasta_falla_h??r.mtbf_h),folio:r.folio||null,url:r.fuente_url||null,origen:r.origen||'real',imgs:Array.isArray(r.imgs)?r.imgs:[]});
+      rep.insp++;
+    }
+  }
+  const pobs=Array.isArray(obj.poblaciones)?obj.poblaciones:[];
+  for(const p of pobs){
+    const id=String(p.id||p.tipo||'').trim(); const datos=(p.datos||[]).map(d=>({horas:num(d.horas),evento:/susp|censur/i.test(d.evento||'')?'suspension':'falla'})).filter(d=>d.horas>0);
+    if(!id||datos.length<3){rep.warn.push(`Población "${id}" omitida (menos de 3 datos).`);continue}
+    DB.poblaciones[id]={id,tipo:normTipo(p.tipo||id),descripcion:p.descripcion||'',origen:p.origen||'real',datos};rep.pob++;
+  }
+  pushLog();
+  return rep;
+}
+
+/* ===== Índices y evaluación de severidad ===== */
+const thrOf=(a,p)=>{const pp=a.umbrales_por_punto;if(pp){if(pp[p])return pp[p];const k=Object.keys(pp).find(x=>p.toLowerCase().includes(x.toLowerCase()));if(k)return pp[k]}return a.umbrales||DEFAULT_THR[a.tipo]||DEFAULT_THR.Otro};
+function evalSnap(a,snap,prev){
+  const useNeta=a.tipo!=='Transformador';
+  const pp=snap.pts.map(p=>{const t=thrOf(a,p.punto);let s=0;if(p.temp>t.diseno)s=1;if(p.temp>=t.alarma)s=2;
+    const o={...p,thr:t,sev:s,disp:p.temp>=t.disparo,dtSim:null,rate:null,esp:null,exc:null,why:[]};
+    if(s===1)o.why.push(`T ${f1(p.temp)} °C > límite de diseño ${t.diseno} °C`);
+    if(s===2)o.why.push(`T ${f1(p.temp)} °C ≥ alarma preventiva ${t.alarma} °C`+(o.disp?` (≥ disparo ${t.disparo} °C)`:''));
+    return o});
+  if(useNeta){
+    const by={};pp.forEach(p=>(by[p.grupo]=by[p.grupo]||[]).push(p));
+    for(const g of Object.values(by)){if(g.length<2)continue;
+      g.forEach(p=>{const others=g.filter(q=>q!==p);const dt=p.temp-mean(others.map(q=>q.temp));p.dtSim=dt;const n=netaSim(dt);
+        if(n.s>p.sev)p.sev=n.s; if(n.s>0)p.why.push(`ΔT ${f1(dt)} °C vs fases similares — ${n.t}`)})}
+  }
+  if(prev){const dh=(snap.ts-prev.ts)/3.6e6;
+    if(dh>0&&dh<=48)pp.forEach(p=>{const q=prev.pts.find(x=>x.punto===p.punto);if(!q)return;p.rate=(p.temp-q.temp)/dh;
+      if(p.rate>=CFG.rate){if(p.sev<1)p.sev=1;p.why.push(`dT/dt = ${f1(p.rate,2)} °C/h ≥ ${CFG.rate} °C/h (calentamiento acelerado)`)}})}
+  const adv=[];
+  pp.forEach(p=>{if(snap.carga!=null&&snap.amb!=null&&p.thr){const rise=p.thr.diseno-40;p.esp=snap.amb+rise*Math.pow(Math.max(snap.carga,1)/100,CFG.expLoad);p.exc=p.temp-p.esp}});
+  const over=pp.filter(p=>p.exc!=null&&p.exc>CFG.dynMargin).sort((x,y)=>y.exc-x.exc);
+  if(over.length)adv.push(`${over.length} de ${pp.length} puntos sobre lo esperado por carga (${f1(snap.carga,0)} %) y ambiente (${f1(snap.amb,0)} °C); máx. ${over[0].punto}: ${f1(over[0].temp)} °C = +${f1(over[0].exc)} °C vs esperado ${f1(over[0].esp)} °C. Verificar lectura/emisividad o calentamiento anormal.`);
+  let sev=Math.max(0,...pp.map(p=>p.sev));
+  if(/fuera|mantenimiento|libranza/i.test(a.estado_operativo||''))sev=3;
+  const hot=pp.reduce((m,p)=>p.temp>(m?m.temp:-1e9)?p:m,null);
+  const dts=pp.map(p=>p.dtSim).filter(v=>v!=null);
+  return{ts:snap.ts,sev,pp,hot,tmax:hot?hot.temp:null,dtMax:dts.length?Math.max(...dts):null,amb:snap.amb,carga:snap.carga,adv,
+         why:pp.filter(p=>p.sev>0).flatMap(p=>p.why.map(w=>`${p.punto}: ${w}`)),real:snap.pts.every(p=>p.origen!=='simulado')};
+}
+function rebuild(){
+  IX={snaps:new Map(),ev:new Map(),cur:new Map()};
+  const by=new Map();
+  for(const r of DB.lecturas){let m=by.get(r.tag);if(!m){m=new Map();by.set(r.tag,m)}let s=m.get(r.ts);if(!s){s={ts:r.ts,pts:[],amb:null,carga:null};m.set(r.ts,s)}s.pts.push(r);if(r.amb!=null)s.amb=r.amb;if(r.carga!=null)s.carga=r.carga}
+  for(const [tag,m] of by)IX.snaps.set(tag,[...m.values()].sort((x,y)=>x.ts-y.ts));
+  for(const tag of Object.keys(DB.activos)){const a=DB.activos[tag],sn=IX.snaps.get(tag)||[];const ev=sn.map((s,i)=>evalSnap(a,s,sn[i-1]));IX.ev.set(tag,ev);IX.cur.set(tag,ev[ev.length-1]||null)}
+}
+const assets=()=>Object.values(DB.activos).sort((a,b)=>a.tag.localeCompare(b.tag,'es',{numeric:true}));
+const refTs=()=>{let m=0;for(const e of IX.cur.values())if(e&&e.ts>m)m=e.ts;return m||Date.now()};
+
+/* =====================================================================
+   MOTOR DE GRÁFICAS (Canvas, sin dependencias)
+   ===================================================================== */
+function niceTicks(a,b,n=6){const span=b-a;if(!(span>0))return[a];const raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/mag,step=(f<1.5?1:f<3?2:f<7?5:10)*mag,t=[];for(let v=Math.ceil(a/step-1e-9)*step;v<=b+step*1e-6;v+=step)t.push(+v.toPrecision(12));return t}
+const TSTEPS=[1,2,3,6,12,24,48,168,336,720,1440,2160].map(h=>h*3.6e6);
+function timeTicks(a,b,max=8){const span=b-a;const st=TSTEPS.find(s=>span/s<=max)||TSTEPS[TSTEPS.length-1];const out=[];for(let t=Math.ceil((a+MXOFF)/st)*st-MXOFF;t<=b;t+=st)out.push(t);return{ticks:out,step:st}}
+class Chart{
+  constructor(canvas,opt={}){this.c=canvas;this.ctx=canvas.getContext('2d');this.opt=opt;this.data=null;this.view=null;this.full=null;this.hover=null;this.group=opt.group||[this];if(!opt.group)this.group=[this];
+    this.tip=canvas.parentElement.querySelector('.tip');
+    const ro=new ResizeObserver(()=>this.draw());ro.observe(canvas.parentElement);
+    canvas.addEventListener('pointerdown',e=>this.down(e));canvas.addEventListener('pointermove',e=>this.move(e));
+    canvas.addEventListener('pointerup',e=>this.up(e));canvas.addEventListener('pointerleave',()=>{this.hover=null;if(this.tip)this.tip.style.display='none';this.draw()});
+    canvas.addEventListener('wheel',e=>{e.preventDefault();this.zoomAt(e,e.deltaY>0?1.25:0.8)},{passive:false});
+    canvas.addEventListener('dblclick',()=>this.resetAll());
+    canvas.parentElement.querySelectorAll('[data-z]').forEach(b=>b.addEventListener('click',()=>{const z=b.dataset.z;if(z==='reset')this.resetAll();else this.zoomCenter(z==='in'?0.7:1.43)}));
+  }
+  setData(d,reset){this.data=d;const xs=d.xdom||this.extent(d);this.full=xs;if(reset||!this.view||this.view[0]<xs[0]-1||this.view[1]>xs[1]+1)this.view=[...xs];this.draw()}
+  extent(d){let a=Infinity,b=-Infinity;for(const s of d.series)for(const p of s.pts){if(p[0]<a)a=p[0];if(p[0]>b)b=p[0]}(d.vlines||[]).forEach(v=>{if(v.x<a)a=v.x;if(v.x>b)b=v.x});if(!(a<b)){a=(a||0)-1;b=(b||0)+1}return[a,b]}
+  setView(v,fromGroup){this.view=v;this.draw();if(!fromGroup)this.group.forEach(g=>{if(g!==this){g.view=[...v];g.draw()}})}
+  resetAll(){this.group.forEach(g=>{if(g.full){g.view=[...g.full];g.draw()}})}
+  clamp(v){const[f0,f1_]=this.full,fs=f1_-f0;let[a,b]=v;let w=b-a;const minW=this.data&&this.data.xType==='time'?3.6e6:fs*0.01;if(this.data&&this.data.xLog){return[Math.max(a,f0),Math.min(b,f1_)]}
+    if(w>fs){return[f0,f1_]}if(w<minW){const c=(a+b)/2;a=c-minW/2;b=c+minW/2;w=minW}if(a<f0){a=f0;b=a+w}if(b>f1_){b=f1_;a=b-w}return[a,b]}
+  xAt(px){const g=this.geom,[x0,x1]=this.view;const fr=(px-g.ml)/g.pw;return this.data.xLog?Math.pow(10,Math.log10(x0)+fr*(Math.log10(x1)-Math.log10(x0))):x0+fr*(x1-x0)}
+  zoomAt(e,f){if(!this.geom)return;const r=this.c.getBoundingClientRect(),xv=this.xAt(e.clientX-r.left);let[a,b]=this.view;
+    if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),lx=Math.log10(xv);const na=lx-(lx-la)*f,nb=lx+(lb-lx)*f;this.setView(this.clamp([Math.pow(10,na),Math.pow(10,nb)]))}
+    else this.setView(this.clamp([xv-(xv-a)*f,xv+(b-xv)*f]))}
+  zoomCenter(f){const[a,b]=this.view;if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),c=(la+lb)/2,h=(lb-la)/2*f;this.setView(this.clamp([Math.pow(10,c-h),Math.pow(10,c+h)]))}else{const c=(a+b)/2,h=(b-a)/2*f;this.setView(this.clamp([c-h,c+h]))}}
+  down(e){this.drag={x:e.clientX,v:[...this.view]};this.c.setPointerCapture(e.pointerId)}
+  up(){this.drag=null}
+  move(e){if(!this.geom||!this.data)return;const r=this.c.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+    if(this.drag){const dx=e.clientX-this.drag.x,[a,b]=this.drag.v;
+      if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),sh=-dx/this.geom.pw*(lb-la);this.setView(this.clamp([Math.pow(10,la+sh),Math.pow(10,lb+sh)]))}
+      else{const sh=-dx/this.geom.pw*(b-a);this.setView(this.clamp([a+sh,b+sh]))}return}
+    this.hover={px,py};this.draw();this.showTip(px,py)}
+  showTip(px,py){const g=this.geom,d=this.data;if(!this.tip||!g)return;if(px<g.ml||px>g.ml+g.pw||py<g.mt||py>g.mt+g.ph){this.tip.style.display='none';return}
+    const items=[];
+    if(d.scatter){let best=null,bd=14;for(const s of d.series)for(const p of s.pts){if(s.kind!=='dots')continue;const dx=g.tx(p[0])-px,dy=(s.axis==='r'?g.ty2:g.ty)(p[1])-py,dd=Math.hypot(dx,dy);if(dd<bd){bd=dd;best={s,p}}}
+      if(best){items.push(d.tipPt?d.tipPt(best.s,best.p):`${esc(best.s.name)}: ${d.xFmt(best.p[0])} → ${d.yFmt(best.p[1])}`)}}
+    else{const xv=this.xAt(px);let xs=null;
+      for(const s of d.series){if(s.noTip)continue;const i=nearest(s.pts,xv);if(i<0)continue;const p=s.pts[i];if(Math.abs(g.tx(p[0])-px)>60)continue;if(xs==null)xs=p[0];
+        items.push(`<span style="color:${s.color}">●</span> ${esc(s.name)}: <b>${(s.axis==='r'?d.y2Fmt:d.yFmt)(p[1])}</b>${p[2]&&p[2].sim?' <span class="badge sim">sim</span>':p[2]&&p[2].real?' <span class="badge real">real</span>':''}`)}
+      if(items.length)items.unshift(`<b>${esc(d.xFmt(xs!=null?xs:xv))}</b>`)}
+    if(!items.length){this.tip.style.display='none';return}
+    this.tip.innerHTML=items.join('<br>');this.tip.style.display='block';
+    const W=this.c.clientWidth,tw=this.tip.offsetWidth;this.tip.style.left=Math.min(Math.max(4,px+14),W-tw-4)+'px';this.tip.style.top=Math.max(26,py-10)+'px'}
+  draw(){
+    const c=this.c,ctx=this.ctx,W=c.clientWidth,H=c.clientHeight;if(!W||!H)return;const dpr=window.devicePixelRatio||1;
+    if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr)}
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);const d=this.data;if(!d||!this.view)return;
+    const css=getComputedStyle(document.documentElement),col=n=>css.getPropertyValue(n).trim();
+    const hasR=d.series.some(s=>s.axis==='r'&&s.pts.length);
+    const ml=56,mr=hasR?50:16,mt=26,mb=d.xLabel?44:30,pw=W-ml-mr,ph=H-mt-mb;if(pw<50||ph<40)return;
+    const[x0,x1]=this.view,xl=d.xLog,lx0=Math.log10(x0),lx1=Math.log10(x1);
+    const tx=v=>xl?ml+(Math.log10(v)-lx0)/(lx1-lx0)*pw:ml+(v-x0)/(x1-x0)*pw;
+    // dominios Y
+    const dom=(axis)=>{let a=Infinity,b=-Infinity;for(const s of d.series){if((s.axis||'l')!==axis)continue;for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;if(p[1]<a)a=p[1];if(p[1]>b)b=p[1]}}
+      if(d.hInclude!==false)for(const h of d.hlines||[]){if((h.axis||'l')!==axis)continue;if(h.y<a)a=h.y;if(h.y>b)b=h.y}
+      if(!(a<=b)){a=0;b=1}if(a===b){a-=1;b+=1}const pad=(b-a)*0.07;return[a-pad,b+pad]};
+    let[y0,y1]=d.ydom||dom('l');if(d.yMin0&&y0>0)y0=0;if(d.ydomL)[y0,y1]=d.ydomL;
+    const[z0,z1]=hasR?(d.y2dom||dom('r')):[0,1];
+    const ty=v=>mt+ph-(v-y0)/(y1-y0)*ph, ty2=v=>mt+ph-(v-z0)/(z1-z0)*ph;
+    this.geom={ml,mt,pw,ph,tx,ty,ty2};
+    const grid=col('--grid'),axis=col('--axis'),txt=col('--text');
+    ctx.font='11px "Segoe UI",system-ui,sans-serif';ctx.lineWidth=1;
+    // rejilla y ejes Y
+    const yt=d.yTicks?d.yTicks.filter(t=>t.v>=y0&&t.v<=y1):niceTicks(y0,y1,5).map(v=>({v,label:d.yFmt(v)}));
+    ctx.fillStyle=axis;ctx.textAlign='right';ctx.textBaseline='middle';
+    for(const t of yt){const y=ty(t.v);ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.fillText(t.label,ml-6,y)}
+    if(hasR){ctx.textAlign='left';for(const v of niceTicks(z0,z1,5)){ctx.fillText(d.y2Fmt(v),ml+pw+6,ty2(v))}}
+    // ejes X
+    ctx.textAlign='center';ctx.textBaseline='top';let xt=[];
+    if(d.xType==='time'){const{ticks,step}=timeTicks(x0,x1);xt=ticks.map(t=>({v:t,label:step<864e5?`${p2(mx(t).getUTCDate())} ${p2(mx(t).getUTCHours())}h`:`${p2(mx(t).getUTCDate())} ${MES[mx(t).getUTCMonth()]}`}));
+      if(step>=864e5&&x1-x0>150*864e5)xt=xt.map(t=>({...t,label:t.label+' '+String(mx(t.v).getUTCFullYear()).slice(2)}))}
+    else if(xl){const lo=Math.floor(lx0),hi=Math.ceil(lx1);for(let k=lo;k<=hi;k++)for(const m of[1,2,5]){const v=m*Math.pow(10,k);if(v>=x0&&v<=x1)xt.push({v,label:d.xFmt(v)})}}
+    else xt=niceTicks(x0,x1,7).map(v=>({v,label:d.xFmt(v)}));
+    let lastX=-99;for(const t of xt){const x=tx(t.v);ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();if(x-lastX>46){ctx.fillStyle=axis;ctx.fillText(t.label,x,mt+ph+6);lastX=x}}
+    ctx.strokeStyle=axis;ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ph);ctx.lineTo(ml+pw,mt+ph);ctx.stroke();
+    ctx.fillStyle=axis;ctx.textAlign='left';ctx.textBaseline='bottom';if(d.yLabel)ctx.fillText(d.yLabel,4,mt-4);
+    ctx.textAlign='right';ctx.textBaseline='bottom';if(d.xLabel)ctx.fillText(d.xLabel,ml+pw,H-4);
+    // recorte
+    ctx.save();ctx.beginPath();ctx.rect(ml,mt,pw,ph);ctx.clip();
+    for(const h of d.hlines||[]){const y=(h.axis==='r'?ty2:ty)(h.y);ctx.strokeStyle=h.color;ctx.lineWidth=h.w||1.4;ctx.setLineDash(h.dash||[6,4]);ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.setLineDash([]);
+      if(h.label){ctx.fillStyle=h.color;ctx.textAlign='left';ctx.textBaseline='bottom';ctx.fillText(h.label,ml+6,y-2)}}
+    for(const v of d.vlines||[]){const x=tx(v.x);ctx.strokeStyle=v.color;ctx.lineWidth=1.6;ctx.setLineDash(v.dash||[5,4]);ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();ctx.setLineDash([]);
+      if(v.label){ctx.fillStyle=v.color;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(v.label,x+4,mt+4)}}
+    for(const s of d.series){const Y=s.axis==='r'?ty2:ty;ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=s.width||1.8;ctx.setLineDash(s.dash||[]);
+      if(s.kind==='dots'){for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;ctx.fillStyle=p[2]&&p[2].c?p[2].c:s.color;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(tx(p[0]),Y(p[1]),s.r||3.2,0,6.283);ctx.fill();ctx.globalAlpha=1}}
+      else if(s.kind==='stem'){const y0p=Y(0);for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;const x=tx(p[0]);ctx.strokeStyle=p[2]&&p[2].c?p[2].c:s.color;ctx.beginPath();ctx.moveTo(x,y0p);ctx.lineTo(x,Y(p[1]));ctx.stroke()}}
+      else{ctx.beginPath();let pen=false,prev=null;for(const p of s.pts){if(p[1]==null){pen=false;continue}
+          if(p[0]<x0&&!(prev&&prev[0]<x0&&false)){}
+          const x=tx(p[0]),y=Y(p[1]);if(!pen){ctx.moveTo(x,y);pen=true}else ctx.lineTo(x,y);prev=p}ctx.stroke();
+        if(s.markReal){for(const p of s.pts){if(!(p[2]&&p[2].real)||p[0]<x0||p[0]>x1||p[1]==null)continue;const x=tx(p[0]),y=Y(p[1]);ctx.setLineDash([]);ctx.fillStyle=s.color;ctx.strokeStyle=col('--surface');ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x+5,y);ctx.lineTo(x,y+5);ctx.lineTo(x-5,y);ctx.closePath();ctx.fill();ctx.stroke()}}}
+      ctx.setLineDash([])}
+    // crosshair
+    if(this.hover&&!d.scatter){const hx=this.hover.px;if(hx>=ml&&hx<=ml+pw){ctx.strokeStyle=col('--dorado');ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(hx,mt);ctx.lineTo(hx,mt+ph);ctx.stroke();ctx.setLineDash([]);
+      const xv=this.xAt(hx);for(const s of d.series){if(s.noTip||s.kind==='dots')continue;const i=nearest(s.pts,xv);if(i<0)continue;const p=s.pts[i];if(p[1]==null)continue;ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(tx(p[0]),(s.axis==='r'?ty2:ty)(p[1]),3.5,0,6.283);ctx.fill()}}}
+    ctx.restore();
+  }
+}
+function nearest(pts,x){let lo=0,hi=pts.length-1;if(hi<0)return-1;while(lo<hi){const m=(lo+hi)>>1;if(pts[m][0]<x)lo=m+1;else hi=m}if(lo>0&&Math.abs(pts[lo-1][0]-x)<Math.abs(pts[lo][0]-x))lo--;return lo}
+
+/* =====================================================================
+   WEIBULL
+   ===================================================================== */
+function gammaFn(z){if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gammaFn(1-z));z-=1;const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];let x=c[0];for(let i=1;i<g+2;i++)x+=c[i]/(z+i);const t=z+g+0.5;return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x}
+function weibullFit(data){
+  const s=[...data].sort((a,b)=>a.t-b.t),n=s.length;let prev=0;const pts=[];
+  s.forEach((d,i)=>{if(!d.fail)return;const rr=n-i,inc=(n+1-prev)/(1+rr);prev+=inc;pts.push({t:d.t,F:(prev-0.3)/(n+0.4)})});
+  if(pts.length<2)return null;
+  const x=pts.map(p=>Math.log(p.t)),y=pts.map(p=>Math.log(-Math.log(1-p.F)));const r=ols(x,y);if(!r||r.b<=0)return null;
+  return{beta:r.b,eta:Math.exp(-r.a/r.b),r2:r.r2,pts,nf:pts.length,ns:n-pts.length,n}}
+const wF=(t,b,e)=>1-Math.exp(-Math.pow(t/e,b)), wR=(t,b,e)=>Math.exp(-Math.pow(t/e,b)), wH=(t,b,e)=>b/e*Math.pow(t/e,b-1);
+const wRUL=(t,b,e,q)=>e*Math.pow(Math.pow(t/e,b)-Math.log(q),1/b)-t; // q=0.5 mediana; q=0.9 → 10 % prob. de falla
+function betaDiag(b){
+  if(b<0.9)return{t:'Falla prematura (mortalidad infantil), β<1',a:'Defectos de instalación/comisionamiento o de fabricación. El mantenimiento por tiempo no ayuda: reforzar pruebas de aceptación, torque y termografía de arranque.'};
+  if(b<=1.1)return{t:'Falla aleatoria, β≈1',a:'La edad no predice la falla. Priorizar monitoreo por condición (termografía, ultrasonido, tendencia dT/dt) y redundancia; reemplazo por tiempo no se justifica.'};
+  if(b<2)return{t:'Desgaste incipiente, 1<β<2',a:'Mezcla de causas aleatorias y desgaste. Inspección periódica por condición y reemplazo de elementos sujetos a desgaste (conexiones, contactos).'};
+  return{t:'Desgaste por envejecimiento térmico, β≥2',a:'La edad sí predice la falla. Justifica rehabilitación/reemplazo programado antes de la vida B10 y control estricto de temperatura (cada +10 °C reduce a la mitad la vida del aislamiento, regla de Arrhenius/Montsinger).'}}
+
+/* =====================================================================
+   ESTADO DE UI
+   ===================================================================== */
+const S={view:'exec',sel:null,fTipo:'',fPlanta:'',fSev:'',q:'',tr:{pts:new Set(),primary:null,asset:null},wb:{age:null,pop:null},insp:{sel:null}};
+let CH={};
+const colorOf=(i)=>PALETTE[i%PALETTE.length];
+
+/* ===================== VISTA A · EJECUTIVO ===================== */
+function opts(sel,list,cur){sel.innerHTML=list.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');sel.value=cur}
+function renderExec(){
+  const all=assets(),tipos=['Transformador','Tablero','Motor','Otro'].filter(t=>all.some(a=>a.tipo===t)),plantas=[...new Set(all.map(a=>a.planta))].sort();
+  opts($('#fTipo'),[['','Todos los tipos'],...tipos.map(t=>[t,t])],S.fTipo);opts($('#fPlanta'),[['','Todas las plantas'],...plantas.map(p=>[p,p])],S.fPlanta);
+  opts($('#fSev'),[['','Todas las severidades'],...SEV.map(s=>[String(s.k),s.n])],S.fSev);
+  const cnt=[0,0,0,0];let dtM=0,cargas=[];
+  all.forEach(a=>{const e=IX.cur.get(a.tag);if(!e)return;cnt[e.sev]++;if(e.dtMax>dtM)dtM=e.dtMax;if(e.carga!=null)cargas.push(e.carga)});
+  $('#kpis').innerHTML=[['gold',all.length,'Activos monitoreados'],['ok',cnt[0],'Normal'],['warn',cnt[1],'Alarma 1 · Precaución'],['crit',cnt[2],'Alarma 2 · Crítico'],['oos',cnt[3],'Fuera de servicio'],['gold',f1(dtM)+' °C','ΔT máx. (NETA)'],['gold',cargas.length?f1(mean(cargas),0)+' %':'—','Carga promedio']]
+    .map(([c,v,l])=>`<div class="kpi ${c}"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('');
+  const list=all.filter(a=>{const e=IX.cur.get(a.tag);return (!S.fTipo||a.tipo===S.fTipo)&&(!S.fPlanta||a.planta===S.fPlanta)&&(S.fSev===''||(e&&String(e.sev)===S.fSev))&&(!S.q||a.tag.toLowerCase().includes(S.q.toLowerCase()))});
+  $('#fCount').textContent=`${list.length} de ${all.length} activos`;
+  $('#cards').innerHTML=list.length?list.map(cardHTML).join(''):'<p class="muted">Sin activos con esos filtros. Carga un JSON en «Datos y carga».</p>';
+  $$('#cards .card').forEach(c=>{c.addEventListener('click',()=>openDrawer(c.dataset.tag));c.addEventListener('keydown',e=>{if(e.key==='Enter')openDrawer(c.dataset.tag)})});
+  // alertas
+  const al=[];all.forEach(a=>{const e=IX.cur.get(a.tag);if(!e)return;e.why.forEach(w=>al.push({s:e.sev===3?3:Math.max(1,e.sev),tag:a.tag,txt:w,k:0}));e.adv.forEach(w=>al.push({s:1,tag:a.tag,txt:w,k:1}))});
+  al.sort((x,y)=>(y.s-x.s)||(x.k-y.k));
+  $('#alerts').innerHTML=al.length?al.slice(0,40).map(x=>`<li data-tag="${esc(x.tag)}"><span class="chip c${x.k?1:x.s}" aria-label="${SEV[x.k?1:x.s].n}">${SEV[x.k?1:x.s].i}</span><div><span class="t">${esc(x.tag)}</span> ${x.k?'<span class="badge">analítico</span>':''}<br>${esc(x.txt)}</div></li>`).join(''):'<li class="muted">Sin alertas activas.</li>';
+  $$('#alerts li[data-tag]').forEach(li=>li.addEventListener('click',()=>openDrawer(li.dataset.tag)));
+}
+function sparkSVG(tag){
+  const ev=IX.ev.get(tag)||[];if(ev.length<2)return'';const v=ev.map(e=>e.tmax),a=DB.activos[tag],th=thrOf(a,ev[ev.length-1].hot?ev[ev.length-1].hot.punto:'');
+  const lo=Math.min(...v),hi=Math.max(...v,lo+1),w=240,h=42,X=i=>i/(v.length-1)*w,Y=t=>h-3-(t-lo)/(hi-lo)*(h-6);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--dorado)" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${v.map((t,i)=>X(i).toFixed(1)+','+Y(t).toFixed(1)).join(' ')}"/></svg>`}
+function cardHTML(a){
+  const e=IX.cur.get(a.tag);if(!e)return`<article class="card" data-tag="${esc(a.tag)}" tabindex="0"><div class="tag">${esc(a.tag)}</div><div class="meta">Sin lecturas</div></article>`;
+  return`<article class="card s${e.sev}" data-tag="${esc(a.tag)}" tabindex="0" aria-label="${esc(a.tag)}: ${SEV[e.sev].n}">
+  <div class="h"><div><div class="tag">${esc(a.tag)}</div><div class="meta">${esc(a.tipo)} · ${esc(a.planta)}</div></div>${chip(e.sev)}</div>
+  <div class="mx"><div><span>T máx.</span><br><b>${f1(e.tmax)} °C</b> <span>${e.hot?esc(e.hot.punto.replace(/^Conexiones /,'').replace(/^Devanado /,'Dev. ')):''}</span></div>
+  <div><span>ΔT (fases similares)</span><br><b>${e.dtMax!=null?f1(e.dtMax)+' °C':'n/a'}</b></div>
+  <div><span>Carga</span><br><b>${e.carga!=null?f1(e.carga,0)+' %':'—'}</b></div><div><span>T ambiente</span><br><b>${e.amb!=null?f1(e.amb,0)+' °C':'—'}</b></div></div>
+  ${sparkSVG(a.tag)}
+  <div class="meta">Última lectura: ${fDT(e.ts)} <span class="badge ${e.real?'real':'sim'}">${e.real?'real':'simulado'}</span></div></article>`}
+
+/* ===== Ficha técnica ===== */
+function openDrawer(tag){
+  const a=DB.activos[tag],e=IX.cur.get(tag);if(!a)return;S.sel=tag;const m=a.metadatos||{},ev=IX.ev.get(tag)||[];
+  const kvs=[['Tipo',a.tipo],['Planta / área',a.planta],['Sector',a.sector??'—'],['Ubicación física',a.ubicacion],['N° SAP',a.sap??'—'],['Coordenadas GPS',a.gps?a.gps.join(', '):'—'],['Estado operativo',a.estado_operativo],
+    ['Potencia',m.potencia||'—'],['Tensión (kV)',m.tension_kv??'—'],['Clase térmica aislamiento',m.clase_termica||'—'],['Fabricante',m.fabricante||'—'],
+    ['Puesta en marcha',m.puesta_en_marcha?`${fDate(parseTs(m.puesta_en_marcha))}${m.puesta_en_marcha_origen==='estimada'?' (estimada)':''}`:'—'],
+    ['Corriente nominal (A)',m.corriente_nominal_a!=null?`${m.corriente_nominal_a}${m.corriente_nominal_origen?' ('+m.corriente_nominal_origen+')':''}`:'—']];
+  const rows=e?e.pp.slice().sort((x,y)=>y.temp-x.temp).map(p=>`<tr><td>${esc(p.punto)}</td><td class="n"><b>${f1(p.temp)}</b></td><td class="n">${p.dtSim!=null?f1(p.dtSim):'—'}</td><td class="n">${p.rate!=null?f1(p.rate,2):'—'}</td><td class="n small">${p.thr.diseno}/${p.thr.alarma}/${p.thr.disparo}</td><td>${chip(p.sev)}</td></tr>`).join(''):'';
+  const tl=ev.length?`<div class="tl" role="img" aria-label="Historial de criticidad">${ev.map(x=>`<span class="t${x.sev}" title="${fDT(x.ts)} · ${SEV[x.sev].n} · ${f1(x.tmax)} °C"></span>`).join('')}</div><div class="small muted" style="display:flex;justify-content:space-between"><span>${fDate(ev[0].ts)}</span><span>${fDate(ev[ev.length-1].ts)}</span></div>`:'';
+  $('#drawer').innerHTML=`<div class="dh"><div><h2>${esc(a.tag)}</h2><div class="small">${esc(a.tipo)} · ${esc(a.planta)}</div></div><div>${e?chip(e.sev):''} <button class="btn sm" id="dClose" aria-label="Cerrar">✕</button></div></div>
+  <div class="panel"><h3>Identificación y datos de placa</h3><dl class="kv">${kvs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>
+  ${a.nota_calidad_dato?`<div class="warnbox"><b>Calidad del dato:</b> ${esc(a.nota_calidad_dato)}</div>`:''}
+  <div class="panel"><h3>Estado actual · ${e?fDT(e.ts):'—'}</h3><div class="tw" style="max-height:300px"><table><tr><th>Punto</th><th class="n">T °C</th><th class="n">ΔT</th><th class="n">°C/h</th><th class="n">Dis/Alm/Disp</th><th>Estado</th></tr>${rows}</table></div>
+   ${e&&e.adv.length?`<p class="small" style="margin-top:8px"><b>Análisis dinámico:</b><br>${e.adv.map(esc).join('<br>')}</p>`:''}</div>
+  <div class="panel"><h3>Historial de criticidad (${ev.length} lecturas)</h3>${tl}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" data-go="trend">Ver tendencias</button><button class="btn" data-go="insp">Inspecciones</button><button class="btn" data-go="wb">Weibull / RUL</button></div>`;
+  $('#drawer').classList.add('open');$('#dClose').addEventListener('click',closeDrawer);
+  $$('#drawer [data-go]').forEach(b=>b.addEventListener('click',()=>{closeDrawer();switchView(b.dataset.go)}));
+}
+const closeDrawer=()=>$('#drawer').classList.remove('open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+/* ===================== VISTA B · TENDENCIAS ===================== */
+const srsFor=(tag,punto)=>{const out=[];for(const s of IX.snaps.get(tag)||[])for(const p of s.pts)if(p.punto===punto)out.push(p);return out};
+function renderTrend(resetView){
+  const a=DB.activos[S.sel];if(!a){$('#tStats').innerHTML='<p class="muted">Sin activos.</p>';return}
+  const sn=IX.snaps.get(a.tag)||[],puntos=[...new Set(sn.flatMap(s=>s.pts.map(p=>p.punto)))];
+  if(S.tr.asset!==a.tag){S.tr.asset=a.tag;const last=IX.cur.get(a.tag);const hot=last?last.pp.slice().sort((x,y)=>y.temp-x.temp).slice(0,3).map(p=>p.punto):puntos.slice(0,3);S.tr.pts=new Set(hot);S.tr.primary=hot[0]||puntos[0];resetView=true}
+  $('#tPoints').innerHTML=puntos.map((p,i)=>`<label><input type="checkbox" data-p="${esc(p)}" ${S.tr.pts.has(p)?'checked':''}><i style="display:inline-block;width:10px;height:10px;background:${colorOf(i)};border-radius:2px"></i>${esc(p)}</label>`).join('');
+  $$('#tPoints input').forEach(i=>i.addEventListener('change',()=>{i.checked?S.tr.pts.add(i.dataset.p):S.tr.pts.delete(i.dataset.p);renderTrend()}));
+  $('#tPrimary').innerHTML=puntos.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');$('#tPrimary').value=S.tr.primary;
+  const hideSim=$('#tHideSim').checked,showAmb=$('#tAmb').checked,showLoad=$('#tLoad').checked,showDyn=$('#tDyn').checked;
+  const series=[],hl=[],legend=[];
+  puntos.forEach((p,i)=>{if(!S.tr.pts.has(p))return;const pts=srsFor(a.tag,p).filter(r=>!(hideSim&&r.origen==='simulado')).map(r=>[r.ts,r.temp,{real:r.origen!=='simulado',sim:r.origen==='simulado'}]);
+    series.push({name:p,color:colorOf(i),pts,kind:'line',markReal:true});legend.push([colorOf(i),p,0])});
+  const pri=S.tr.primary,priR=srsFor(a.tag,pri).filter(r=>!(hideSim&&r.origen==='simulado'));
+  if(showAmb){const pts=sn.filter(s=>s.amb!=null&&!(hideSim&&s.pts.every(p=>p.origen==='simulado'))).map(s=>[s.ts,s.amb]);series.push({name:'T ambiente',color:'#8C9399',pts,kind:'line',dash:[2,3],width:1.3});legend.push(['#8C9399','T ambiente',1])}
+  if(showLoad){const pts=sn.filter(s=>s.carga!=null&&!(hideSim&&s.pts.every(p=>p.origen==='simulado'))).map(s=>[s.ts,s.carga]);series.push({name:'% Carga',color:'#4C8BD6',pts,kind:'line',axis:'r',width:1.2,dash:[6,3]});legend.push(['#4C8BD6','% Carga (eje der.)',1])}
+  const thrSets=[];[...S.tr.pts].forEach(p=>{const t=thrOf(a,p);if(!thrSets.some(x=>x.t.diseno===t.diseno&&x.t.alarma===t.alarma&&x.t.disparo===t.disparo))thrSets.push({t,p})});
+  const css=getComputedStyle(document.documentElement),cOk=css.getPropertyValue('--ok').trim(),cW=css.getPropertyValue('--warn-fill').trim(),cC=css.getPropertyValue('--crit').trim();
+  thrSets.forEach(({t,p})=>{const sfx=thrSets.length>1?` (${p})`:'';hl.push({y:t.diseno,color:cOk,label:'Límite de diseño '+t.diseno+' °C'+sfx,dash:[8,4]},{y:t.alarma,color:cW,label:'Alarma preventiva '+t.alarma+' °C'+sfx,dash:[8,4]},{y:t.disparo,color:cC,label:'Disparo crítico '+t.disparo+' °C'+sfx,dash:[3,3],w:1.8})});
+  if(showDyn&&pri){const t=thrOf(a,pri),rise=t.diseno-40,pts=sn.filter(s=>s.amb!=null&&s.carga!=null).map(s=>[s.ts,s.amb+rise*Math.pow(Math.max(s.carga,1)/100,CFG.expLoad)]);
+    series.push({name:'T esperada (carga, ambiente) — '+pri,color:'#E07A45',pts,kind:'line',dash:[2,2],width:1.4});
+    series.push({name:'Umbral dinámico (+'+CFG.dynMargin+' °C)',color:'#E07A45',pts:pts.map(p=>[p[0],p[1]+CFG.dynMargin]),kind:'line',dash:[10,3,2,3],width:1.4});legend.push(['#E07A45','T esperada = Tamb + (T_dis−40)·(carga)^1.6',1],['#E07A45','Umbral dinámico (+margen)',1])}
+  $('#tLegend').innerHTML=legend.map(([c,n])=>`<span><i style="background:${c}"></i>${esc(n)}</span>`).join('')+'<span><span style="color:var(--text)">◆</span> lectura real (resto simulado)</span>';
+  CH.T.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,0),y2Fmt:v=>f1(v,0)+'%',yLabel:'°C',y2Label:'% carga',series,hlines:hl,hInclude:true},resetView);
+  // derivada
+  const w=+$('#tSmooth').value,raw=[];for(let i=1;i<priR.length;i++){const dh=(priR[i].ts-priR[i-1].ts)/3.6e6;if(dh>0&&dh<=48)raw.push([priR[i].ts,(priR[i].temp-priR[i-1].temp)/dh])}
+  const sm=raw.map((p,i)=>{const lo=Math.max(0,i-((w-1)>>1)),hi=Math.min(raw.length-1,i+(w>>1));return[p[0],mean(raw.slice(lo,hi+1).map(q=>q[1]))]});
+  CFG.rate=+$('#tRate').value||1.5;
+  const stem=sm.map(p=>[p[0],p[1],{c:Math.abs(p[1])>=CFG.rate?cC:undefined}]);
+  CH.D.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,1),y2Fmt:v=>v,yLabel:'°C/h',series:[{name:'dT/dt '+pri,color:'#2F9E8F',pts:stem,kind:'stem',width:2},{name:'dT/dt',color:'#2F9E8F',pts:sm,kind:'line',width:1.2}],
+    hlines:[{y:CFG.rate,color:cW,label:`+${CFG.rate} °C/h`,dash:[6,4]},{y:-CFG.rate,color:cW,dash:[6,4]},{y:0,color:'#8C9399',dash:[],w:1}],hInclude:true},resetView);
+  // dispersión
+  const sc=priR.filter(r=>r.carga!=null&&r.amb!=null);
+  if(sc.length>2){const aMin=Math.min(...sc.map(r=>r.amb)),aMax=Math.max(...sc.map(r=>r.amb)),mixc=t=>{const k=(t-aMin)/Math.max(aMax-aMin,1e-6),A=[76,139,214],B=[224,122,69];return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*k)).join(',')})`};
+    const pts=sc.map(r=>[r.carga,r.temp,{c:mixc(r.amb),amb:r.amb,ts:r.ts}]),fit=ols(sc.map(r=>r.carga),sc.map(r=>r.temp)),xs=pts.map(p=>p[0]),xa=Math.min(...xs),xb=Math.max(...xs);
+    const ser=[{name:pri,color:'#BC955C',pts,kind:'dots',r:3.6}];if(fit)ser.push({name:`Ajuste lineal (R²=${f1(fit.r2,2)})`,color:cC,pts:[[xa,fit.a+fit.b*xa],[xb,fit.a+fit.b*xb]],kind:'line',width:1.8,dash:[6,3],noTip:true});
+    CH.S.setData({xType:'lin',scatter:true,xFmt:v=>f1(v,0)+' %',yFmt:v=>f1(v,1)+' °C',y2Fmt:v=>v,yLabel:'°C',xLabel:`% carga · color: Tamb ${f1(aMin,0)}→${f1(aMax,0)} °C (azul→naranja)`,series:ser,hlines:[],
+      tipPt:(s,p)=>`<b>${esc(pri)}</b><br>Carga ${f1(p[0],1)} % · ${f1(p[1],1)} °C<br>Tamb ${f1(p[2].amb,1)} °C<br>${fDT(p[2].ts)}`},resetView)}
+  else CH.S.setData({xType:'lin',scatter:true,xFmt:String,yFmt:String,y2Fmt:String,series:[],hlines:[],xdom:[0,100]},true);
+  // estadísticas
+  const T=priR.map(r=>r.temp),tmx=Math.max(...T),tmn=Math.min(...T),sd=Math.sqrt(mean(T.map(v=>(v-mean(T))**2))),last=priR[priR.length-1];
+  const rec=priR.filter(r=>r.ts>=last.ts-14*864e5),fit=ols(rec.map(r=>r.ts/864e5),rec.map(r=>r.temp)),thr=thrOf(a,pri);
+  let proj='n/a',projN='Sin tendencia ascendente';if(fit&&fit.b>0.005){const d=(thr.alarma-last.temp)/fit.b;proj=d>0?(d>3650?'>10 años':f1(d,0)+' días'):'ya superada';projN=`a ${f1(fit.b,3)} °C/día (14 d)`}else if(fit)projN=`pendiente ${f1(fit.b,3)} °C/día`;
+  const both=priR.filter(r=>r.carga!=null),rL=pearson(both.map(r=>r.carga),both.map(r=>r.temp)),bA=priR.filter(r=>r.amb!=null),rA=pearson(bA.map(r=>r.amb),bA.map(r=>r.temp));
+  const rmax=sm.length?sm.reduce((m,p)=>Math.abs(p[1])>Math.abs(m)?p[1]:m,0):null;
+  $('#tStats').innerHTML=[['T máx. / mín.',`${f1(tmx)} / ${f1(tmn)} °C`,pri],['Promedio ± σ',`${f1(mean(T))} ± ${f1(sd)}`,`n=${T.length}`],['Pendiente de tendencia',fit?f1(fit.b,3)+' °C/día':'—',projN],['Días a alarma preventiva',proj,`umbral ${thr.alarma} °C`],['dT/dt pico',rmax!=null?f1(rmax,2)+' °C/h':'—',`umbral ±${CFG.rate} °C/h`],['r (T, carga)',rL!=null?f1(rL,2):'—','Pearson'],['r (T, ambiente)',rA!=null?f1(rA,2):'—','Pearson']]
+    .map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
+}
+
+/* ===================== VISTA C · INSPECCIONES ===================== */
+const evAt=i=>(IX.ev.get(i.tag)||[]).find(e=>e.ts===i.ts)||null;
+const dtOf=i=>i.delta_t!=null?{v:i.delta_t,calc:false}:(()=>{const e=evAt(i);return e&&e.dtMax!=null?{v:e.dtMax,calc:true}:null})();
+const TIPOS_INSP=['Termografía','Ultrasonido pasivo','Resistencia de aislamiento','Análisis de aceite','Calidad de energía','Otro'];
+function renderInsp(){
+  const all=assets();const sa=$('#iAsset');sa.innerHTML='<option value="">Todos</option>'+all.map(a=>`<option value="${esc(a.tag)}">${esc(a.tag)}</option>`).join('');sa.value=S.insp.asset||'';
+  const tipos=[...new Set(DB.inspecciones.map(i=>i.tipo))];opts($('#iTipo'),[['','Todos'],...tipos.map(t=>[t,t])],S.insp.tipo||'');opts($('#iSev'),[['','Todas'],...SEV.slice(0,3).map(s=>[String(s.k),s.n])],S.insp.sev??'');
+  const q=($('#iQ').value||'').toLowerCase();
+  let rows=DB.inspecciones.filter(i=>(!S.insp.asset||i.tag===S.insp.asset)&&(!S.insp.tipo||i.tipo===S.insp.tipo)&&(S.insp.sev==null||S.insp.sev===''||String(i.sev)===S.insp.sev)&&(!q||(i.hallazgos+i.folio+i.tag+i.inspector).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);
+  $('#iTable').innerHTML=`<tr><th>Fecha</th><th>TAG</th><th>Tipo</th><th class="n" title="* calculado por el dashboard (fases similares)">ΔT °C</th><th>Severidad (campo)</th><th>Origen</th></tr>`+(rows.length?rows.map(i=>`<tr class="click ${S.insp.sel===i.id?'sel':''}" data-id="${esc(i.id)}"><td>${fDate(i.ts)}</td><td><b>${esc(i.tag)}</b></td><td>${esc(i.tipo)}</td><td class="n">${(()=>{const d=dtOf(i);return d?f1(d.v)+(d.calc?'*':''):'—'})()}</td><td>${chip(i.sev)}</td><td><span class="badge ${i.origen==='real'?'real':i.origen==='simulado'?'sim':''}">${esc(i.origen)}</span></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Sin inspecciones.</td></tr>');
+  $$('#iTable tr.click').forEach(r=>r.addEventListener('click',()=>{S.insp.sel=r.dataset.id;renderInsp();showInsp(r.dataset.id)}));
+  if(S.insp.sel)showInsp(S.insp.sel);calc();
+}
+async function showInsp(id){
+  const i=DB.inspecciones.find(x=>x.id===id);if(!i){$('#iViewer').innerHTML='<h2>Visor de hallazgo</h2><p class="muted">Selecciona una inspección.</p>';return}
+  const a=DB.activos[i.tag],e=IX.cur.get(i.tag);
+  $('#iViewer').innerHTML=`<h2>${esc(i.tag)} · ${esc(i.tipo)}</h2>${chip(i.sev)} <span class="badge ${i.origen==='real'?'real':i.origen==='simulado'?'sim':''}">${esc(i.origen)}</span>
+   <dl class="kv" style="margin-top:8px"><dt>Fecha</dt><dd>${fDT(i.ts)}</dd><dt>Inspector</dt><dd>${esc(i.inspector)}</dd><dt>Folio</dt><dd>${esc(i.folio||'—')}</dd>
+   <dt>T comp. / ref.</dt><dd>${i.t_comp!=null?f1(i.t_comp):'—'} / ${i.t_ref!=null?f1(i.t_ref):'—'} °C (${i.ref_modo==='amb'?'vs ambiente':'vs similar'})</dd><dt>ΔT</dt><dd>${(()=>{const d=dtOf(i);return d?f1(d.v)+' °C'+(d.calc?' (calculado, fases similares)':''):'—'})()}</dd>
+   <dt>Tiempo hasta falla</dt><dd>${i.ttf_h!=null?i.ttf_h+' h':'—'}</dd><dt>Hallazgos</dt><dd>${esc(i.hallazgos||'—')}</dd>
+   ${(()=>{const x=evAt(i);return x?`<dt>Diagnóstico dashboard</dt><dd>${chip(x.sev)}<br>${x.why.length?x.why.map(esc).join('<br>'):'Sin desviaciones en la lectura asociada.'}${x.sev>i.sev?'<br><b>Difiere del veredicto de campo: revisar.</b>':''}</dd>`:''})()}</dl>
+   ${i.url?`<p><a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">Abrir reporte técnico original ↗</a></p>`:''}
+   <h3>Galería de termogramas / reportes</h3><div class="gal" id="gal"></div>
+   <p><label class="btn sm" style="display:inline-block;cursor:pointer">＋ Adjuntar imagen<input type="file" id="imgIn" accept="image/*" multiple hidden></label> <span class="small muted">Se redimensiona y se guarda en este equipo.</span></p>`;
+  const gal=$('#gal');for(const gid of i.imgs){const rec=await Store.get('imgs',gid);if(!rec)continue;const f=document.createElement('figure');const im=document.createElement('img');im.src=rec.data;im.alt=rec.name;im.addEventListener('click',()=>{$('#bigImg').src=rec.data;$('#dlgImg').showModal()});const cap=document.createElement('figcaption');cap.textContent=rec.name;const del=document.createElement('button');del.className='btn sm';del.textContent='Quitar';del.addEventListener('click',async()=>{i.imgs=i.imgs.filter(x=>x!==gid);await Store.del('imgs',gid);save();showInsp(id)});f.append(im,cap,del);gal.appendChild(f)}
+  $('#imgIn').addEventListener('change',async ev=>{for(const f of ev.target.files){try{const data=await shrink(f);const gid='img'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);await Store.put('imgs',gid,{name:f.name,data});i.imgs.push(gid)}catch(e){toast('No se pudo leer '+f.name)}}save();showInsp(id)});
+  if(i.t_comp!=null)$('#cTc').value=i.t_comp;if(i.t_ref!=null)$('#cTr').value=i.t_ref;$('#cMode').value=i.ref_modo||'sim';calc();
+}
+function shrink(file,max=1600){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.85))};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};im.src=url})}
+function calc(){
+  const tc=num($('#cTc').value),tr=num($('#cTr').value),mode=$('#cMode').value,ld=num($('#cLoad').value);
+  if(tc==null||tr==null){$('#cOut').innerHTML='<span class="muted small">Captura T componente y T referencia.</span>';return}
+  const dt=tc-tr,n=mode==='amb'?netaAmb(dt):netaSim(dt);let extra='';
+  if(ld!=null&&ld>0){extra=ld<40?`<p class="small muted">Carga &lt; 40 %: la corrección a plena carga no es confiable; repetir medición con mayor carga.</p>`:`<p class="small">ΔT proyectado a 100 % de carga (∝ I²): <b>${f1(dt/Math.pow(ld/100,2))} °C</b> → ${(mode==='amb'?netaAmb:netaSim)(dt/Math.pow(ld/100,2)).t}</p>`}
+  $('#cOut').innerHTML=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="font-size:24px">ΔT = ${f1(dt)} °C</b>${chip(n.s)}</div><p style="margin:6px 0 0"><b>${esc(n.t)}</b><br>${esc(n.a)}</p>${extra}<p class="small muted">Criterio NETA MTS Tabla 100.18 / NFPA 70B (ΔT = T_componente − T_referencia).</p>`}
+function newInspDialog(){
+  const d=$('#dlgInsp');d.innerHTML=`<h2>Nueva inspección</h2><form method="dialog" class="form" id="fInsp">
+  <label>TAG<select id="nTag" required>${assets().map(a=>`<option value="${esc(a.tag)}" ${a.tag===(S.insp.asset||S.sel)?'selected':''}>${esc(a.tag)}</option>`).join('')}</select></label>
+  <label>Fecha y hora<input type="datetime-local" id="nFecha" value="${toInput(Date.now())}" required></label>
+  <label>Inspector<input type="text" id="nInsp" placeholder="Nombre · ficha" required></label>
+  <label>Tipo de inspección<select id="nTipo">${TIPOS_INSP.map(t=>`<option>${esc(t)}</option>`).join('')}</select></label>
+  <label>T componente (°C)<input type="number" step="0.1" id="nTc"></label><label>T referencia (°C)<input type="number" step="0.1" id="nTr"></label>
+  <label>Referencia ΔT<select id="nMode"><option value="sim">Componente similar</option><option value="amb">Temperatura ambiente</option></select></label>
+  <label>Tiempo hasta falla / MTBF (h)<input type="number" id="nTtf" min="0"></label>
+  <label class="full">Hallazgos<textarea id="nHall" rows="3"></textarea></label>
+  <label class="full">Severidad (vacío = automática por ΔT)<select id="nSev"><option value="">Automática</option>${SEV.slice(0,3).map(s=>`<option value="${s.k}">${esc(s.n)}</option>`).join('')}</select></label>
+  <div class="full" style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="nCancel">Cancelar</button><button class="btn pri" value="ok">Guardar</button></div></form>`;
+  d.showModal();$('#nCancel').addEventListener('click',()=>d.close());
+  $('#fInsp').addEventListener('submit',()=>{const tc=num($('#nTc').value),tr=num($('#nTr').value),mode=$('#nMode').value,dT=tc!=null&&tr!=null?tc-tr:null;
+    const sev=$('#nSev').value!==''?+$('#nSev').value:(dT!=null?(mode==='amb'?netaAmb(dT):netaSim(dT)).s:0),ts=parseTs($('#nFecha').value),tag=$('#nTag').value;
+    DB.inspecciones.push({id:'I'+hash(tag+ts+Math.random()),tag,ts,inspector:$('#nInsp').value,tipo:$('#nTipo').value,hallazgos:$('#nHall').value,sev,t_comp:tc,t_ref:tr,ref_modo:mode,delta_t:dT,ttf_h:num($('#nTtf').value),folio:null,url:null,origen:'captura manual',imgs:[]});
+    save();renderInsp();toast('Inspección registrada')});
+}
+
+/* ===================== VISTA D · WEIBULL ===================== */
+function ageHours(a){const m=a.metadatos||{};const t0=m.puesta_en_marcha?parseTs(m.puesta_en_marcha):NaN;return Number.isFinite(t0)?Math.max(0,(refTs()-t0)/3.6e6):null}
+function renderWeibull(){
+  const a=DB.activos[S.sel];const pops=Object.values(DB.poblaciones);
+  if(!a||!pops.length){$('#wStats').innerHTML='<p class="muted">Carga una población de datos de falla (clave "poblaciones" en el JSON).</p>';return}
+  const defPop=(DB.poblaciones[a.poblacion]||pops.find(p=>p.tipo===a.tipo)||pops[0]).id;
+  if(S.wb.asset!==a.tag){S.wb.asset=a.tag;S.wb.pop=defPop;S.wb.age=null}
+  opts($('#wPop'),pops.map(p=>[p.id,`${p.id} — ${p.datos.length} unidades`]),S.wb.pop);
+  const pop=DB.poblaciones[S.wb.pop],fit=weibullFit(pop.datos.map(d=>({t:d.horas,fail:d.evento==='falla'})));
+  const age0=ageHours(a),age=S.wb.age!=null?S.wb.age:age0;$('#wAge').value=age!=null?Math.round(age):'';
+  $('#wWarn').innerHTML=pop.origen==='simulado'?`<div class="warnbox"><b>Población SIMULADA (demo).</b> β y η mostrados provienen de datos de vida generados para ilustrar el método; no son historial real de la refinería. Sustituir con fallas reales (JSON, clave <code>poblaciones</code>) antes de tomar decisiones de reemplazo.</div>`:'';
+  if(!fit){$('#wStats').innerHTML='<p class="muted">Se requieren al menos 2 fallas con β>0 para ajustar.</p>';return}
+  const{beta:b,eta:e}=fit,ttl=v=>f1(v/8760,1)+' años';
+  const diag=betaDiag(b),tn=age!=null?age:0;
+  const rul50=age!=null?wRUL(tn,b,e,0.5):null,rul90=age!=null?wRUL(tn,b,e,0.9):null;
+  $('#wStats').innerHTML=[['β forma',f1(b,2),`R² = ${f1(fit.r2,3)}`],['η escala (vida característica)',Math.round(e).toLocaleString('es-MX')+' h',ttl(e)],['Datos',`${fit.nf} fallas`,`${fit.ns} suspensiones`],
+    ['MTTF',Math.round(e*gammaFn(1+1/b)).toLocaleString('es-MX')+' h',ttl(e*gammaFn(1+1/b))],['Vida B10',Math.round(e*Math.pow(-Math.log(0.9),1/b)).toLocaleString('es-MX')+' h',ttl(e*Math.pow(-Math.log(0.9),1/b))],
+    ['Edad actual',age!=null?Math.round(age).toLocaleString('es-MX')+' h':'—',age!=null?ttl(age):'sin fecha de puesta en marcha'],
+    ['R(t) actual',age!=null?f1(wR(tn,b,e)*100,1)+' %':'—',age!=null?'F(t)='+f1(wF(tn,b,e)*100,1)+' %':''],
+    ['h(t) actual',age!=null?f1(wH(tn,b,e)*1e6,1)+' /10⁶ h':'—',''],
+    ['RUL mediana (P50)',rul50!=null?ttl(rul50):'—',rul50!=null?Math.round(rul50).toLocaleString('es-MX')+' h':''],['RUL con 10 % riesgo (R=90 %)',rul90!=null?ttl(rul90):'—',rul90!=null?Math.round(rul90).toLocaleString('es-MX')+' h':'']]
+    .map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
+  $('#wInterp').innerHTML=`<b>Diagnóstico: ${esc(diag.t)}.</b> ${esc(diag.a)}${a.metadatos&&a.metadatos.puesta_en_marcha_origen==='estimada'?' <span class="badge sim">edad con fecha estimada</span>':''}<br><span class="small muted">Método: regresión por rangos medianos (Bernard) con rangos ajustados de Johnson para suspensiones. RUL = vida residual condicional a que el activo ha sobrevivido hasta la edad actual.</span>`;
+  const tMax=Math.max(e*1.9,(age||0)*1.25,...pop.datos.map(d=>d.horas)),N=140,grid=[];for(let i=1;i<=N;i++)grid.push(tMax*i/N);
+  const css=getComputedStyle(document.documentElement),cC=css.getPropertyValue('--crit').trim(),cOk=css.getPropertyValue('--ok').trim();
+  const kh=v=>(v/1000).toFixed(0)+'k',vl=age!=null?[{x:age,color:cC,label:'Edad actual'}]:[];
+  const yP=F=>Math.log(-Math.log(1-F)),ptsP=fit.pts.map(p=>[p.t,yP(p.F)]),tl=[Math.min(...fit.pts.map(p=>p.t))*0.6,Math.max(e*1.6,age||0)];
+  const Fl=[0.001,0.01,0.05,0.1,0.2,0.3,0.5,0.632,0.8,0.9,0.95,0.99];
+  CH.WP.setData({xType:'lin',xLog:true,xFmt:v=>kh(v),yFmt:String,y2Fmt:String,xLabel:'horas (k)',yLabel:'F(t) %',yTicks:Fl.map(F=>({v:yP(F),label:f1(F*100,F<0.1?1:0)})),
+    series:[{name:'Fallas (rango mediano)',color:'#BC955C',pts:ptsP,kind:'dots',r:4},{name:'Ajuste Weibull',color:'#2F9E8F',pts:tl.map(t=>[t,b*Math.log(t/e)]),kind:'line',width:2}],vlines:vl,hlines:[{y:0,color:'#8C9399',label:'63.2 % (η)',dash:[3,3]}],hInclude:true,xdom:[tl[0],tl[1]],
+    tipPt:(s,p)=>`<b>${esc(s.name)}</b><br>t = ${Math.round(p[0]).toLocaleString('es-MX')} h<br>F = ${f1((1-Math.exp(-Math.exp(p[1])))*100,1)} %`},true);
+  const lin=(fn,color,name,fmt)=>({xType:'lin',xFmt:kh,yFmt:fmt,y2Fmt:String,xLabel:'horas (k)',series:[{name,color,pts:grid.map(t=>[t,fn(t)]),kind:'line',width:2.2}],vlines:vl,hlines:[],hInclude:false,xdom:[0,tMax]});
+  CH.WF.setData({...lin(t=>wF(t,b,e)*100,'#C9557C','F(t)',v=>f1(v,0)+' %'),ydomL:[0,100]},true);
+  CH.WR.setData({...lin(t=>wR(t,b,e)*100,'#2F9E8F','R(t)',v=>f1(v,0)+' %'),ydomL:[0,100],hlines:[{y:90,color:cOk,label:'R = 90 %',dash:[6,4]},{y:50,color:'#8C9399',label:'R = 50 %',dash:[6,4]}],hInclude:false},true);
+  CH.WH.setData(lin(t=>wH(t,b,e)*1e6,'#E07A45','h(t)',v=>f1(v,1)),true);
+  $('#wTable').innerHTML='<tr><th>#</th><th class="n">Horas</th><th>Evento</th></tr>'+pop.datos.slice().sort((x,y)=>x.horas-y.horas).map((d,i)=>`<tr><td>${i+1}</td><td class="n">${d.horas.toLocaleString('es-MX')}</td><td>${d.evento==='falla'?'Falla':'Suspensión (censurado)'}</td></tr>`).join('');
+}
+
+/* ===================== VISTA E · DATOS ===================== */
+const SCHEMA_DOC=`{
+  "schema": "sicm-termico/v1",
+  "activos": [{
+    "tag": "TR-12-01",                       // ID de activo (obligatorio)
+    "tipo": "Transformador|Tablero|Motor",
+    "planta": "U-DE DESTILACIÓN COMBINADA (UDC2) TREN 2",
+    "sector": 1,
+    "ubicacion": "SE-12 · cuarto de control / celda",
+    "sap": "20939850",  "gps": [18.417, -93.187],
+    "estado_operativo": "En servicio|Fuera de servicio|Mantenimiento",
+    "metadatos": { "potencia": "17.25 MVA", "tension_kv": "13.8 / 4.16",
+        "clase_termica": "H", "fabricante": "…",
+        "puesta_en_marcha": "2009-06-01", "puesta_en_marcha_origen": "estimada",
+        "corriente_nominal_a": 2394.1 },
+    "umbrales": { "diseno": 100, "alarma": 120, "disparo": 130, "ref": "NMX-J-351" },
+    "umbrales_por_punto": { "Núcleo": { "diseno":140, "alarma":155, "disparo":165 } },
+    "poblacion": "Transformador",              // id de la población Weibull
+    "registros": [{
+        "ts": "2026-08-31T12:41:00-06:00",     // ISO 8601 o dd/mm/aaaa hh:mm
+        "punto": "Devanado BT X1",             // Devanados, Aceite superior, F1/F2/F3, Chumacera…
+        "temp_c": 84.0, "t_amb_c": 33.0, "carga_pct": 20.2,
+        "origen": "real|simulado" }],
+    "inspecciones": [{
+        "fecha": "2026-08-31T12:41:00-06:00", "inspector": "…",
+        "tipo": "Termografía|Ultrasonido pasivo|Resistencia de aislamiento",
+        "hallazgos": "…", "severidad": 0,      // 0 normal · 1 alarma 1 · 2 alarma 2
+        "t_comp": 89.0, "t_ref": 83.0, "ref_modo": "sim|amb",
+        "tiempo_hasta_falla_h": null, "folio": "ROLM-…", "fuente_url": "https://…" }]
+  }],
+  "poblaciones": [{ "id": "Transformador", "tipo": "Transformador", "origen": "real|simulado",
+      "datos": [{ "horas": 182000, "evento": "falla" }, { "horas": 90000, "evento": "suspension" }] }]
+}`;
+function renderData(){
+  $('#schema').textContent=SCHEMA_DOC;
+  $('#log').innerHTML=DB.archivos.length?DB.archivos.map(l=>`<div><b>${esc(l.nombre)}</b> <span class="muted">${fDT(l.ts)}</span><br>${l.act} activos · ${l.lec} lecturas · ${l.insp} inspecciones · ${l.pob} poblaciones${l.dup?` · ${l.dup} duplicados omitidos`:''}${l.skip?` · ${l.skip} descartados`:''}${(l.warn||[]).map(w=>`<br><span style="color:var(--warn)">⚠ ${esc(w)}</span>`).join('')}</div>`).join(''):'<div class="muted">Sin cargas.</div>';
+  const real=DB.lecturas.filter(r=>r.origen!=='simulado').length;
+  $('#dbStats').innerHTML=`<table><tr><td>Activos</td><td class="n"><b>${Object.keys(DB.activos).length}</b></td></tr><tr><td>Lecturas térmicas</td><td class="n"><b>${DB.lecturas.length.toLocaleString('es-MX')}</b> (${real} reales)</td></tr><tr><td>Inspecciones</td><td class="n"><b>${DB.inspecciones.length}</b></td></tr><tr><td>Poblaciones Weibull</td><td class="n"><b>${Object.keys(DB.poblaciones).length}</b></td></tr><tr><td>Persistencia</td><td class="n">${Store.mode()}</td></tr></table>`;
+}
+function exportDB(){
+  const by={};for(const r of DB.lecturas)(by[r.tag]=by[r.tag]||[]).push({ts:new Date(r.ts).toISOString().replace('Z','+00:00'),punto:r.punto,temp_c:r.temp,t_amb_c:r.amb,carga_pct:r.carga,origen:r.origen});
+  const out={schema:'sicm-termico/v1',exportado:new Date().toISOString(),activos:assets().map(a=>({...a,registros:by[a.tag]||[],inspecciones:DB.inspecciones.filter(i=>i.tag===a.tag).map(i=>({id:i.id,fecha:new Date(i.ts).toISOString(),inspector:i.inspector,tipo:i.tipo,hallazgos:i.hallazgos,severidad:i.sev,t_comp:i.t_comp,t_ref:i.t_ref,ref_modo:i.ref_modo,delta_t:i.delta_t,tiempo_hasta_falla_h:i.ttf_h,folio:i.folio,fuente_url:i.url,origen:i.origen}))})),poblaciones:Object.values(DB.poblaciones)};
+  download(`sicm-termico-base-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(out,null,1));
+}
+async function handleFiles(files){
+  const list=[...files].filter(f=>/\.json$/i.test(f.name)||f.type==='application/json');
+  if(!list.length){toast('Solo se aceptan archivos .json');return}
+  for(const f of list){try{ingest(JSON.parse(await f.text()),f.name)}catch(e){DB.archivos.unshift({nombre:f.name,ts:Date.now(),act:0,lec:0,insp:0,pob:0,dup:0,skip:0,warn:['JSON inválido: '+e.message]})}}
+  rebuild();save();refreshAll();switchView('data');toast(`${list.length} archivo(s) procesado(s)`);
+}
+async function loadSeed(){ingest(JSON.parse($('#seed').textContent),'seed_completo.json (datos de ejemplo)')}
+
+/* ===================== NAVEGACIÓN / INIT ===================== */
+function fillAssetSelects(){
+  const html=assets().map(a=>`<option value="${esc(a.tag)}">${esc(a.tag)} — ${esc(a.tipo)}</option>`).join('');
+  $$('.selAsset').forEach(s=>{if(s.id==='iAsset')return;s.innerHTML=html;s.value=S.sel||''});
+}
+function refreshAll(){
+  if(!S.sel||!DB.activos[S.sel])S.sel=assets()[0]?.tag||null;
+  fillAssetSelects();renderExec();renderData();
+  if(S.view==='trend')renderTrend(true);if(S.view==='insp')renderInsp();if(S.view==='wb')renderWeibull();
+  const ts=refTs();$('#statusbar').innerHTML=`<span>${Object.keys(DB.activos).length} activos · ${DB.lecturas.length.toLocaleString('es-MX')} lecturas · ${DB.inspecciones.length} inspecciones</span><span>Datos hasta: ${DB.lecturas.length?fDT(ts):'—'} (hora centro)</span><span>Persistencia: ${Store.mode()}</span><span>Sin conexión externa</span>`;
+}
+function switchView(v){
+  S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
+  requestAnimationFrame(()=>{if(v==='trend')renderTrend(true);if(v==='insp')renderInsp();if(v==='wb')renderWeibull();if(v==='data')renderData();window.scrollTo(0,0)});
+}
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('sicm_theme',t)}catch(e){}Object.values(CH).forEach(c=>c.draw())}
+async function init(){
+  let th='dark';try{th=localStorage.getItem('sicm_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){}
+  document.documentElement.dataset.theme=th;
+  await Store.open();
+  let saved=null;try{saved=await Store.get('kv','db')}catch(e){}
+  if(saved&&saved.activos&&Object.keys(saved.activos).length)DB={...emptyDB(),...saved};else{await loadSeed();save()}
+  rebuild();
+  // gráficas
+  CH.T=new Chart($('#cT'));CH.D=new Chart($('#cD'));CH.S=new Chart($('#cS'));CH.T.group=CH.D.group=[CH.T,CH.D];
+  CH.WP=new Chart($('#wP'));CH.WF=new Chart($('#wF'));CH.WR=new Chart($('#wR'));CH.WH=new Chart($('#wH'));
+  CH.WF.group=CH.WR.group=CH.WH.group=[CH.WF,CH.WR,CH.WH];
+  // eventos
+  $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+  $('#btnTheme').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+  $('#btnLoad').addEventListener('click',()=>$('#fileIn').click());$('#fileIn').addEventListener('change',e=>{handleFiles(e.target.files);e.target.value=''});
+  $('#btnExport').addEventListener('click',exportDB);$('#btnExport2').addEventListener('click',exportDB);
+  $('#btnSample').addEventListener('click',()=>download('sicm-termico-ejemplo.json',$('#seed').textContent));
+  $('#btnReseed').addEventListener('click',async()=>{if(!confirm('¿Reemplazar toda la base por los datos de ejemplo?'))return;await Store.clear();DB=emptyDB();await loadSeed();rebuild();save();S.sel=null;refreshAll();toast('Datos de ejemplo restablecidos')});
+  $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar toda la base local (activos, lecturas, inspecciones e imágenes)?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.sel=null;refreshAll()});
+  const drop=$('#drop');drop.addEventListener('click',()=>$('#fileIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#fileIn').click()});
+  let dc=0;const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragenter',e=>{if(!hasFiles(e))return;dc++;$('#dropOverlay').style.display='flex'});
+  window.addEventListener('dragleave',e=>{if(!hasFiles(e))return;dc=Math.max(0,dc-1);if(!dc)$('#dropOverlay').style.display='none'});
+  window.addEventListener('dragover',e=>{if(hasFiles(e))e.preventDefault()});
+  window.addEventListener('drop',e=>{if(!hasFiles(e))return;e.preventDefault();dc=0;$('#dropOverlay').style.display='none';handleFiles(e.dataTransfer.files)});
+  // filtros
+  [['fTipo','fTipo'],['fPlanta','fPlanta'],['fSev','fSev']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{S[k]=e.target.value;renderExec()}));
+  $('#fQ').addEventListener('input',e=>{S.q=e.target.value;renderExec()});
+  $$('.selAsset').forEach(s=>s.addEventListener('change',e=>{if(s.id==='iAsset'){S.insp.asset=e.target.value;renderInsp();return}S.sel=e.target.value;fillAssetSelects();if(S.view==='trend')renderTrend(true);if(S.view==='wb')renderWeibull()}));
+  $('#tPrimary').addEventListener('change',e=>{S.tr.primary=e.target.value;renderTrend(true)});
+  ['tSmooth','tRate','tDynM','tAmb','tLoad','tDyn','tHideSim'].forEach(id=>$('#'+id).addEventListener('change',()=>{if(id==='tDynM')CFG.dynMargin=+$('#tDynM').value||15;renderTrend(id==='tHideSim')}));
+  $$('[data-win]').forEach(b=>b.addEventListener('click',()=>{const d=+b.dataset.win;if(!CH.T.full)return;const e=CH.T.full[1];CH.T.setView(d?[Math.max(CH.T.full[0],e-d*864e5),e]:[...CH.T.full])}));
+  $('#iTipo').addEventListener('change',e=>{S.insp.tipo=e.target.value;renderInsp()});$('#iSev').addEventListener('change',e=>{S.insp.sev=e.target.value;renderInsp()});$('#iQ').addEventListener('input',renderInsp);
+  $('#btnNewInsp').addEventListener('click',newInspDialog);['cTc','cTr','cMode','cLoad'].forEach(id=>$('#'+id).addEventListener('input',calc));
+  $('#imgClose').addEventListener('click',()=>$('#dlgImg').close());
+  $('#wPop').addEventListener('change',e=>{S.wb.pop=e.target.value;renderWeibull()});
+  $('#wAge').addEventListener('change',e=>{S.wb.age=num(e.target.value);renderWeibull()});$('#wAgeReset').addEventListener('click',()=>{S.wb.age=null;renderWeibull()});
+  refreshAll();
+  window.__ready=true;
+}
+init();
+</script>
+</body>
+</html>
