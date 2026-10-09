@@ -222,3 +222,39 @@ Al aplicar el motor a las 600 mediciones sintéticas: 439 normales, 161 en alert
 ## Rama y estado
 
 Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades), Fase 3 y Fase 4 entregadas.
+
+---
+
+## Dashboard térmico de activos críticos (`app/sicm-termico.html`)
+
+Archivo **único y autocontenido** (2 MB; sin CDN ni peticiones de red, CSP `connect-src 'none'`; lector PDF `pdf.js` 3.11 incrustado) para monitoreo de salud, confiabilidad y análisis predictivo de **transformadores, tableros y motores/arrancadores**: semáforo de criticidad, tendencias con zoom y dT/dt, correlación T–carga–ambiente, bitácora de inspecciones con ΔT (NETA MTS 100.18) y galería, y Weibull (β, η, F(t), R(t), h(t), RUL).
+
+**Base real incluida:** 94 reportes PDF de termografía (Drive «json de temperatura 08102026», 20-jul → 8-oct-2026) → 1,118 activos, ~9,800 lecturas válidas y 1,214 inspecciones. Se omiten lecturas imposibles (<12 °C o >250/300 °C) por error de captura del reporte; las >150 °C en conexiones se marcan «verificar lectura». La mayoría de los equipos tiene **una sola visita**: las tendencias aparecen conforme se agregan datos.
+
+**Corriente y tensión por fase:** además de la temperatura, cada recorrido guarda la corriente (L1/L2/L3; transformadores: primaria/secundaria) y la tensión por fase (solo tableros; los demás formatos traen únicamente la nominal de placa). Se muestran en tarjetas, ficha (con desbalance de I y V, NEMA MG-1), historial de lecturas, gráficas de tendencia ligadas al zoom (con banda ±10 % NMX-J-098) y como eje derecho de la gráfica de temperatura.
+
+**Calidad de datos:** al importar, las celdas en blanco y los valores imposibles por error de tecleo se detectan y se registran (pestaña «Datos y carga» → «Calidad de datos», con exportación a CSV). Reglas: temperatura 12–250 °C (300 °C trafos); tensión 100–15,000 V y cercana a un nivel estándar, y dentro de ±25 % de las otras fases; corriente 0–20,000 A y sin desviarse >4× / <0.25× de la mediana de sus fases; 0 V se descarta si circula corriente (campo sin capturar) y se conserva marcado «revisar» si tampoco hay corriente (barra desenergizada); >150 °C en conexiones se conserva marcado «verificar lectura».
+
+**Actualizar la base día a día** (pestaña «Datos y carga»):
+- Arrastrar **PDF** de termografía (tableros ANSI C37.20, transformadores secos NMX-J-351, arrancadores POE-009) o **JSON** → vista previa con «equipos / total del resumen», lecturas nuevas y duplicadas → «Agregar a la base». Re-subir un reporte no duplica datos (llave TAG + fecha + punto).
+- **Captura diaria manual** por activo (o activo nuevo) con T ambiente, corriente, temperaturas por punto y observaciones; clasifica severidad y crea la inspección.
+- Persistencia en IndexedDB **de ese navegador/equipo**: usar «Exportar base» periódicamente como respaldo o para pasarla a otro equipo.
+
+**Regenerar:** `python3 scripts/build_termico_real.py <dir con TBL_*.jsonl TRAN_*.jsonl TMO_*.jsonl>` → `data/termico/seed_real.json`; luego `python3 scripts/build_termico.py` (plantilla `app/sicm-termico.template.html` + `vendor/pdfjs`). Los datos de `data/termico/demo_simulado_*.json` son **simulados** (monitoreo continuo) y sirven solo para probar la carga de JSON y las gráficas de dT/dt. Las poblaciones Weibull incluidas también son simuladas.
+
+## Suite modular: arquitectura compartida y módulo SFI (`app/sicm-sfi.html`)
+
+Cada módulo es **un solo `.html` autocontenido** (sin CDN; CSP `connect-src 'none'`) y comparten núcleo para ensamblarse después en una sola app:
+
+| Pieza | Archivo | Contenido |
+|---|---|---|
+| Núcleo compartido | `app/shared/core.js`, `core.css` | utilidades, IndexedDB (`Store.open(nombre)`), motor de gráficas Canvas, Weibull, lector PDF, menú de módulos (`SUITE`) |
+| Módulo térmico | `app/sicm-termico.template.html` → `scripts/build_termico.py` | transformadores, tableros, motores |
+| Módulo SFI | `app/sfi/{template.html,model.js,ingest.js,views.js,init.js}` → `scripts/build_sfi.py` | SFI/UPS, cargadores y bancos de baterías |
+| Datos | `data/sfi/seed_real_sfi.json` ← `scripts/build_sfi_real.py <dir JSONL>` | 152 inspecciones / 136 TAG (PDF jul–oct 2026) |
+
+Cada módulo guarda su base por separado (`sicm_termico`, `sicm_sfi`) y exporta con la misma envolvente JSON (`schema`, `activos[]`, `poblaciones[]`).
+
+**SFI — qué hace:** (1) ejecutivo y censo con filtros Sector/SE/Planta/Marca/Servicio/Tipo/Condición, semáforo SICM, alertas y mapa GPS; (2) expediente por equipo (placa, mediciones, protecciones, alarmas, LEDs, verificación física incl. extractor/H₂, matriz de celdas, diagnóstico ISO 14224, línea de tiempo, impresión); (3) tendencias (V de flotación vs placa ±1/±2 %, corrientes, temperatura 30/35 °C, celda por celda, comparativo de flota); (4) confiabilidad (SoH, Arrhenius, Weibull por modo de falla con R/F/h/RUL, matriz prioridad × condición); (5) carga de PDF/JSON por lotes con vista previa, captura manual, calidad de datos, exportación JSON/CSV.
+
+**Limitaciones declaradas:** los PDF llegan **sin diagnóstico** (veredicto vacío) → la condición se **calcula por reglas** (criterios institucionales editables en `model.js`/pestaña 3); casi todos los equipos tienen **una sola visita**, así que las tendencias maduran al cargar más recorridos; el SoH requiere capturar la **edad** del banco; las poblaciones Weibull son **simuladas** (`origen:"simulado"`) hasta cargar fallas reales; los códigos ISO 14224 son **sugeridos**.

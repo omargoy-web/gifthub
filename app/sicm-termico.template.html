@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-ELE · Salud térmica de activos eléctricos</title>
+<style>
+/*__CORE_CSS__*/
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-ELE · Salud, confiabilidad y análisis predictivo de activos eléctricos críticos</h1>
+    <div class="sub">Refinería Olmeca · Subdirección de Producción de Petrolíferos · Monitoreo de variables térmicas (transformadores · tableros · motores)</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar JSON</button>
+  <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="exec" aria-selected="true">A · Ejecutivo y activos</button>
+  <button role="tab" data-view="trend" aria-selected="false">B · Tendencias</button>
+  <button role="tab" data-view="insp" aria-selected="false">C · Inspecciones y ΔT</button>
+  <button role="tab" data-view="wb" aria-selected="false">D · Confiabilidad Weibull</button>
+  <button role="tab" data-view="data" aria-selected="false">Datos y carga</button>
+</nav>
+
+<main>
+<!-- ============ A. EJECUTIVO ============ -->
+<section id="v-exec" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar">
+    <label>Tipo de equipo<select id="fTipo"></select></label>
+    <label>Planta / unidad<select id="fPlanta"></select></label>
+    <label>Severidad térmica<select id="fSev"></select></label>
+    <label>Buscar TAG<input type="text" id="fQ" placeholder="TR-12, GAM…"></label>
+    <span class="sp"></span>
+    <span class="small muted" id="fCount"></span>
+  </div>
+  <div class="grid2">
+    <div class="cards" id="cards"></div>
+    <div>
+      <div class="panel"><h2>Alertas y diagnóstico automático</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel small"><h3>Criterio del semáforo</h3>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div><span class="chip c0">● Normal</span> T ≤ límite de diseño y ΔT NETA ≤ 3 °C</div>
+          <div><span class="chip c1">▲ Alarma 1 · Precaución</span> T &gt; límite de diseño, ΔT 4–15 °C o dT/dt alto</div>
+          <div><span class="chip c2">■ Alarma 2 · Crítico</span> T ≥ alarma preventiva, ΔT &gt; 15 °C (≥ disparo = ‼)</div>
+          <div><span class="chip c3">◆ Fuera de servicio</span> en mantenimiento / libranza</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ B. TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset"></select></label>
+    <label>Punto principal<select id="tPrimary"></select></label>
+    <label>Suavizado dT/dt<select id="tSmooth"><option value="1">Sin suavizar</option><option value="3" selected>3 muestras</option><option value="5">5 muestras</option></select></label>
+    <label>Umbral dT/dt (°C/h)<input type="number" id="tRate" step="0.1" min="0.1" value="1.5" style="min-width:90px"></label>
+    <label>Margen dinámico (°C)<input type="number" id="tDynM" step="1" min="1" value="15" style="min-width:90px"></label>
+    <span class="sp"></span>
+    <button class="btn sm" data-win="0">Todo</button><button class="btn sm" data-win="14">14 d</button><button class="btn sm" data-win="7">7 d</button><button class="btn sm" data-win="3">72 h</button>
+  </div>
+  <div class="panel"><div class="checks" id="tPoints"></div>
+    <div class="checks" style="margin-top:6px">
+      <label><input type="checkbox" id="tAmb" checked> T ambiente</label>
+      <label style="flex-direction:row;align-items:center;gap:6px">Eje derecho <select id="tRight"><option value="auto">Automático</option><option value="carga">% Carga</option><option value="corr">Corriente (A)</option><option value="volt">Tensión (V)</option><option value="none">Ninguno</option></select></label>
+      <label><input type="checkbox" id="tDyn" checked> Umbral dinámico (carga/ambiente)</label>
+      <label><input type="checkbox" id="tHideSim"> Ocultar datos simulados</label>
+    </div></div>
+  <div class="stats" id="tStats"></div>
+  <div class="legend" id="tLegend"></div>
+  <div class="chartbox tall"><div class="ttl">Temperatura (°C) vs. tiempo · rueda = zoom · arrastrar = paneo · doble clic = restablecer</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cT"></canvas><div class="tip"></div></div>
+  <div class="chartbox short"><div class="ttl">Tasa de cambio dT/dt (°C/h) · punto principal</div><canvas id="cD"></canvas><div class="tip"></div></div>
+  <div class="chartbox short"><div class="ttl">Corriente por fase (A)</div><canvas id="cI"></canvas><div class="tip"></div></div>
+  <div class="chartbox short"><div class="ttl">Tensión por fase (V) · banda ±10 % del nominal</div><canvas id="cV"></canvas><div class="tip"></div></div>
+  <div class="chartbox tall"><div class="ttl">Correlación: temperatura vs. carga (color = T ambiente)</div><canvas id="cS"></canvas><div class="tip"></div></div>
+</section>
+
+<!-- ============ C. INSPECCIONES ============ -->
+<section id="v-insp" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset" id="iAsset"><option value="">Todos</option></select></label>
+    <label>Tipo de inspección<select id="iTipo"></select></label>
+    <label>Severidad<select id="iSev"></select></label>
+    <label>Buscar<input type="text" id="iQ" placeholder="folio, hallazgo…"></label>
+    <span class="sp"></span>
+    <button class="btn pri" id="btnNewInsp">＋ Nueva inspección</button>
+  </div>
+  <div class="grid2">
+    <div class="tw" style="max-height:560px"><table id="iTable"></table></div>
+    <div>
+      <div class="panel" id="iViewer"><h2>Visor de hallazgo</h2><p class="muted">Selecciona una inspección de la bitácora.</p></div>
+      <div class="panel"><h2>Calculadora ΔT · clasificación NETA</h2>
+        <div class="calc">
+          <label>T componente (°C)<input type="number" step="0.1" id="cTc"></label>
+          <label>T referencia (°C)<input type="number" step="0.1" id="cTr"></label>
+          <label>Referencia<select id="cMode"><option value="sim">Componente similar</option><option value="amb">Temperatura ambiente</option></select></label>
+          <label>Carga medida % (opc.)<input type="number" step="1" id="cLoad"></label>
+        </div>
+        <div id="cOut" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ D. WEIBULL ============ -->
+<section id="v-wb" class="view" hidden>
+  <div class="bar">
+    <label>Activo<select class="selAsset"></select></label>
+    <label>Población de falla<select id="wPop"></select></label>
+    <label>Edad del activo (h)<input type="number" id="wAge" min="0" step="1000" style="min-width:130px"></label>
+    <button class="btn sm" id="wAgeReset">Edad por fecha de puesta en marcha</button>
+  </div>
+  <div id="wWarn"></div>
+  <div class="stats" id="wStats"></div>
+  <div class="infobox" id="wInterp"></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(520px,1fr))">
+    <div><div class="chartbox tall"><div class="ttl">Gráfica de probabilidad Weibull (ajuste MRR)</div><canvas id="wP"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">F(t) · probabilidad acumulada de falla</div><canvas id="wF"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">R(t) · confiabilidad</div><canvas id="wR"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">h(t) · tasa de falla instantánea (fallas / 10⁶ h)</div><canvas id="wH"></canvas><div class="tip"></div></div></div>
+  </div>
+  <div class="panel"><h3>Datos de vida de la población</h3><div class="tw" style="max-height:240px"><table id="wTable"></table></div></div>
+</section>
+
+<!-- ============ DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos JSON">
+        <b>Actualizar base: arrastra reportes PDF de termografía o archivos .json</b><br>
+        <span class="muted">Tableros (ANSI C37.20), transformadores secos (NMX-J-351) y arrancadores (POE-009) · se agregan sin borrar lo anterior, por TAG y fecha · se guardan en este navegador</span>
+      </div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <div class="tw" style="max-height:300px"><table id="stTable"></table></div>
+        <p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
+        <p class="small muted">Se omiten automáticamente las lecturas que ya existen (mismo TAG, fecha y punto), así que puedes volver a subir un reporte sin duplicar datos. Revisa que «Equipos / total» coincida con el resumen del PDF.</p></div>
+      <div class="panel" id="capPanel" style="margin-top:12px"><h2>Captura diaria manual</h2>
+        <div class="form">
+          <label>Activo<select id="mTag"></select></label>
+          <label>Fecha y hora de la medición<input type="datetime-local" id="mFecha"></label>
+          <div id="mNew" class="full form" hidden>
+            <label>TAG nuevo<input type="text" id="mNTag" placeholder="TR-12-09"></label>
+            <label>Tipo<select id="mNTipo"><option>Tablero</option><option>Motor</option><option>Transformador</option></select></label>
+            <label>Planta / área<input type="text" id="mNPlanta"></label><label>Sector<input type="number" id="mNSector" min="1" max="9"></label>
+          </div>
+          <label>T ambiente (°C)<input type="number" step="0.1" id="mAmb"></label>
+          <label>% Carga (opcional)<input type="number" step="0.1" id="mLoad"></label>
+          <label>Inspector<input type="text" id="mInsp2" placeholder="Nombre · ficha"></label>
+          <div class="full"><div class="small muted" style="margin-bottom:4px">Corriente (A) y tensión (V o kV) por fase — opcional</div><div id="mElec" class="mpts"></div></div>
+          <div class="full"><div class="small muted" style="margin-bottom:4px">Temperaturas (°C): deja en blanco los puntos que no mediste</div><div id="mPts" class="mpts"></div></div>
+          <label>Punto adicional<input type="text" id="mXN" placeholder="p.ej. Chumacera LA"></label><label>Temp. punto adicional (°C)<input type="number" step="0.1" id="mXT"></label>
+          <label class="full">Observaciones<textarea id="mObs" rows="2"></textarea></label>
+          <label class="full" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="mInsp" checked> Registrar también como inspección (clasifica severidad con ANSI C37.20 / NETA)</label>
+          <div class="full"><button class="btn pri" id="mSave">Guardar lectura</button></div>
+        </div></div>
+      <div class="panel" id="qPanel" style="margin-top:12px"><h2>Calidad de datos · valores en blanco o imposibles</h2>
+        <p class="small muted">Los reportes PDF traen celdas vacías y errores de tecleo. Al importar, los valores imposibles se <b>descartan</b> y quedan listados aquí para corregirlos en la fuente; los sospechosos se conservan marcados «revisar».</p>
+        <div id="qSum" class="stats"></div>
+        <div class="bar"><label>Motivo<select id="qMot"></select></label><label>Buscar TAG<input type="text" id="qQ"></label><span class="sp"></span><button class="btn sm" id="qCsv">⬇ Exportar CSV</button></div>
+        <div class="tw" style="max-height:320px"><table id="qTable"></table></div></div>
+      <div class="panel" style="margin-top:12px"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-termico/v1</code></h2>
+        <p class="small muted">Se aceptan: archivo con <code>activos[]</code>, un arreglo de activos o un activo suelto. Las lecturas duplicadas (tag+ts+punto) se omiten.</p>
+        <pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnSample">⬇ Descargar JSON de ejemplo</button>
+          <button class="btn" id="btnExport2">⬇ Exportar base completa</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos de ejemplo</button>
+          <button class="btn" id="btnWipe">🗑 Vaciar base</button>
+        </div></div>
+      <div class="panel small"><h3>Seguridad</h3>
+        Archivo autocontenido: sin CDN, sin peticiones de red (CSP <code>connect-src 'none'</code>). Los datos nunca salen del equipo; todo texto de los JSON se escapa antes de mostrarse.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-label="Ficha técnica"></aside>
+<dialog id="dlgInsp"></dialog>
+<dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
+<div id="dropOverlay">Suelta los archivos .json para cargarlos</div>
+<div class="statusbar" id="statusbar"></div>
+
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/* =====================================================================
+   CONSTANTES DE INGENIERÍA
+   ===================================================================== */
+const SEV=[{k:0,n:'Normal',i:'●'},{k:1,n:'Alarma 1 · Precaución',i:'▲'},{k:2,n:'Alarma 2 · Crítico',i:'■'},{k:3,n:'Fuera de servicio',i:'◆'}];
+const chip=(s,extra='')=>`<span class="chip c${s}">${SEV[s].i} ${SEV[s].n}${extra}</span>`;
+const DEFAULT_THR={
+  Transformador:{diseno:100,alarma:120,disparo:130,ref:'NMX-J-351-ANCE-2016'},
+  Tablero:{diseno:70,alarma:85,disparo:105,ref:'ANSI C37.20 (70 °C / 105 °C mat. especiales)'},
+  Motor:{diseno:70,alarma:85,disparo:105,ref:'ANSI C37.20 / NEMA ICS (conexiones)'},
+  Otro:{diseno:70,alarma:85,disparo:105,ref:'genérico'}
+};
+const CFG={rate:1.5,dynMargin:15,expLoad:1.6};
+// NETA MTS (Tabla 100.18) — comparación contra componente similar
+function netaSim(dt){const r=Math.round(dt);if(r<1)return{s:0,t:'Sin diferencia significativa',a:'Sin acción.'};
+  if(r<=3)return{s:0,t:'Posible deficiencia (1–3 °C)',a:'Investigar / vigilar en el siguiente recorrido.'};
+  if(r<=15)return{s:1,t:'Probable deficiencia (4–15 °C)',a:'Programar reparación en el próximo paro; verificar par de apriete y contacto.'};
+  return{s:2,t:'Discrepancia mayor (>15 °C)',a:'Reparar de inmediato; evaluar libranza.'}}
+function netaAmb(dt){const r=Math.round(dt);if(r<1)return{s:0,t:'Sin diferencia significativa',a:'Sin acción.'};
+  if(r<=10)return{s:0,t:'Posible deficiencia (1–10 °C vs ambiente)',a:'Investigar / vigilar.'};
+  if(r<=20)return{s:1,t:'Probable deficiencia (11–20 °C vs ambiente)',a:'Programar reparación.'};
+  if(r<=40)return{s:1,t:'Monitoreo continuo (21–40 °C vs ambiente)',a:'Monitorear continuamente hasta corregir.'};
+  return{s:2,t:'Discrepancia mayor (>40 °C vs ambiente)',a:'Reparar de inmediato.'}}
+
+/* =====================================================================
+   BASE NORMALIZADA EN MEMORIA
+   ===================================================================== */
+const emptyDB=()=>({v:2,activos:{},lecturas:[],inspecciones:[],poblaciones:{},archivos:[],elec:[],descartes:[]});
+let DB=emptyDB(), IX={snaps:new Map(),ev:new Map(),cur:new Map()};
+let saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),150)}
+
+const normTipo=s=>{s=String(s||'').toLowerCase();return /transf|trafo/.test(s)?'Transformador':/tabler|ccm|mcc|cub[ií]culo|interruptor|tdm|swgr|switchgear/.test(s)?'Tablero':/motor|arranc|bomba|ventilador|compresor/.test(s)?'Motor':'Otro'};
+const grupoOf=p=>String(p).replace(/[\s\-–—_]+(F[123]|L[123]|R|S|T|X[0-3]|H[1-3]|U|V|W)$/i,'').trim()||String(p);
+function sevFrom(v){if(typeof v==='number')return Math.max(0,Math.min(3,v|0));const s=String(v||'').toLowerCase();
+  if(/fuera|libranza|mantto|oos/.test(s))return 3; if(/alarma ?2|cr[ií]tic|deficiente|alta|rojo|2/.test(s))return 2;
+  if(/alarma ?1|precauc|condicionad|media|ámbar|ambar|amarillo|1/.test(s))return 1; return 0}
+
+function ingest(obj,fname){
+  const rep={file:fname,warn:[],act:0,lec:0,insp:0,pob:0,dup:0,skip:0,ts:Date.now()};
+  const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,act:rep.act,lec:rep.lec,insp:rep.insp,pob:rep.pob,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,40)};
+  if(!obj||typeof obj!=='object'){rep.warn.push('El archivo no contiene un objeto JSON válido.');pushLog();return rep}
+  const recs=Array.isArray(obj.recorridos)?obj.recorridos:(Array.isArray(obj)&&obj[0]&&obj[0].fmt?obj:null);
+  let acts=recs?(Array.isArray(obj.activos)?obj.activos:[]):Array.isArray(obj)?obj:Array.isArray(obj.activos)?obj.activos:(obj.tag||obj.id_activo||obj.TAG)?[obj]:null;
+  if(!acts&&!obj.poblaciones){rep.warn.push('Sin "activos" ni "poblaciones": estructura no reconocida (ver esquema en esta pestaña).');pushLog();return rep}
+  const seen=new Set(DB.lecturas.map(r=>r.tag+'|'+r.ts+'|'+r.punto));
+  const seenI=new Set(DB.inspecciones.map(i=>i.id));
+  DB.elec=DB.elec||[];DB.descartes=DB.descartes||[];
+  const seenE=new Set(DB.elec.map(e=>e.tag+'|'+e.ts)),seenD=new Set(DB.descartes.map(d=>d.tag+'|'+d.ts+'|'+d.campo));
+  for(const a of (acts||[])){
+    const tag=String(a.tag||a.TAG||a.id_activo||a.id||'').trim();
+    if(!tag){rep.warn.push('Activo sin TAG omitido.');rep.skip++;continue}
+    const old=DB.activos[tag]||{};
+    const tipo=normTipo(a.tipo||a.Tipo||old.tipo);
+    if(tipo==='Otro')rep.warn.push(`${tag}: tipo "${a.tipo}" no reconocido; se clasificó como "Otro".`);
+    DB.activos[tag]={...old,tag,tipo,
+      planta:a.planta??a.area??old.planta??'—',sector:a.sector??old.sector??null,ubicacion:a.ubicacion??old.ubicacion??'—',
+      sap:a.sap??old.sap??null,gps:a.gps??old.gps??null,estado_operativo:a.estado_operativo??old.estado_operativo??'En servicio',
+      metadatos:{...(old.metadatos||{}),...(a.metadatos||a.placa||{})},
+      umbrales:a.umbrales??old.umbrales??null,umbrales_por_punto:a.umbrales_por_punto??old.umbrales_por_punto??null,
+      poblacion:a.poblacion??old.poblacion??tipo,nota_calidad_dato:a.nota_calidad_dato??old.nota_calidad_dato??null};
+    rep.act++;
+    for(const r of (a.registros||a.lecturas||[])){
+      const ts=parseTs(r.ts??r.timestamp??r.fecha), punto=String(r.punto??r.punto_medicion??'').trim(), t=num(r.temp_c??r.temperatura_c??r.temp);
+      if(!Number.isFinite(ts)||!punto||t==null||t<-60||t>600){rep.skip++;if(rep.warn.length<8)rep.warn.push(`${tag}: lectura inválida omitida (${JSON.stringify(r).slice(0,80)})`);continue}
+      const k=tag+'|'+ts+'|'+punto; if(seen.has(k)){rep.dup++;continue} seen.add(k);
+      DB.lecturas.push({tag,ts,punto,grupo:r.grupo||grupoOf(punto),temp:t,amb:num(r.t_amb_c??r.temp_ambiente_c??r.amb),carga:num(r.carga_pct??r.carga),corr:num(r.i_a??r.corriente_a),origen:r.origen==='simulado'?'simulado':(r.origen||'real')});
+      rep.lec++;
+    }
+    for(const r of (a.mediciones_electricas||[])){const ts=parseTs(r.ts??r.fecha);if(!Number.isFinite(ts))continue;const k=tag+'|'+ts;if(seenE.has(k))continue;seenE.add(k);
+      DB.elec.push({tag,ts,i:(r.i||[]).map(num),il:r.i_lbl||['L1','L2','L3'],v:(r.v||[]).map(num),vl:r.v_lbl||['L1','L2','L3'],origen:r.origen||'real'});rep.ele=(rep.ele||0)+1}
+    for(const r of (a.inspecciones||a.eventos||[])){
+      const ts=parseTs(r.fecha??r.ts); if(!Number.isFinite(ts)){rep.skip++;continue}
+      const tc=num(r.t_comp??r.temp_componente_c), tr=num(r.t_ref??r.temp_referencia_c), id=r.id||('I'+hash(tag+'|'+ts+'|'+(r.tipo||'')+'|'+(r.folio||'')));
+      if(seenI.has(id)){rep.dup++;continue} seenI.add(id);
+      const modo=r.ref_modo||'sim', dT=num(r.delta_t)??(tc!=null&&tr!=null?tc-tr:null);
+      let sev=r.severidad!=null?sevFrom(r.severidad):(dT!=null?(modo==='amb'?netaAmb(dT):netaSim(dT)).s:0);
+      DB.inspecciones.push({id,tag,ts,inspector:r.inspector||'—',tipo:r.tipo||'Termografía',hallazgos:r.hallazgos||'',sev,t_comp:tc,t_ref:tr,ref_modo:modo,delta_t:dT,ttf_h:num(r.tiempo_hasta_falla_h??r.mtbf_h),folio:r.folio||null,url:r.fuente_url||null,origen:r.origen||'real',imgs:Array.isArray(r.imgs)?r.imgs:[]});
+      rep.insp++;
+    }
+  }
+  if(recs){ingestRec(recs,rep,seen,seenI,seenE,seenD);if(rep.qd||rep.qb||rep.qr)rep.warn.push(`Calidad: ${rep.qd||0} valor(es) imposible(s) descartado(s), ${rep.qb||0} celda(s) en blanco, ${rep.qr||0} marcado(s) «revisar». Detalle en «Calidad de datos».`)}
+  const pobs=Array.isArray(obj.poblaciones)?obj.poblaciones:[];
+  for(const p of pobs){
+    const id=String(p.id||p.tipo||'').trim(); const datos=(p.datos||[]).map(d=>({horas:num(d.horas),evento:/susp|censur/i.test(d.evento||'')?'suspension':'falla'})).filter(d=>d.horas>0);
+    if(!id||datos.length<3){rep.warn.push(`Población "${id}" omitida (menos de 3 datos).`);continue}
+    DB.poblaciones[id]={id,tipo:normTipo(p.tipo||id),descripcion:p.descripcion||'',origen:p.origen||'real',datos};rep.pob++;
+  }
+  pushLog();
+  return rep;
+}
+
+/* ===== Índices y evaluación de severidad ===== */
+const thrOf=(a,p)=>{const pp=a.umbrales_por_punto;if(pp){if(pp[p])return pp[p];const k=Object.keys(pp).find(x=>p.toLowerCase().includes(x.toLowerCase()));if(k)return pp[k]}return a.umbrales||DEFAULT_THR[a.tipo]||DEFAULT_THR.Otro};
+function evalSnap(a,snap,prev){
+  const useNeta=a.tipo!=='Transformador';
+  const pp=snap.pts.map(p=>{const t=thrOf(a,p.punto);const sus=useNeta&&p.temp>150;let s=0;if(sus)s=1;else{if(p.temp>t.diseno)s=1;if(p.temp>=t.alarma)s=2}
+    const o={...p,thr:t,sev:s,sus,disp:!sus&&p.temp>=t.disparo,dtSim:null,rate:null,esp:null,exc:null,why:[]};
+    if(sus)o.why.push(`⚠ lectura de ${f1(p.temp)} °C sospechosa (posible error de captura): verificar en campo`);
+    else if(s===1)o.why.push(`T ${f1(p.temp)} °C > límite de diseño ${t.diseno} °C`);
+    if(s===2)o.why.push(`T ${f1(p.temp)} °C ≥ alarma preventiva ${t.alarma} °C`+(o.disp?` (≥ disparo ${t.disparo} °C)`:''));
+    return o});
+  if(useNeta){
+    const by={};pp.forEach(p=>(by[p.grupo]=by[p.grupo]||[]).push(p));
+    for(const g0 of Object.values(by)){const g=g0.filter(q=>!q.sus);if(g.length<3)continue;
+      g.forEach(p=>{const others=g.filter(q=>q!==p);const dt=p.temp-mean(others.map(q=>q.temp));p.dtSim=dt;const n=netaSim(dt);
+        if(n.s>p.sev)p.sev=n.s; if(n.s>0)p.why.push(`ΔT ${f1(dt)} °C vs fases similares — ${n.t}`)})}
+  }
+  if(prev){const dh=(snap.ts-prev.ts)/3.6e6;
+    if(dh>0&&dh<=48)pp.forEach(p=>{const q=prev.pts.find(x=>x.punto===p.punto);if(!q)return;p.rate=(p.temp-q.temp)/dh;
+      if(p.rate>=CFG.rate){if(p.sev<1)p.sev=1;p.why.push(`dT/dt = ${f1(p.rate,2)} °C/h ≥ ${CFG.rate} °C/h (calentamiento acelerado)`)}})}
+  const adv=[];
+  pp.forEach(p=>{if(snap.carga!=null&&snap.amb!=null&&p.thr){const rise=p.thr.diseno-40;p.esp=snap.amb+rise*Math.pow(Math.max(snap.carga,1)/100,CFG.expLoad);p.exc=p.temp-p.esp}});
+  const over=pp.filter(p=>p.exc!=null&&p.exc>CFG.dynMargin).sort((x,y)=>y.exc-x.exc);
+  if(over.length)adv.push(`${over.length} de ${pp.length} puntos sobre lo esperado por carga (${f1(snap.carga,0)} %) y ambiente (${f1(snap.amb,0)} °C); máx. ${over[0].punto}: ${f1(over[0].temp)} °C = +${f1(over[0].exc)} °C vs esperado ${f1(over[0].esp)} °C. Verificar lectura/emisividad o calentamiento anormal.`);
+  let sev=Math.max(0,...pp.map(p=>p.sev));
+  if(/fuera|mantenimiento|libranza/i.test(a.estado_operativo||''))sev=3;
+  const hot=pp.reduce((m,p)=>p.temp>(m?m.temp:-1e9)?p:m,null);
+  const dts=pp.map(p=>p.dtSim).filter(v=>v!=null);
+  return{ts:snap.ts,sev,pp,hot,elec:snap.elec||null,corr:snap.corr??null,vMean:snap.vMean??null,tmax:hot?hot.temp:null,dtMax:dts.length?Math.max(...dts):null,amb:snap.amb,carga:snap.carga,adv,
+         why:pp.filter(p=>p.sev>0).flatMap(p=>p.why.map(w=>`${p.punto}: ${w}`)),real:snap.pts.every(p=>p.origen!=='simulado')};
+}
+function rebuild(){
+  IX={snaps:new Map(),ev:new Map(),cur:new Map()};
+  const by=new Map();
+  for(const r of DB.lecturas){let m=by.get(r.tag);if(!m){m=new Map();by.set(r.tag,m)}let s=m.get(r.ts);if(!s){s={ts:r.ts,pts:[],amb:null,carga:null};m.set(r.ts,s)}s.pts.push(r);if(r.amb!=null)s.amb=r.amb;if(r.carga!=null)s.carga=r.carga;if(r.corr!=null)s.corr=r.corr}
+  const em=new Map();for(const e of DB.elec||[]){let m=em.get(e.tag);if(!m){m=new Map();em.set(e.tag,m)}m.set(e.ts,e)}
+  for(const [tag,m] of by){const arr=[...m.values()].sort((x,y)=>x.ts-y.ts),E=em.get(tag);
+    if(E)arr.forEach(s=>{const e=E.get(s.ts);if(!e)return;s.elec=e;s.iMean=meanOk(e.i);s.vMean=meanOk(e.v);const c=isSec(e)?e.i[1]:s.iMean;if(c!=null)s.corr=c});
+    IX.snaps.set(tag,arr)}
+  for(const tag of Object.keys(DB.activos)){const a=DB.activos[tag],sn=IX.snaps.get(tag)||[];const ev=sn.map((s,i)=>evalSnap(a,s,sn[i-1]));IX.ev.set(tag,ev);IX.cur.set(tag,ev[ev.length-1]||null)}
+}
+const assets=()=>Object.values(DB.activos).sort((a,b)=>a.tag.localeCompare(b.tag,'es',{numeric:true}));
+const refTs=()=>{let m=0;for(const e of IX.cur.values())if(e&&e.ts>m)m=e.ts;return m||Date.now()};
+
+/* =====================================================================
+   WEIBULL
+   ===================================================================== */
+function betaDiag(b){
+  if(b<0.9)return{t:'Falla prematura (mortalidad infantil), β<1',a:'Defectos de instalación/comisionamiento o de fabricación. El mantenimiento por tiempo no ayuda: reforzar pruebas de aceptación, torque y termografía de arranque.'};
+  if(b<=1.1)return{t:'Falla aleatoria, β≈1',a:'La edad no predice la falla. Priorizar monitoreo por condición (termografía, ultrasonido, tendencia dT/dt) y redundancia; reemplazo por tiempo no se justifica.'};
+  if(b<2)return{t:'Desgaste incipiente, 1<β<2',a:'Mezcla de causas aleatorias y desgaste. Inspección periódica por condición y reemplazo de elementos sujetos a desgaste (conexiones, contactos).'};
+  return{t:'Desgaste por envejecimiento térmico, β≥2',a:'La edad sí predice la falla. Justifica rehabilitación/reemplazo programado antes de la vida B10 y control estricto de temperatura (cada +10 °C reduce a la mitad la vida del aislamiento, regla de Arrhenius/Montsinger).'}}
+
+/* =====================================================================
+   ESTADO DE UI
+   ===================================================================== */
+const S={view:'exec',sel:null,fTipo:'',fPlanta:'',fSev:'',q:'',tr:{pts:new Set(),primary:null,asset:null},wb:{age:null,pop:null},insp:{sel:null},limit:60};
+let CH={};
+
+/* ===================== VISTA A · EJECUTIVO ===================== */
+function renderExec(){
+  const all=assets(),tipos=['Transformador','Tablero','Motor','Otro'].filter(t=>all.some(a=>a.tipo===t)),plantas=[...new Set(all.map(a=>a.planta))].sort();
+  opts($('#fTipo'),[['','Todos los tipos'],...tipos.map(t=>[t,t])],S.fTipo);opts($('#fPlanta'),[['','Todas las plantas'],...plantas.map(p=>[p,p])],S.fPlanta);
+  opts($('#fSev'),[['','Todas las severidades'],...SEV.map(s=>[String(s.k),s.n])],S.fSev);
+  const cnt=[0,0,0,0];let dtM=0,cargas=[];
+  all.forEach(a=>{const e=IX.cur.get(a.tag);if(!e)return;cnt[e.sev]++;if(e.dtMax>dtM)dtM=e.dtMax;if(e.carga!=null)cargas.push(e.carga)});
+  $('#kpis').innerHTML=[['gold',all.length,'Activos monitoreados'],['ok',cnt[0],'Normal'],['warn',cnt[1],'Alarma 1 · Precaución'],['crit',cnt[2],'Alarma 2 · Crítico'],['oos',cnt[3],'Fuera de servicio'],['gold',f1(dtM)+' °C','ΔT máx. (NETA)'],['gold',cargas.length?f1(mean(cargas),0)+' %':'—','Carga promedio']]
+    .map(([c,v,l])=>`<div class="kpi ${c}"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('');
+  const list=all.filter(a=>{const e=IX.cur.get(a.tag);return (!S.fTipo||a.tipo===S.fTipo)&&(!S.fPlanta||a.planta===S.fPlanta)&&(S.fSev===''||(e&&String(e.sev)===S.fSev))&&(!S.q||a.tag.toLowerCase().includes(S.q.toLowerCase()))});
+  $('#fCount').textContent=`${list.length} de ${all.length} activos`;
+  const shown=list.slice(0,S.limit);
+  $('#cards').innerHTML=list.length?shown.map(cardHTML).join('')+(list.length>shown.length?`<button class="btn" id="moreCards" style="grid-column:1/-1">Mostrar más (${list.length-shown.length} restantes)</button>`:''):'<p class="muted">Sin activos con esos filtros. Carga un JSON en «Datos y carga».</p>';
+  const mb=$('#moreCards');if(mb)mb.addEventListener('click',()=>{S.limit+=60;renderExec()});
+  $$('#cards .card').forEach(c=>{c.addEventListener('click',()=>openDrawer(c.dataset.tag));c.addEventListener('keydown',e=>{if(e.key==='Enter')openDrawer(c.dataset.tag)})});
+  // alertas
+  const al=[];all.forEach(a=>{const e=IX.cur.get(a.tag);if(!e)return;e.why.forEach(w=>al.push({s:e.sev===3?3:Math.max(1,e.sev),tag:a.tag,txt:w,k:0}));e.adv.forEach(w=>al.push({s:1,tag:a.tag,txt:w,k:1}))});
+  al.sort((x,y)=>(y.s-x.s)||(x.k-y.k));
+  $('#alerts').innerHTML=al.length?al.slice(0,40).map(x=>`<li data-tag="${esc(x.tag)}"><span class="chip c${x.k?1:x.s}" aria-label="${SEV[x.k?1:x.s].n}">${SEV[x.k?1:x.s].i}</span><div><span class="t">${esc(x.tag)}</span> ${x.k?'<span class="badge">analítico</span>':''}<br>${esc(x.txt)}</div></li>`).join(''):'<li class="muted">Sin alertas activas.</li>';
+  $$('#alerts li[data-tag]').forEach(li=>li.addEventListener('click',()=>openDrawer(li.dataset.tag)));
+}
+function sparkSVG(tag){
+  const ev=IX.ev.get(tag)||[];if(ev.length<2)return'';const v=ev.map(e=>e.tmax),a=DB.activos[tag],th=thrOf(a,ev[ev.length-1].hot?ev[ev.length-1].hot.punto:'');
+  const lo=Math.min(...v),hi=Math.max(...v,lo+1),w=240,h=42,X=i=>i/(v.length-1)*w,Y=t=>h-3-(t-lo)/(hi-lo)*(h-6);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="var(--dorado)" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${v.map((t,i)=>X(i).toFixed(1)+','+Y(t).toFixed(1)).join(' ')}"/></svg>`}
+function cardHTML(a){
+  const e=IX.cur.get(a.tag);if(!e)return`<article class="card" data-tag="${esc(a.tag)}" tabindex="0"><div class="tag">${esc(a.tag)}</div><div class="meta">Sin lecturas</div></article>`;
+  return`<article class="card s${e.sev}" data-tag="${esc(a.tag)}" tabindex="0" aria-label="${esc(a.tag)}: ${SEV[e.sev].n}">
+  <div class="h"><div><div class="tag">${esc(a.tag)}</div><div class="meta">${esc(a.tipo)} · ${esc(a.planta)}</div></div>${chip(e.sev)}</div>
+  <div class="mx"><div><span>T máx.</span><br><b>${f1(e.tmax)} °C</b> <span>${e.hot?esc(e.hot.punto.replace(/^Conexiones /,'').replace(/^Devanado /,'Dev. ')):''}</span></div>
+  <div><span>ΔT (fases similares)</span><br><b>${e.dtMax!=null?f1(e.dtMax)+' °C':'n/a'}</b></div>
+  <div><span>Carga</span><br><b>${e.carga!=null?f1(e.carga,0)+' %':'—'}</b></div><div><span>T ambiente</span><br><b>${e.amb!=null?f1(e.amb,0)+' °C':'—'}</b></div></div>
+  ${e.elec?`<div class="small muted">I ${esc(iTxt(e.elec))}${vTxt(e.elec)!=='—'?' · V '+esc(vTxt(e.elec)):''}</div>`:''}
+  ${sparkSVG(a.tag)}
+  <div class="meta">Última lectura: ${fDT(e.ts)} <span class="badge ${e.real?'real':'sim'}">${e.real?'real':'simulado'}</span></div></article>`}
+
+/* ===== Ficha técnica ===== */
+function openDrawer(tag){
+  const a=DB.activos[tag],e=IX.cur.get(tag);if(!a)return;S.sel=tag;const m=a.metadatos||{},ev=IX.ev.get(tag)||[];
+  const kvs=[['Tipo',a.tipo],['Planta / área',a.planta],['Sector',a.sector??'—'],['Ubicación física',a.ubicacion],['N° SAP',a.sap??'—'],['Coordenadas GPS',a.gps?a.gps.join(', '):'—'],['Estado operativo',a.estado_operativo],
+    ['Potencia',m.potencia||'—'],['Tensión (kV)',m.tension_kv??'—'],['Clase térmica aislamiento',m.clase_termica||'—'],['Fabricante',m.fabricante||'—'],
+    ['Puesta en marcha',m.puesta_en_marcha?`${fDate(parseTs(m.puesta_en_marcha))}${m.puesta_en_marcha_origen==='estimada'?' (estimada)':''}`:'—'],
+    ['Corriente nominal (A)',m.corriente_nominal_a!=null?`${m.corriente_nominal_a}${m.corriente_nominal_origen?' ('+m.corriente_nominal_origen+')':''}`:'—']];
+  const rows=e?e.pp.slice().sort((x,y)=>y.temp-x.temp).map(p=>`<tr><td>${esc(p.punto)}</td><td class="n"><b>${f1(p.temp)}</b></td><td class="n">${p.dtSim!=null?f1(p.dtSim):'—'}</td><td class="n">${p.rate!=null?f1(p.rate,2):'—'}</td><td class="n small">${p.thr.diseno}/${p.thr.alarma}/${p.thr.disparo}</td><td>${chip(p.sev)}</td></tr>`).join(''):'';
+  const tl=ev.length?`<div class="tl" role="img" aria-label="Historial de criticidad">${ev.map(x=>`<span class="t${x.sev}" title="${fDT(x.ts)} · ${SEV[x.sev].n} · ${f1(x.tmax)} °C${x.elec?' · I '+iTxt(x.elec)+(vTxt(x.elec)!=='—'?' · V '+vTxt(x.elec):''):''}"></span>`).join('')}</div><div class="small muted" style="display:flex;justify-content:space-between"><span>${fDate(ev[0].ts)}</span><span>${fDate(ev[ev.length-1].ts)}</span></div>`:'';
+  const el=e?e.elec:null,ub=el&&!isSec(el)?unbal(el.i):null,uv=el?unbal(el.v):null;
+  const eInfo=el?`<p class="small" style="margin:8px 0 0">Corriente: <b>${esc(iTxt(el))}</b>${ub!=null?` (desbalance ${f1(ub,1)} %)`:''} · Tensión: <b>${esc(vTxt(el))}</b>${uv!=null?` (desbalance ${f1(uv,1)} %${uv>2?' ⚠ NEMA MG-1 recomienda ≤ 1 %':''})`:''}${e.carga!=null?` · Carga ${f1(e.carga,0)} %`:''}</p>`:'<p class="small muted" style="margin:8px 0 0">Sin corriente ni tensión registradas en esta lectura.</p>';
+  const hist=ev.slice().reverse().slice(0,150).map(x=>`<tr><td>${fDT(x.ts)}</td><td class="n"><b>${f1(x.tmax)}</b></td><td class="small">${esc(x.hot?x.hot.punto.replace(/^Conexiones lado /,'').replace(/^Devanado /,'Dev. '):'')}</td><td class="n">${x.dtMax!=null?f1(x.dtMax):'—'}</td><td><span class="chip c${x.sev}" title="${SEV[x.sev].n}">${SEV[x.sev].i}</span></td><td class="small">${esc(iTxt(x.elec))}</td><td class="small">${esc(vTxt(x.elec))}</td><td class="n">${x.carga!=null?f1(x.carga,0):'—'}</td><td class="n">${x.amb!=null?f1(x.amb,0):'—'}</td></tr>`).join('');
+  const dq=(DB.descartes||[]).filter(d=>d.tag===tag).sort((x,y)=>y.ts-x.ts);
+  const dqH=dq.length?`<details class="panel"><summary><b>Valores en blanco o descartados (${dq.length})</b></summary><div class="tw" style="max-height:220px;margin-top:8px"><table><tr><th>Fecha</th><th>Campo</th><th class="n">Valor</th><th>Motivo</th></tr>${dq.slice(0,60).map(d=>`<tr><td class="small">${fDate(d.ts)}</td><td class="small">${esc(d.campo)}</td><td class="n">${d.valor==null?'—':esc(d.valor)}</td><td class="small">${esc(d.motivo)}</td></tr>`).join('')}</table></div></details>`:'';
+  $('#drawer').innerHTML=`<div class="dh"><div><h2>${esc(a.tag)}</h2><div class="small">${esc(a.tipo)} · ${esc(a.planta)}</div></div><div>${e?chip(e.sev):''} <button class="btn sm" id="dClose" aria-label="Cerrar">✕</button></div></div>
+  <div class="panel"><h3>Identificación y datos de placa</h3><dl class="kv">${kvs.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>
+  ${a.nota_calidad_dato?`<div class="warnbox"><b>Calidad del dato:</b> ${esc(a.nota_calidad_dato)}</div>`:''}
+  <div class="panel"><h3>Estado actual · ${e?fDT(e.ts):'—'}</h3><div class="tw" style="max-height:300px"><table><tr><th>Punto</th><th class="n">T °C</th><th class="n">ΔT</th><th class="n">°C/h</th><th class="n">Dis/Alm/Disp</th><th>Estado</th></tr>${rows}</table></div>
+   ${eInfo}
+   ${e&&e.adv.length?`<p class="small" style="margin-top:8px"><b>Análisis dinámico:</b><br>${e.adv.map(esc).join('<br>')}</p>`:''}</div>
+  <div class="panel"><h3>Historial de criticidad (${ev.length} lecturas)</h3>${tl}</div>
+  <div class="panel"><h3>Historial de lecturas · temperatura, corriente y tensión</h3><div class="tw" style="max-height:300px"><table><tr><th>Fecha</th><th class="n">T máx.</th><th>Punto</th><th class="n">ΔT</th><th>Est.</th><th>I (A)</th><th>V</th><th class="n">Carga %</th><th class="n">Tamb</th></tr>${hist}</table></div></div>
+  ${dqH}
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" data-go="trend">Ver tendencias</button><button class="btn" data-go="insp">Inspecciones</button><button class="btn" data-go="wb">Weibull / RUL</button></div>`;
+  $('#drawer').classList.add('open');$('#dClose').addEventListener('click',closeDrawer);
+  $$('#drawer [data-go]').forEach(b=>b.addEventListener('click',()=>{closeDrawer();switchView(b.dataset.go)}));
+}
+const closeDrawer=()=>$('#drawer').classList.remove('open');
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+/* ===================== VISTA B · TENDENCIAS ===================== */
+const srsFor=(tag,punto)=>{const out=[];for(const s of IX.snaps.get(tag)||[])for(const p of s.pts)if(p.punto===punto)out.push(p);return out};
+function renderTrend(resetView){
+  const a=DB.activos[S.sel];if(!a){$('#tStats').innerHTML='<p class="muted">Sin activos.</p>';return}
+  const sn=IX.snaps.get(a.tag)||[],puntos=[...new Set(sn.flatMap(s=>s.pts.map(p=>p.punto)))];
+  if(S.tr.asset!==a.tag){S.tr.asset=a.tag;const last=IX.cur.get(a.tag);const hot=last?last.pp.slice().sort((x,y)=>y.temp-x.temp).slice(0,3).map(p=>p.punto):puntos.slice(0,3);S.tr.pts=new Set(hot);S.tr.primary=hot[0]||puntos[0];resetView=true}
+  $('#tPoints').innerHTML=puntos.map((p,i)=>`<label><input type="checkbox" data-p="${esc(p)}" ${S.tr.pts.has(p)?'checked':''}><i style="display:inline-block;width:10px;height:10px;background:${colorOf(i)};border-radius:2px"></i>${esc(p)}</label>`).join('');
+  $$('#tPoints input').forEach(i=>i.addEventListener('change',()=>{i.checked?S.tr.pts.add(i.dataset.p):S.tr.pts.delete(i.dataset.p);renderTrend()}));
+  $('#tPrimary').innerHTML=puntos.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');$('#tPrimary').value=S.tr.primary;
+  const hasC=sn.some(s=>s.carga!=null),hasI=sn.some(s=>s.corr!=null),hasV=sn.some(s=>s.vMean!=null),useI=!hasC&&hasI,ldN=useI?'Corriente (A)':'% Carga';
+  let rk=$('#tRight').value;if(rk==='auto')rk=hasC?'carga':hasI?'corr':hasV?'volt':'none';
+  const RK={carga:{f:s=>s.carga,n:'% Carga',u:'%'},corr:{f:s=>s.corr,n:'Corriente (A)',u:' A'},volt:{f:s=>s.vMean,n:'Tensión media (V)',u:' V'}}[rk]||null;
+  const xd=sn.length?(sn[0].ts<sn[sn.length-1].ts?[sn[0].ts,sn[sn.length-1].ts]:[sn[0].ts-432e5,sn[0].ts+432e5]):null,snK=sn.map(s=>[s.ts]);
+  const tipEl=x=>{const i=nearest(snK,x),q=sn[i];if(!q||!q.elec)return'';return `<span class="muted">I ${esc(iTxt(q.elec))}${vTxt(q.elec)!=='—'?'<br>V '+esc(vTxt(q.elec)):''}</span>`};
+  const hideSim=$('#tHideSim').checked,showAmb=$('#tAmb').checked,showLoad=!!RK,showDyn=$('#tDyn').checked;
+  const series=[],hl=[],legend=[];
+  puntos.forEach((p,i)=>{if(!S.tr.pts.has(p))return;const pts=srsFor(a.tag,p).filter(r=>!(hideSim&&r.origen==='simulado')).map(r=>[r.ts,r.temp,{real:r.origen!=='simulado',sim:r.origen==='simulado'}]);
+    series.push({name:p,color:colorOf(i),pts,kind:'line',markReal:true});legend.push([colorOf(i),p,0])});
+  const pri=S.tr.primary,priR=srsFor(a.tag,pri).filter(r=>!(hideSim&&r.origen==='simulado'));
+  if(showAmb){const pts=sn.filter(s=>s.amb!=null&&!(hideSim&&s.pts.every(p=>p.origen==='simulado'))).map(s=>[s.ts,s.amb]);series.push({name:'T ambiente',color:'#8C9399',pts,kind:'line',dash:[2,3],width:1.3});legend.push(['#8C9399','T ambiente',1])}
+  if(showLoad){const pts=sn.filter(s=>RK.f(s)!=null&&!(hideSim&&s.pts.every(p=>p.origen==='simulado'))).map(s=>[s.ts,RK.f(s)]);series.push({name:RK.n,color:'#4C8BD6',pts,kind:'line',axis:'r',width:1.2,dash:[6,3],markReal:false});legend.push(['#4C8BD6',RK.n+' (eje der.)',1])}
+  const thrSets=[];[...S.tr.pts].forEach(p=>{const t=thrOf(a,p);if(!thrSets.some(x=>x.t.diseno===t.diseno&&x.t.alarma===t.alarma&&x.t.disparo===t.disparo))thrSets.push({t,p})});
+  const css=getComputedStyle(document.documentElement),cOk=css.getPropertyValue('--ok').trim(),cW=css.getPropertyValue('--warn-fill').trim(),cC=css.getPropertyValue('--crit').trim();
+  thrSets.forEach(({t,p})=>{const sfx=thrSets.length>1?` (${p})`:'';hl.push({y:t.diseno,color:cOk,label:'Límite de diseño '+t.diseno+' °C'+sfx,dash:[8,4]},{y:t.alarma,color:cW,label:'Alarma preventiva '+t.alarma+' °C'+sfx,dash:[8,4]},{y:t.disparo,color:cC,label:'Disparo crítico '+t.disparo+' °C'+sfx,dash:[3,3],w:1.8})});
+  if(showDyn&&pri){const t=thrOf(a,pri),rise=t.diseno-40,pts=sn.filter(s=>s.amb!=null&&s.carga!=null).map(s=>[s.ts,s.amb+rise*Math.pow(Math.max(s.carga,1)/100,CFG.expLoad)]);
+    series.push({name:'T esperada (carga, ambiente) — '+pri,color:'#E07A45',pts,kind:'line',dash:[2,2],width:1.4});
+    series.push({name:'Umbral dinámico (+'+CFG.dynMargin+' °C)',color:'#E07A45',pts:pts.map(p=>[p[0],p[1]+CFG.dynMargin]),kind:'line',dash:[10,3,2,3],width:1.4});legend.push(['#E07A45','T esperada = Tamb + (T_dis−40)·(carga)^1.6',1],['#E07A45','Umbral dinámico (+margen)',1])}
+  $('#tLegend').innerHTML=legend.map(([c,n])=>`<span><i style="background:${c}"></i>${esc(n)}</span>`).join('')+'<span><span style="color:var(--text)">◆</span> lectura real (resto simulado)</span>';
+  CH.T.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,0),y2Fmt:(v,st)=>rk==='volt'?fV(v,st):f1(v,decOf(st))+(RK?RK.u:''),yLabel:'°C',series,hlines:hl,hInclude:true,xdom:xd,tipExtra:tipEl},resetView);
+  // derivada
+  const w=+$('#tSmooth').value,raw=[];for(let i=1;i<priR.length;i++){const dh=(priR[i].ts-priR[i-1].ts)/3.6e6;if(dh>0&&dh<=48)raw.push([priR[i].ts,(priR[i].temp-priR[i-1].temp)/dh])}
+  const sm=raw.map((p,i)=>{const lo=Math.max(0,i-((w-1)>>1)),hi=Math.min(raw.length-1,i+(w>>1));return[p[0],mean(raw.slice(lo,hi+1).map(q=>q[1]))]});
+  CFG.rate=+$('#tRate').value||1.5;const noRate=sm.length===0;
+  const stem=sm.map(p=>[p[0],p[1],{c:Math.abs(p[1])>=CFG.rate?cC:undefined}]);
+  CH.D.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,1),y2Fmt:v=>v,yLabel:'°C/h',series:[{name:'dT/dt '+pri,color:'#2F9E8F',pts:stem,kind:'stem',width:2},{name:'dT/dt',color:'#2F9E8F',pts:sm,kind:'line',width:1.2}],
+    noData:noRate?'dT/dt no calculable: las lecturas están separadas más de 48 h (inspecciones periódicas, no monitoreo continuo)':null,hlines:[{y:CFG.rate,color:cW,label:`+${CFG.rate} °C/h`,dash:[6,4]},{y:-CFG.rate,color:cW,dash:[6,4]},{y:0,color:'#8C9399',dash:[],w:1}],hInclude:true,xdom:xd},resetView);
+  // corriente y tensión por fase (ligadas al zoom de temperatura)
+  const elS=sn.filter(s=>s.elec),lastEl=elS.length?elS[elS.length-1].elec:null,iL=(lastEl&&lastEl.il)||['L1','L2','L3'],vL=(lastEl&&lastEl.vl&&lastEl.vl.length?lastEl.vl:['L1','L2','L3']),PH=['#2F9E8F','#BC955C','#9A6BC4'];
+  const iSer=iL.map((lb,k)=>({name:'I '+lb,color:PH[k%3],pts:elS.filter(s=>s.elec.i[k]!=null).map(s=>[s.ts,s.elec.i[k]]),kind:'line',markers:true})).filter(x=>x.pts.length),Inom=a.metadatos&&a.metadatos.corriente_nominal_a;
+  CH.I.setData({xType:'time',xFmt:fDT,yFmt:(v,st)=>f1(v,decOf(st))+' A',y2Fmt:String,yLabel:'A',series:iSer,xdom:xd,tipExtra:tipEl,hInclude:true,
+    hlines:Inom&&iSer.length?[{y:Inom,color:cW,label:`In ${Inom} A (${(a.metadatos.corriente_nominal_origen||'placa')})`,dash:[6,4]}]:[],noData:iSer.length?null:'Sin corriente registrada para este activo'},resetView);
+  const vSer=vL.map((lb,k)=>({name:'V '+lb,color:PH[k%3],pts:elS.filter(s=>(s.elec.v||[])[k]!=null).map(s=>[s.ts,s.elec.v[k]]),kind:'line',markers:true})).filter(x=>x.pts.length);
+  const allV=elS.flatMap(s=>(s.elec.v||[]).filter(x=>x!=null&&x>0)),vNom=allV.length?V_STD.reduce((p,q)=>Math.abs(q-medianOf(allV))<Math.abs(p-medianOf(allV))?q:p):null;
+  CH.V.setData({xType:'time',xFmt:fDT,yFmt:(v,st)=>fV(v,st),y2Fmt:String,yLabel:'V',series:vSer,xdom:xd,tipExtra:tipEl,hInclude:true,
+    hlines:vNom&&vSer.length?[{y:vNom,color:cOk,label:`Nominal ${fV(vNom)}`,dash:[6,4]},{y:vNom*1.1,color:cW,label:'±10 % (NMX-J-098)',dash:[3,4]},{y:vNom*0.9,color:cW,dash:[3,4]}]:[],
+    noData:vSer.length?null:(hasI?'Este formato de reporte no incluye tensión medida (solo la nominal de placa)':'Sin tensión registrada para este activo')},resetView);
+  // dispersión
+  const cv=r=>useI?r.corr:r.carga,sc=priR.filter(r=>cv(r)!=null&&r.amb!=null);
+  if(sc.length>2){const aMin=Math.min(...sc.map(r=>r.amb)),aMax=Math.max(...sc.map(r=>r.amb)),mixc=t=>{const k=(t-aMin)/Math.max(aMax-aMin,1e-6),A=[76,139,214],B=[224,122,69];return`rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*k)).join(',')})`};
+    const pts=sc.map(r=>[cv(r),r.temp,{c:mixc(r.amb),amb:r.amb,ts:r.ts}]),fit=ols(sc.map(r=>cv(r)),sc.map(r=>r.temp)),xs=pts.map(p=>p[0]),xa=Math.min(...xs),xb=Math.max(...xs);
+    const ser=[{name:pri,color:'#BC955C',pts,kind:'dots',r:3.6}];if(fit)ser.push({name:`Ajuste lineal (R²=${f1(fit.r2,2)})`,color:cC,pts:[[xa,fit.a+fit.b*xa],[xb,fit.a+fit.b*xb]],kind:'line',width:1.8,dash:[6,3],noTip:true});
+    CH.S.setData({xType:'lin',scatter:true,xFmt:v=>f1(v,0)+(useI?' A':' %'),yFmt:v=>f1(v,1)+' °C',y2Fmt:v=>v,yLabel:'°C',xLabel:`${ldN} · color: Tamb ${f1(aMin,0)}→${f1(aMax,0)} °C (azul→naranja)`,series:ser,hlines:[],
+      tipPt:(s,p)=>`<b>${esc(pri)}</b><br>${ldN} ${f1(p[0],1)}${useI?' A':' %'} · ${f1(p[1],1)} °C<br>Tamb ${f1(p[2].amb,1)} °C<br>${fDT(p[2].ts)}`},resetView)}
+  else CH.S.setData({xType:'lin',scatter:true,xFmt:String,yFmt:String,y2Fmt:String,series:[],hlines:[],xdom:[0,100],noData:'Correlación no disponible: se requieren al menos 3 lecturas con carga/corriente y T ambiente'},true);
+  // estadísticas
+  const T=priR.map(r=>r.temp),tmx=Math.max(...T),tmn=Math.min(...T),sd=Math.sqrt(mean(T.map(v=>(v-mean(T))**2))),last=priR[priR.length-1];
+  const rec=priR.filter(r=>r.ts>=last.ts-14*864e5),fit=ols(rec.map(r=>r.ts/864e5),rec.map(r=>r.temp)),thr=thrOf(a,pri);
+  let proj='n/a',projN='Sin tendencia ascendente';if(fit&&fit.b>0.005){const d=(thr.alarma-last.temp)/fit.b;proj=d>0?(d>3650?'>10 años':f1(d,0)+' días'):'ya superada';projN=`a ${f1(fit.b,3)} °C/día (14 d)`}else if(fit)projN=`pendiente ${f1(fit.b,3)} °C/día`;
+  const both=priR.filter(r=>cv(r)!=null),rL=pearson(both.map(r=>cv(r)),both.map(r=>r.temp)),bA=priR.filter(r=>r.amb!=null),rA=pearson(bA.map(r=>r.amb),bA.map(r=>r.temp));
+  const rmax=sm.length?sm.reduce((m,p)=>Math.abs(p[1])>Math.abs(m)?p[1]:m,0):null;
+  $('#tStats').innerHTML=[['T máx. / mín.',`${f1(tmx)} / ${f1(tmn)} °C`,pri],['Promedio ± σ',`${f1(mean(T))} ± ${f1(sd)}`,`n=${T.length}`],['Pendiente de tendencia',fit?f1(fit.b,3)+' °C/día':'—',projN],['Días a alarma preventiva',proj,`umbral ${thr.alarma} °C`],['dT/dt pico',rmax!=null?f1(rmax,2)+' °C/h':'—',`umbral ±${CFG.rate} °C/h`],['r (T, '+(useI?'corriente':'carga')+')',rL!=null?f1(rL,2):'—','Pearson'],['r (T, ambiente)',rA!=null?f1(rA,2):'—','Pearson'],['Corriente (última)',iTxt(lastEl),lastEl&&!isSec(lastEl)&&unbal(lastEl.i)!=null?`desbalance ${f1(unbal(lastEl.i),1)} %`:(lastEl?'':'sin dato')],['Tensión (última)',vTxt(lastEl),lastEl&&unbal(lastEl.v)!=null?`desbalance ${f1(unbal(lastEl.v),1)} %`+(vNom?` · ${f1((medianOf(lastEl.v.filter(x=>x!=null))-vNom)/vNom*100,1)} % vs nominal`:''):(lastEl?'no medida en este formato':'sin dato')]]
+    .map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
+}
+
+/* ===================== VISTA C · INSPECCIONES ===================== */
+const evAt=i=>(IX.ev.get(i.tag)||[]).find(e=>e.ts===i.ts)||null;
+const dtOf=i=>i.delta_t!=null?{v:i.delta_t,calc:false}:(()=>{const e=evAt(i);return e&&e.dtMax!=null?{v:e.dtMax,calc:true}:null})();
+const TIPOS_INSP=['Termografía','Ultrasonido pasivo','Resistencia de aislamiento','Análisis de aceite','Calidad de energía','Otro'];
+function renderInsp(){
+  const all=assets();const sa=$('#iAsset');sa.innerHTML='<option value="">Todos</option>'+all.map(a=>`<option value="${esc(a.tag)}">${esc(a.tag)}</option>`).join('');sa.value=S.insp.asset||'';
+  const tipos=[...new Set(DB.inspecciones.map(i=>i.tipo))];opts($('#iTipo'),[['','Todos'],...tipos.map(t=>[t,t])],S.insp.tipo||'');opts($('#iSev'),[['','Todas'],...SEV.slice(0,3).map(s=>[String(s.k),s.n])],S.insp.sev??'');
+  const q=($('#iQ').value||'').toLowerCase();
+  let rows=DB.inspecciones.filter(i=>(!S.insp.asset||i.tag===S.insp.asset)&&(!S.insp.tipo||i.tipo===S.insp.tipo)&&(S.insp.sev==null||S.insp.sev===''||String(i.sev)===S.insp.sev)&&(!q||(i.hallazgos+i.folio+i.tag+i.inspector).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);
+  const tot=rows.length;rows=rows.slice(0,300);
+  $('#iTable').innerHTML=`<tr><th>Fecha</th><th>TAG</th><th>Tipo</th><th class="n" title="* calculado por el dashboard (fases similares)">ΔT °C</th><th>Severidad</th><th>Origen</th></tr>`+(rows.length?rows.map(i=>`<tr class="click ${S.insp.sel===i.id?'sel':''}" data-id="${esc(i.id)}"><td>${fDate(i.ts)}</td><td><b>${esc(i.tag)}</b></td><td>${esc(i.tipo)}</td><td class="n">${(()=>{const d=dtOf(i);return d?f1(d.v)+(d.calc?'*':''):'—'})()}</td><td>${chip(i.sev)}</td><td><span class="badge ${i.origen==='real'?'real':i.origen==='simulado'?'sim':''}">${esc(i.origen)}</span></td></tr>`).join(''):'<tr><td colspan="6" class="muted">Sin inspecciones.</td></tr>')+(tot>300?`<tr><td colspan="6" class="muted">Mostrando 300 de ${tot}; afina los filtros.</td></tr>`:'');
+  $$('#iTable tr.click').forEach(r=>r.addEventListener('click',()=>{S.insp.sel=r.dataset.id;renderInsp();showInsp(r.dataset.id)}));
+  if(S.insp.sel)showInsp(S.insp.sel);calc();
+}
+async function showInsp(id){
+  const i=DB.inspecciones.find(x=>x.id===id);if(!i){$('#iViewer').innerHTML='<h2>Visor de hallazgo</h2><p class="muted">Selecciona una inspección.</p>';return}
+  const a=DB.activos[i.tag],e=IX.cur.get(i.tag);
+  $('#iViewer').innerHTML=`<h2>${esc(i.tag)} · ${esc(i.tipo)}</h2>${chip(i.sev)} <span class="badge ${i.origen==='real'?'real':i.origen==='simulado'?'sim':''}">${esc(i.origen)}</span>
+   <dl class="kv" style="margin-top:8px"><dt>Fecha</dt><dd>${fDT(i.ts)}</dd><dt>Inspector</dt><dd>${esc(i.inspector)}</dd><dt>Folio</dt><dd>${esc(i.folio||'—')}</dd>${(()=>{const x=evAt(i),el=x&&x.elec;return `<dt>Corriente</dt><dd>${esc(iTxt(el))}</dd><dt>Tensión</dt><dd>${esc(vTxt(el))}</dd>`})()}
+   <dt>T comp. / ref.</dt><dd>${i.t_comp!=null?f1(i.t_comp):'—'} / ${i.t_ref!=null?f1(i.t_ref):'—'} °C (${i.ref_modo==='amb'?'vs ambiente':'vs similar'})</dd><dt>ΔT</dt><dd>${(()=>{const d=dtOf(i);return d?f1(d.v)+' °C'+(d.calc?' (calculado, fases similares)':''):'—'})()}</dd>
+   <dt>Tiempo hasta falla</dt><dd>${i.ttf_h!=null?i.ttf_h+' h':'—'}</dd><dt>Hallazgos</dt><dd>${esc(i.hallazgos||'—')}</dd>
+   ${(()=>{const x=evAt(i);return x?`<dt>Diagnóstico dashboard</dt><dd>${chip(x.sev)}<br>${x.why.length?x.why.map(esc).join('<br>'):'Sin desviaciones en la lectura asociada.'}${x.sev>i.sev?'<br><b>Difiere de la severidad registrada: revisar.</b>':''}</dd>`:''})()}</dl>
+   ${i.url?`<p><a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">Abrir reporte técnico original ↗</a></p>`:''}
+   <h3>Galería de termogramas / reportes</h3><div class="gal" id="gal"></div>
+   <p><label class="btn sm" style="display:inline-block;cursor:pointer">＋ Adjuntar imagen<input type="file" id="imgIn" accept="image/*" multiple hidden></label> <span class="small muted">Se redimensiona y se guarda en este equipo.</span></p>`;
+  const gal=$('#gal');for(const gid of i.imgs){const rec=await Store.get('imgs',gid);if(!rec)continue;const f=document.createElement('figure');const im=document.createElement('img');im.src=rec.data;im.alt=rec.name;im.addEventListener('click',()=>{$('#bigImg').src=rec.data;$('#dlgImg').showModal()});const cap=document.createElement('figcaption');cap.textContent=rec.name;const del=document.createElement('button');del.className='btn sm';del.textContent='Quitar';del.addEventListener('click',async()=>{i.imgs=i.imgs.filter(x=>x!==gid);await Store.del('imgs',gid);save();showInsp(id)});f.append(im,cap,del);gal.appendChild(f)}
+  $('#imgIn').addEventListener('change',async ev=>{for(const f of ev.target.files){try{const data=await shrink(f);const gid='img'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);await Store.put('imgs',gid,{name:f.name,data});i.imgs.push(gid)}catch(e){toast('No se pudo leer '+f.name)}}save();showInsp(id)});
+  if(i.t_comp!=null)$('#cTc').value=i.t_comp;if(i.t_ref!=null)$('#cTr').value=i.t_ref;$('#cMode').value=i.ref_modo||'sim';calc();
+}
+function shrink(file,max=1600){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.85))};im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};im.src=url})}
+function calc(){
+  const tc=num($('#cTc').value),tr=num($('#cTr').value),mode=$('#cMode').value,ld=num($('#cLoad').value);
+  if(tc==null||tr==null){$('#cOut').innerHTML='<span class="muted small">Captura T componente y T referencia.</span>';return}
+  const dt=tc-tr,n=mode==='amb'?netaAmb(dt):netaSim(dt);let extra='';
+  if(ld!=null&&ld>0){extra=ld<40?`<p class="small muted">Carga &lt; 40 %: la corrección a plena carga no es confiable; repetir medición con mayor carga.</p>`:`<p class="small">ΔT proyectado a 100 % de carga (∝ I²): <b>${f1(dt/Math.pow(ld/100,2))} °C</b> → ${(mode==='amb'?netaAmb:netaSim)(dt/Math.pow(ld/100,2)).t}</p>`}
+  $('#cOut').innerHTML=`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="font-size:24px">ΔT = ${f1(dt)} °C</b>${chip(n.s)}</div><p style="margin:6px 0 0"><b>${esc(n.t)}</b><br>${esc(n.a)}</p>${extra}<p class="small muted">Criterio NETA MTS Tabla 100.18 / NFPA 70B (ΔT = T_componente − T_referencia).</p>`}
+function newInspDialog(){
+  const d=$('#dlgInsp');d.innerHTML=`<h2>Nueva inspección</h2><form method="dialog" class="form" id="fInsp">
+  <label>TAG<select id="nTag" required>${assets().map(a=>`<option value="${esc(a.tag)}" ${a.tag===(S.insp.asset||S.sel)?'selected':''}>${esc(a.tag)}</option>`).join('')}</select></label>
+  <label>Fecha y hora<input type="datetime-local" id="nFecha" value="${toInput(Date.now())}" required></label>
+  <label>Inspector<input type="text" id="nInsp" placeholder="Nombre · ficha" required></label>
+  <label>Tipo de inspección<select id="nTipo">${TIPOS_INSP.map(t=>`<option>${esc(t)}</option>`).join('')}</select></label>
+  <label>T componente (°C)<input type="number" step="0.1" id="nTc"></label><label>T referencia (°C)<input type="number" step="0.1" id="nTr"></label>
+  <label>Referencia ΔT<select id="nMode"><option value="sim">Componente similar</option><option value="amb">Temperatura ambiente</option></select></label>
+  <label>Tiempo hasta falla / MTBF (h)<input type="number" id="nTtf" min="0"></label>
+  <label class="full">Hallazgos<textarea id="nHall" rows="3"></textarea></label>
+  <label class="full">Severidad (vacío = automática por ΔT)<select id="nSev"><option value="">Automática</option>${SEV.slice(0,3).map(s=>`<option value="${s.k}">${esc(s.n)}</option>`).join('')}</select></label>
+  <div class="full" style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="nCancel">Cancelar</button><button class="btn pri" value="ok">Guardar</button></div></form>`;
+  d.showModal();$('#nCancel').addEventListener('click',()=>d.close());
+  $('#fInsp').addEventListener('submit',()=>{const tc=num($('#nTc').value),tr=num($('#nTr').value),mode=$('#nMode').value,dT=tc!=null&&tr!=null?tc-tr:null;
+    const sev=$('#nSev').value!==''?+$('#nSev').value:(dT!=null?(mode==='amb'?netaAmb(dT):netaSim(dT)).s:0),ts=parseTs($('#nFecha').value),tag=$('#nTag').value;
+    DB.inspecciones.push({id:'I'+hash(tag+ts+Math.random()),tag,ts,inspector:$('#nInsp').value,tipo:$('#nTipo').value,hallazgos:$('#nHall').value,sev,t_comp:tc,t_ref:tr,ref_modo:mode,delta_t:dT,ttf_h:num($('#nTtf').value),folio:null,url:null,origen:'captura manual',imgs:[]});
+    save();renderInsp();toast('Inspección registrada')});
+}
+
+/* ===================== VISTA D · WEIBULL ===================== */
+function ageHours(a){const m=a.metadatos||{};const t0=m.puesta_en_marcha?parseTs(m.puesta_en_marcha):NaN;return Number.isFinite(t0)?Math.max(0,(refTs()-t0)/3.6e6):null}
+function renderWeibull(){
+  const a=DB.activos[S.sel];const pops=Object.values(DB.poblaciones);
+  if(!a||!pops.length){$('#wStats').innerHTML='<p class="muted">Carga una población de datos de falla (clave "poblaciones" en el JSON).</p>';return}
+  const defPop=(DB.poblaciones[a.poblacion]||pops.find(p=>p.tipo===a.tipo)||pops[0]).id;
+  if(S.wb.asset!==a.tag){S.wb.asset=a.tag;S.wb.pop=defPop;S.wb.age=null}
+  opts($('#wPop'),pops.map(p=>[p.id,`${p.id} — ${p.datos.length} unidades`]),S.wb.pop);
+  const pop=DB.poblaciones[S.wb.pop],fit=weibullFit(pop.datos.map(d=>({t:d.horas,fail:d.evento==='falla'})));
+  const age0=ageHours(a),age=S.wb.age!=null?S.wb.age:age0;$('#wAge').value=age!=null?Math.round(age):'';
+  $('#wWarn').innerHTML=pop.origen==='simulado'?`<div class="warnbox"><b>Población SIMULADA (demo).</b> β y η mostrados provienen de datos de vida generados para ilustrar el método; no son historial real de la refinería. Sustituir con fallas reales (JSON, clave <code>poblaciones</code>) antes de tomar decisiones de reemplazo.</div>`:'';
+  if(!fit){$('#wStats').innerHTML='<p class="muted">Se requieren al menos 2 fallas con β>0 para ajustar.</p>';return}
+  const{beta:b,eta:e}=fit,ttl=v=>f1(v/8760,1)+' años';
+  const diag=betaDiag(b),tn=age!=null?age:0;
+  const rul50=age!=null?wRUL(tn,b,e,0.5):null,rul90=age!=null?wRUL(tn,b,e,0.9):null;
+  $('#wStats').innerHTML=[['β forma',f1(b,2),`R² = ${f1(fit.r2,3)}`],['η escala (vida característica)',Math.round(e).toLocaleString('es-MX')+' h',ttl(e)],['Datos',`${fit.nf} fallas`,`${fit.ns} suspensiones`],
+    ['MTTF',Math.round(e*gammaFn(1+1/b)).toLocaleString('es-MX')+' h',ttl(e*gammaFn(1+1/b))],['Vida B10',Math.round(e*Math.pow(-Math.log(0.9),1/b)).toLocaleString('es-MX')+' h',ttl(e*Math.pow(-Math.log(0.9),1/b))],
+    ['Edad actual',age!=null?Math.round(age).toLocaleString('es-MX')+' h':'—',age!=null?ttl(age):'sin fecha de puesta en marcha'],
+    ['R(t) actual',age!=null?f1(wR(tn,b,e)*100,1)+' %':'—',age!=null?'F(t)='+f1(wF(tn,b,e)*100,1)+' %':''],
+    ['h(t) actual',age!=null?f1(wH(tn,b,e)*1e6,1)+' /10⁶ h':'—',''],
+    ['RUL mediana (P50)',rul50!=null?ttl(rul50):'—',rul50!=null?Math.round(rul50).toLocaleString('es-MX')+' h':''],['RUL con 10 % riesgo (R=90 %)',rul90!=null?ttl(rul90):'—',rul90!=null?Math.round(rul90).toLocaleString('es-MX')+' h':'']]
+    .map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
+  $('#wInterp').innerHTML=`<b>Diagnóstico: ${esc(diag.t)}.</b> ${esc(diag.a)}${a.metadatos&&a.metadatos.puesta_en_marcha_origen==='estimada'?' <span class="badge sim">edad con fecha estimada</span>':''}<br><span class="small muted">Método: regresión por rangos medianos (Bernard) con rangos ajustados de Johnson para suspensiones. RUL = vida residual condicional a que el activo ha sobrevivido hasta la edad actual.</span>`;
+  const tMax=Math.max(e*1.9,(age||0)*1.25,...pop.datos.map(d=>d.horas)),N=140,grid=[];for(let i=1;i<=N;i++)grid.push(tMax*i/N);
+  const css=getComputedStyle(document.documentElement),cC=css.getPropertyValue('--crit').trim(),cOk=css.getPropertyValue('--ok').trim();
+  const kh=v=>(v/1000).toFixed(0)+'k',vl=age!=null?[{x:age,color:cC,label:'Edad actual'}]:[];
+  const yP=F=>Math.log(-Math.log(1-F)),ptsP=fit.pts.map(p=>[p.t,yP(p.F)]),tl=[Math.min(...fit.pts.map(p=>p.t))*0.6,Math.max(e*1.6,age||0)];
+  const Fl=[0.001,0.01,0.05,0.1,0.2,0.3,0.5,0.632,0.8,0.9,0.95,0.99];
+  CH.WP.setData({xType:'lin',xLog:true,xFmt:v=>kh(v),yFmt:String,y2Fmt:String,xLabel:'horas (k)',yLabel:'F(t) %',yTicks:Fl.map(F=>({v:yP(F),label:f1(F*100,F<0.1?1:0)})),
+    series:[{name:'Fallas (rango mediano)',color:'#BC955C',pts:ptsP,kind:'dots',r:4},{name:'Ajuste Weibull',color:'#2F9E8F',pts:tl.map(t=>[t,b*Math.log(t/e)]),kind:'line',width:2}],vlines:vl,hlines:[{y:0,color:'#8C9399',label:'63.2 % (η)',dash:[3,3]}],hInclude:true,xdom:[tl[0],tl[1]],
+    tipPt:(s,p)=>`<b>${esc(s.name)}</b><br>t = ${Math.round(p[0]).toLocaleString('es-MX')} h<br>F = ${f1((1-Math.exp(-Math.exp(p[1])))*100,1)} %`},true);
+  const lin=(fn,color,name,fmt)=>({xType:'lin',xFmt:kh,yFmt:fmt,y2Fmt:String,xLabel:'horas (k)',series:[{name,color,pts:grid.map(t=>[t,fn(t)]),kind:'line',width:2.2}],vlines:vl,hlines:[],hInclude:false,xdom:[0,tMax]});
+  CH.WF.setData({...lin(t=>wF(t,b,e)*100,'#C9557C','F(t)',v=>f1(v,0)+' %'),ydomL:[0,100]},true);
+  CH.WR.setData({...lin(t=>wR(t,b,e)*100,'#2F9E8F','R(t)',v=>f1(v,0)+' %'),ydomL:[0,100],hlines:[{y:90,color:cOk,label:'R = 90 %',dash:[6,4]},{y:50,color:'#8C9399',label:'R = 50 %',dash:[6,4]}],hInclude:false},true);
+  CH.WH.setData(lin(t=>wH(t,b,e)*1e6,'#E07A45','h(t)',v=>f1(v,1)),true);
+  $('#wTable').innerHTML='<tr><th>#</th><th class="n">Horas</th><th>Evento</th></tr>'+pop.datos.slice().sort((x,y)=>x.horas-y.horas).map((d,i)=>`<tr><td>${i+1}</td><td class="n">${d.horas.toLocaleString('es-MX')}</td><td>${d.evento==='falla'?'Falla':'Suspensión (censurado)'}</td></tr>`).join('');
+}
+
+/* ===================== VISTA E · DATOS ===================== */
+const qCat=d=>d.acc==='blanco'?'Celda en blanco':d.acc==='revisar'?'Revisar (se conserva)':/^Tensión|tensión/.test(d.campo)?'Tensión imposible':/^Corriente/.test(d.campo)?'Corriente imposible':/ambiente/i.test(d.campo)?'T ambiente imposible':/placa/i.test(d.campo)?'Dato de placa imposible':'Temperatura imposible';
+function qRows(){const m=$('#qMot').value,q=($('#qQ').value||'').toLowerCase();return(DB.descartes||[]).filter(d=>(!m||qCat(d)===m)&&(!q||d.tag.toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts)}
+function renderQuality(){
+  const all=DB.descartes||[],cnt={};all.forEach(d=>{const c=qCat(d);cnt[c]=(cnt[c]||0)+1});const cur=$('#qMot').value;
+  opts($('#qMot'),[['','Todos'],...Object.keys(cnt).sort().map(c=>[c,`${c} (${cnt[c]})`])],cur&&cnt[cur]?cur:'');
+  $('#qSum').innerHTML=all.length?Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="stat"><span>${esc(c)}</span><b>${n}</b></div>`).join(''):'<p class="muted small">Sin valores descartados.</p>';
+  const rows=qRows();
+  $('#qTable').innerHTML='<tr><th>Equipo</th><th>Fecha</th><th>Campo</th><th class="n">Valor</th><th>Motivo</th><th>Acción</th></tr>'+rows.slice(0,300).map(d=>`<tr><td><b>${esc(d.tag)}</b></td><td class="small">${fDT(d.ts)}</td><td class="small">${esc(d.campo)}</td><td class="n">${d.valor==null?'—':esc(d.valor)}</td><td class="small">${esc(d.motivo)}</td><td class="small">${d.acc==='descartado'?'descartado':d.acc==='blanco'?'sin dato':'revisar'}</td></tr>`).join('')+(rows.length>300?`<tr><td colspan="6" class="muted">Mostrando 300 de ${rows.length}; usa los filtros o exporta el CSV.</td></tr>`:'')}
+function exportQuality(){const rows=qRows(),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  download('calidad-de-datos.csv','\ufeff'+['equipo,fecha,campo,valor,motivo,accion,fuente',...rows.map(d=>[d.tag,fDT(d.ts),d.campo,d.valor,d.motivo,d.acc,d.fuente].map(q).join(','))].join('\r\n'),'text/csv;charset=utf-8')}
+const SCHEMA_DOC=`{
+  "schema": "sicm-termico/v1",
+  "activos": [{
+    "tag": "TR-12-01",                       // ID de activo (obligatorio)
+    "tipo": "Transformador|Tablero|Motor",
+    "planta": "U-DE DESTILACIÓN COMBINADA (UDC2) TREN 2",
+    "sector": 1,
+    "ubicacion": "SE-12 · cuarto de control / celda",
+    "sap": "20939850",  "gps": [18.417, -93.187],
+    "estado_operativo": "En servicio|Fuera de servicio|Mantenimiento",
+    "metadatos": { "potencia": "17.25 MVA", "tension_kv": "13.8 / 4.16",
+        "clase_termica": "H", "fabricante": "…",
+        "puesta_en_marcha": "2009-06-01", "puesta_en_marcha_origen": "estimada",
+        "corriente_nominal_a": 2394.1 },
+    "umbrales": { "diseno": 100, "alarma": 120, "disparo": 130, "ref": "NMX-J-351" },
+    "umbrales_por_punto": { "Núcleo": { "diseno":140, "alarma":155, "disparo":165 } },
+    "poblacion": "Transformador",              // id de la población Weibull
+    "registros": [{
+        "ts": "2026-08-31T12:41:00-06:00",     // ISO 8601 o dd/mm/aaaa hh:mm
+        "punto": "Devanado BT X1",             // Devanados, Aceite superior, F1/F2/F3, Chumacera…
+        "temp_c": 84.0, "t_amb_c": 33.0, "carga_pct": 20.2,
+        "origen": "real|simulado" }],
+    "mediciones_electricas": [{ "ts": "2026-08-31T12:41:00-06:00",
+        "i": [127, 127, 128], "i_lbl": ["L1","L2","L3"],      // A (transformador: ["Primario","Secundario"])
+        "v": [13440, 13520, 13440], "v_lbl": ["L1","L2","L3"] }],   // V (kV < 100 se convierte a V)
+    "inspecciones": [{
+        "fecha": "2026-08-31T12:41:00-06:00", "inspector": "…",
+        "tipo": "Termografía|Ultrasonido pasivo|Resistencia de aislamiento",
+        "hallazgos": "…", "severidad": 0,      // 0 normal · 1 alarma 1 · 2 alarma 2
+        "t_comp": 89.0, "t_ref": 83.0, "ref_modo": "sim|amb",
+        "tiempo_hasta_falla_h": null, "folio": "ROLM-…", "fuente_url": "https://…" }]
+  }],
+  "poblaciones": [{ "id": "Transformador", "tipo": "Transformador", "origen": "real|simulado",
+      "datos": [{ "horas": 182000, "evento": "falla" }, { "horas": 90000, "evento": "suspension" }] }]
+}`;
+function renderData(){
+  $('#schema').textContent=SCHEMA_DOC;renderCapture();renderQuality();
+  $('#log').innerHTML=DB.archivos.length?DB.archivos.map(l=>`<div><b>${esc(l.nombre)}</b> <span class="muted">${fDT(l.ts)}</span><br>${l.act} activos · ${l.lec} lecturas · ${l.insp} inspecciones · ${l.pob} poblaciones${l.dup?` · ${l.dup} duplicados omitidos`:''}${l.skip?` · ${l.skip} descartados`:''}${(l.warn||[]).map(w=>`<br><span style="color:var(--warn)">⚠ ${esc(w)}</span>`).join('')}</div>`).join(''):'<div class="muted">Sin cargas.</div>';
+  const real=DB.lecturas.filter(r=>r.origen!=='simulado').length;
+  $('#dbStats').innerHTML=`<table><tr><td>Activos</td><td class="n"><b>${Object.keys(DB.activos).length}</b></td></tr><tr><td>Lecturas térmicas</td><td class="n"><b>${DB.lecturas.length.toLocaleString('es-MX')}</b> (${real} reales)</td></tr><tr><td>Inspecciones</td><td class="n"><b>${DB.inspecciones.length}</b></td></tr><tr><td>Poblaciones Weibull</td><td class="n"><b>${Object.keys(DB.poblaciones).length}</b></td></tr><tr><td>Persistencia</td><td class="n">${Store.mode()}</td></tr></table>`;
+}
+function exportDB(){
+  const eby={};for(const e of DB.elec||[])(eby[e.tag]=eby[e.tag]||[]).push({ts:new Date(e.ts).toISOString().replace('Z','+00:00'),i:e.i,i_lbl:e.il,v:e.v,v_lbl:e.vl,origen:e.origen});
+  const by={};for(const r of DB.lecturas)(by[r.tag]=by[r.tag]||[]).push({ts:new Date(r.ts).toISOString().replace('Z','+00:00'),punto:r.punto,temp_c:r.temp,t_amb_c:r.amb,carga_pct:r.carga,i_a:r.corr,origen:r.origen});
+  const out={schema:'sicm-termico/v1',exportado:new Date().toISOString(),activos:assets().map(a=>({...a,registros:by[a.tag]||[],mediciones_electricas:eby[a.tag]||[],inspecciones:DB.inspecciones.filter(i=>i.tag===a.tag).map(i=>({id:i.id,fecha:new Date(i.ts).toISOString(),inspector:i.inspector,tipo:i.tipo,hallazgos:i.hallazgos,severidad:i.sev,t_comp:i.t_comp,t_ref:i.t_ref,ref_modo:i.ref_modo,delta_t:i.delta_t,tiempo_hasta_falla_h:i.ttf_h,folio:i.folio,fuente_url:i.url,origen:i.origen}))})),poblaciones:Object.values(DB.poblaciones),descartes:DB.descartes||[]};
+  download(`sicm-termico-base-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(out,null,1));
+}
+async function loadSeed(){ingest(JSON.parse($('#seed').textContent),'seed_real.json (recorridos PDF, jul–oct 2026)')}
+
+/* =====================================================================
+   INGESTA DE RECORRIDOS (PDF / JSON "recorridos" / captura manual)
+   ===================================================================== */
+const TH_TAB={diseno:70,alarma:85,disparo:105,ref:'ANSI C37.20: conexiones 70 °C (Δ30 K); 105 °C con materiales especiales (Δ65 K); alarma 85 °C criterio institucional editable'};
+const TH_TRAFO={diseno:100,alarma:120,disparo:130,ref:'NMX-J-351-ANCE-2016: operación 100 °C; 13.8/4.16 kV alarma 120 / disparo 130 °C'};
+const TH_NUCLEO={diseno:140,alarma:155,disparo:165,ref:'NMX-J-351-ANCE-2016: núcleo 165 °C (disparo); 140/155 °C criterio institucional editable'};
+const NEC={1:2.1,1.5:3.0,2:3.4,3:4.8,5:7.6,7.5:11,10:14,15:21,20:27,25:34,30:40,40:52,50:65,60:77,75:96,100:124,125:156,150:180,200:240,250:302,300:361,350:414,400:477,450:515,500:590};
+const NOTA_TR='Fuente: PDF NMX-J-351-ANCE. Cuando el PDF no permite ubicar la columna de cada valor, se asigna por posición: fila baja con 3 valores = X1-X3, con 4 = Xo-X3; fila alta con 1 valor = Núcleo (supuesto), con 3 = H1-H3, con 4 = H1-H3 + Núcleo. Verificar contra la hoja original.';
+const NOTA_TMO='Termografía de circuito de motor/arrancador (POE-009 Anexo 2). Sin sensores de chumacera en la fuente. % de carga = I medida / FLA de tabla NEC (supuesta).';
+const normTag=t=>String(t==null?'':t).trim().replace(/\s+/g,' ').toUpperCase();
+const sevAbs=(t,thr)=>t==null?0:t>=thr.alarma?2:t>thr.diseno?1:0;
+function dtGroups(groups){let m=null;for(const g0 of groups){const g=g0.map(x=>x!=null&&x>150?null:x);if(g.filter(x=>x!=null).length<3)continue;g.forEach((x,i)=>{if(x==null)return;const o=g.filter((y,j)=>j!==i&&y!=null),d=x-mean(o);if(m==null||d>m)m=d})}return m}
+function recTs(r){const c=r.capturado;if(c&&/^\d{4}-\d\d-\d\dT\d\d:\d\d/.test(c))return parseTs(c.slice(0,16));const m=(r.fecha_doc||'').match(/^(\d\d)\/(\d\d)\/(\d\d)$/);return m?parseTs(`${m[1]}/${m[2]}/20${m[3]} 12:00`):NaN}
+const planOf=se=>{se=String(se||'').trim().replace(/^S\.?E\.?:?\s*/i,'');return se.includes('—')?se.split('—').pop().trim():se};
+/* ---------- Limpieza de tensión y corriente (celdas en blanco / errores de tecleo) ---------- */
+const V_STD=[120,127,208,220,240,277,380,440,460,480,600,2400,4160,6600,6900,13200,13800,23000,34500,69000,115000];
+const medianOf=a=>{const t=[...a].sort((x,y)=>x-y),n=t.length;return n%2?t[(n-1)/2]:(t[n/2-1]+t[n/2])/2};
+const meanOk=a=>{const v=(a||[]).filter(x=>x!=null&&Number.isFinite(x));return v.length?mean(v):null};
+const stdV=v=>v!=null&&V_STD.some(x=>Math.abs(v-x)/x<=0.25);
+function cleanPhases(vals,kind,lbl,opts={}){
+  const nm=kind==='V'?'Tensión':'Corriente',issues=[];
+  const raw=(vals||[]).slice(0,lbl.length).map(x=>x==null||x===''?null:num(x));while(raw.length<lbl.length)raw.push(null);
+  const bad=(i,motivo)=>{issues.push({campo:`${nm} ${lbl[i]}`,valor:raw[i],motivo,acc:'descartado'});return null};
+  let out=raw.map((x,i)=>{
+    if(x==null){issues.push({campo:`${nm} ${lbl[i]}`,valor:null,motivo:'celda en blanco',acc:'blanco'});return null}
+    let y=x;
+    if(kind==='V'){if(y>0&&y<100)y*=1000;                                    // el reporte la captura en kV (13.44)
+      if(y<=0||y>15000)return bad(i,'tensión fuera de rango (100–15,000 V)');
+      if(!stdV(y))return bad(i,'no corresponde a un nivel de tensión estándar (±25 %)')}
+    else if(y<0||y>20000)return bad(i,'corriente fuera de rango (0–20,000 A)');
+    return y});
+  const ok=out.filter(x=>x!=null);
+  if(!opts.noConsistency&&ok.length>=3){const med=medianOf(ok);
+    out=out.map((x,i)=>{if(x==null)return null;const r=med>0?x/med:1,
+      atip=kind==='V'?(r>1.25||r<0.8):((r>4||r<0.25)&&Math.abs(x-med)>3);
+      return atip?bad(i,`atípico vs. las otras fases (${f1(r,2)}× la mediana): posible error de tecleo`):x})}
+  return{v:out,issues}}
+const decOf=st=>st==null||st>=1?0:st>=0.1?1:2;
+const fV=(v,st)=>v==null?'—':v>=1000?(v/1000).toFixed(st!=null&&st<10?3:2)+' kV':v.toFixed(decOf(st))+' V';
+const fI=v=>v==null?'—':v.toFixed(v<10?1:0);
+const isSec=el=>el&&el.il&&el.il[1]==='Secundario';
+const iTxt=el=>!el||!(el.i||[]).some(x=>x!=null)?'—':(isSec(el)?`Prim ${fI(el.i[0])} / Sec ${fI(el.i[1])}`:el.i.map(fI).join(' / '))+' A';
+const vTxt=el=>{if(!el||!(el.v||[]).some(x=>x!=null))return'—';const k=el.v.filter(x=>x!=null).every(x=>x>=1000);return el.v.map(x=>x==null?'—':k?(x/1000).toFixed(2):x.toFixed(0)).join(' / ')+(k?' kV':' V')};
+const unbal=a=>{const v=(a||[]).filter(x=>x!=null);if(v.length<3)return null;const m=mean(v);return m>0?Math.max(...v.map(x=>Math.abs(x-m)))/m*100:null};
+
+function ingestRec(recs,rep,seen,seenI,seenE,seenD){
+  const addQ=(tag,ts,r,it)=>{const k=tag+'|'+ts+'|'+it.campo;if(seenD.has(k))return;seenD.add(k);
+    DB.descartes.push({tag,ts,campo:it.campo,valor:it.valor,motivo:it.motivo,acc:it.acc,fuente:r.folio||r.archivo||''});
+    if(it.acc==='descartado')rep.qd=(rep.qd||0)+1;else if(it.acc==='blanco')rep.qb=(rep.qb||0)+1;else rep.qr=(rep.qr||0)+1};
+  const L3=['L1','L2','L3'];
+  for(const r of recs){
+    const tag=normTag(r.tag),ts=recTs(r);if(!tag||!Number.isFinite(ts)){rep.skip++;continue}
+    const iss=[];let amb=num(r.t_amb);if(amb!=null&&(amb<5||amb>60)){iss.push({campo:'T ambiente',valor:amb,motivo:'temperatura ambiente imposible (5–60 °C)',acc:'descartado'});amb=null}
+    let tipo,thr,meta={},rows=[],carga=null,iA=null,groups=[],hall='',nota=null,el=null;
+    if(r.fmt==='TBL'){
+      tipo='Tablero';thr=TH_TAB;
+      const iC=cleanPhases(r.i,'I',L3),iOn=iC.v.some(x=>x!=null&&x>1),vR=(r.v||[]).map(num),zeroAll=vR.length===3&&vR.every(x=>x===0);
+      // 0 V: si circula corriente es un campo sin capturar (se descarta); si tampoco hay corriente puede ser una barra desenergizada real (se conserva)
+      const vC=zeroAll&&!iOn?{v:[0,0,0],issues:[{campo:'Tensión L1/L2/L3',valor:0,motivo:'0 V en las 3 fases y sin corriente: barra desenergizada o fuera de servicio (se conserva)',acc:'revisar'}]}:cleanPhases(r.v,'V',L3);
+      if(iOn)vC.issues.forEach(x=>{if(x.valor===0&&x.acc==='descartado')x.motivo=`0 V con corriente circulando (${f1(meanOk(iC.v),0)} A): campo sin capturar`});
+      iss.push(...vC.issues,...iC.issues);
+      const vm=meanOk(vC.v),vk=vm?vm/1000:null,kv=vk?[13.8,6.9,4.16,2.4,0.48,0.22,0.127].reduce((a,b)=>Math.abs(b-vk)<Math.abs(a-vk)?b:a):null;
+      meta={tension_kv:kv,potencia:'—',clase_termica:'n/a (conexiones)'};iA=meanOk(iC.v);el={i:iC.v,il:L3,v:vC.v,vl:L3};
+      const L=(r.linea||[]).map(num),C=(r.carga||[]).map(num);L3.forEach((_,k)=>{const ph='F'+(k+1);rows.push([`Conexiones lado línea ${ph}`,L[k]],[`Conexiones lado carga ${ph}`,C[k]])});groups=[L,C];
+      hall=[r.hallazgo,r.obs].filter(Boolean).join(' · ');
+    }else if(r.fmt==='TMO'){
+      tipo='Motor';thr=TH_TAB;const hp=num(r.potencia),fla=hp!=null?NEC[hp]:null;
+      meta={potencia:hp?`${hp} HP (${(hp*0.7457).toFixed(1)} kW)`:null,potencia_kw:hp?+(hp*0.7457).toFixed(1):null,tension_kv:num(r.v_oper)?num(r.v_oper)/1000:null,clase_termica:'F (supuesta)',fabricante:r.marca||null,nema:r.nema||null,corriente_nominal_a:fla||null,corriente_nominal_origen:fla?'NEC 430.250 (supuesta)':null};
+      const iC=cleanPhases(r.i,'I',L3);iss.push(...iC.issues);iA=meanOk(iC.v);el={i:iC.v,il:L3,v:[],vl:[]};carga=iA&&fla?+(iA/fla*100).toFixed(1):null;nota=NOTA_TMO;
+      [['Interruptor — entrada',r.int_ent],['Interruptor — salida',r.int_sal],['Arrancador — entrada',r.arr_ent],['Arrancador — salida',r.arr_sal]].forEach(([n,vals])=>{const a=(vals||[]).map(num);groups.push(a);L3.forEach((_,k)=>rows.push([`${n} F${k+1}`,a[k]]))});
+      hall=r.obs||'';
+    }else if(r.fmt==='TRAN'){
+      tipo='Transformador';thr=TH_TRAFO;const p=r.placa||{};let kva=num(p.kva),vp=num(p.v_prim),vs=num(p.v_sec);
+      if(kva!=null&&(kva<5||kva>200000)){iss.push({campo:'Potencia de placa (kVA)',valor:kva,motivo:'potencia de placa imposible (5–200,000 kVA)',acc:'descartado'});kva=null}
+      if(vp!=null&&!stdV(vp)){iss.push({campo:'Tensión primaria de placa',valor:vp,motivo:'no corresponde a un nivel de tensión estándar (±25 %)',acc:'descartado'});vp=null}
+      if(vs!=null&&!stdV(vs)){iss.push({campo:'Tensión secundaria de placa',valor:vs,motivo:'no corresponde a un nivel de tensión estándar (±25 %)',acc:'descartado'});vs=null}
+      meta={potencia:kva?(kva>=1000?`${+(kva/1000).toFixed(3)} MVA`:`${kva} kVA`):null,potencia_kva:kva,tension_kv:vp&&vs?`${vp/1000} / ${vs/1000}`:null,clase_termica:p.clase||null,corriente_nominal_a:num(p.a_sec),impedancia_pct:num(p.elev_imp)};
+      const im=r.i_medida||{},iC=cleanPhases([im.prim,im.sec],'I',['Primario','Secundario'],{noConsistency:true});iss.push(...iC.issues.filter(x=>x.acc!=='blanco'));
+      if(iC.v[0]!=null&&iC.v[1]!=null&&vp&&vs){const ratio=iC.v[0]/(iC.v[1]*vs/vp);if(ratio>2||ratio<0.5)iss.push({campo:'Corriente primaria/secundaria',valor:`${iC.v[0]}/${iC.v[1]}`,motivo:`relación de corrientes ${f1(ratio,1)}× la esperada por la relación de transformación: revisar`,acc:'revisar'})}
+      const aSec=num(p.a_sec)||(kva&&vs?kva*1000/(Math.sqrt(3)*vs):null),isec=iC.v[1];carga=isec&&aSec?+(isec/aSec*100).toFixed(1):null;iA=isec;nota=NOTA_TR;el={i:iC.v,il:['Primario','Secundario'],v:[],vl:[]};
+      const named=(d,order)=>order.filter(k=>d[k]!=null).map(k=>[k,num(d[k])]);
+      let bt,hi;
+      if(r.bt&&!Array.isArray(r.bt))bt=named(r.bt,['Xo','X1','X2','X3']);else{const b=(r.bt_vals||[]).map(num),nm=b.length===3?['X1','X2','X3']:b.length===4?['Xo','X1','X2','X3']:b.map((_,k)=>'#'+(k+1));bt=b.map((v,k)=>[nm[k],v])}
+      if(r.alta&&!Array.isArray(r.alta))hi=named(r.alta,['H1','H2','H3','Núcleo']);else{const h=(r.alta_vals||[]).map(num),nm=h.length===1?['Núcleo']:h.length===3?['H1','H2','H3']:h.length===4?['H1','H2','H3','Núcleo']:h.map((_,k)=>'#'+(k+1));hi=h.map((v,k)=>[nm[k],v])}
+      bt.forEach(([n,v])=>rows.push([`Devanado BT ${n}`,v]));hi.forEach(([n,v])=>rows.push([n==='Núcleo'?'Núcleo':`Devanado AT ${n}`,v]));hall=r.obs||'';
+    }else{rep.skip++;continue}
+    // temperaturas: plausibilidad 12–250 °C (conexiones) / 12–300 °C (transformadores); >150 °C en conexiones = «revisar»
+    const hiT=tipo==='Transformador'?300:250,okT=t=>t!=null&&Number.isFinite(t)&&t>=12&&t<=hiT;let any=false;
+    for(const [punto,temp] of rows){
+      if(temp==null||!Number.isFinite(temp)){if(tipo!=='Transformador')iss.push({campo:punto,valor:null,motivo:'celda en blanco',acc:'blanco'});continue}
+      if(!okT(temp)){iss.push({campo:punto,valor:temp,motivo:`temperatura fuera de rango plausible (12–${hiT} °C)`,acc:'descartado'});rep.rng=(rep.rng||0)+1;continue}
+      if(tipo!=='Transformador'&&temp>150)iss.push({campo:punto,valor:temp,motivo:'>150 °C en conexión: ¿error de tecleo o falla grave? Se conserva marcada «verificar lectura»',acc:'revisar'});
+      const k=tag+'|'+ts+'|'+punto;if(seen.has(k)){rep.dup++;continue}seen.add(k);
+      DB.lecturas.push({tag,ts,punto,grupo:grupoOf(punto),temp,amb,carga,corr:iA,origen:'real'});rep.lec++;any=true}
+    iss.forEach(it=>addQ(tag,ts,r,it));
+    // corriente / tensión por fase (independiente de si las temperaturas ya existían: permite completar PDFs cargados antes)
+    if(el&&(el.i.some(x=>x!=null)||el.v.some(x=>x!=null))){const k=tag+'|'+ts;if(!seenE.has(k)){seenE.add(k);DB.elec.push({tag,ts,...el,origen:'real'});rep.ele=(rep.ele||0)+1}}
+    // activo (placa/ubicación del recorrido más reciente)
+    let a=DB.activos[tag];
+    if(!a){a=DB.activos[tag]={tag,tipo,estado_operativo:'En servicio',metadatos:{},poblacion:tipo,umbrales:thr,umbrales_por_punto:tipo==='Transformador'?{'Núcleo':TH_NUCLEO}:null,planta:'—',sector:null,ubicacion:'—',sap:null,gps:null};rep.act++}
+    if(!(a._ts>ts)){a._ts=ts;a.planta=planOf(r.se||r.area)||a.planta;a.ubicacion=r.se||r.area||a.ubicacion;a.sector=r.sector??a.sector;a.sap=r.sap||a.sap;a.gps=r.gps||a.gps;
+      for(const k in meta)if(meta[k]!=null)a.metadatos[k]=meta[k];if(nota)a.nota_calidad_dato=nota}
+    // inspección (una por equipo y recorrido)
+    const id=`${r.folio||r.archivo||'REC'}#${tag.replace(/ /g,'_')}`;
+    if(!seenI.has(id)){seenI.add(id);const gC=groups.map(g=>g.map(x=>okT(x)?x:null)),dt=tipo==='Transformador'?null:dtGroups(gC);
+      let sev=0;for(const [punto,temp] of rows)if(okT(temp))sev=Math.max(sev,tipo!=='Transformador'&&temp>150?1:sevAbs(temp,/^Núcleo$/.test(punto)?TH_NUCLEO:thr));if(dt!=null)sev=Math.max(sev,netaSim(dt).s);
+      DB.inspecciones.push({id,tag,ts,inspector:'SICM Eléctrico (ver reporte original)',tipo:'Termografía',hallazgos:hall.trim()||'Sin observaciones en el reporte.',sev,t_comp:null,t_ref:null,ref_modo:'sim',delta_t:dt!=null?+dt.toFixed(1):null,ttf_h:null,folio:r.folio||null,url:r.fuente_id?`https://drive.google.com/file/d/${r.fuente_id}/view`:null,origen:'real',imgs:[]});rep.insp++}
+    if(any)rep.eq=(rep.eq||0)+1;
+  }
+}
+
+const FOLIO_RE=/ROLM-SCM-SICM-[A-Z0-9]+-ELE-[A-Z]+-ELE\d-\d{4}-\s?\d{2,6}/;
+function parseEquipPage(items,flat,fmt){
+  const c=captOf(flat),fd=(flat.match(/FECHA:\s*(\d\d\/\d\d\/\d\d)\b/)||[])[1]||null,sec=(flat.match(/SECTOR:\s*(\d+)/)||[])[1];
+  if(fmt==='TBL'){
+    const t=(flat.match(/EQUIPO:\s*(.+?)\s+FECHA:/)||[])[1];if(!t)return null;
+    const hm=flat.match(/Falla \/ hallazgo \(ISO 14224\)\s*(.*?)\s*Observaciones\s*(.*?)\s*Acci[óo]n recomendada/i);
+    return{fmt,tag:t.trim(),se:((flat.match(/S\.E\.:\s*(.+?)\s+EQUIPO:/)||[])[1]||'').trim(),fecha_doc:fd,sector:sec?+sec:null,t_amb:num((flat.match(/T\. ambiente:\s*(-?[\d.]+)/)||[])[1]),
+      v:tri(flat,'VOLTAJE'),i:tri(flat,'CORRIENTE \\(A\\)'),linea:tri(flat,'CONEXIONES LADO L[ÍI]NEA'),carga:tri(flat,'CONEXIONES LADO CARGA'),hallazgo:hm?hm[1].trim():'',obs:hm?hm[2].trim():'',...c}}
+  if(fmt==='TRAN'){
+    const t=(flat.match(/EQUIPO:\s*(.+?)\s+FECHA:/)||[])[1];if(!t)return null;
+    const m1=flat.match(/Voltaje Prim\. \/ Corr\. Prim\.\s*([\d,]+(?:\.\d+)?)\s*V(?:\s+([\d,]+(?:\.\d+)?)\s*A)?/i),m2=flat.match(/Voltaje Sec\. \/ Corr\. Sec\.\s*([\d,]+(?:\.\d+)?)\s*V(?:\s+([\d,]+(?:\.\d+)?)\s*A)?/i);
+    const im=flat.match(/Corriente de carga \(medida\)\s*Prim\.:\s*([\d.]*)\s*[·•]\s*Sec\.:\s*([\d.]*)/i),cl=(flat.match(/Clase aisl\. \/ Marca\s*(.*?)\s*Elev\. temp\./i)||[])[1];
+    const bt=colVals(items,/DEVANADO LADO BAJA/i,['Xo','X0','X1','X2','X3']),al=colVals(items,/DEVANADO LADO ALTA/i,['H1','H2','H3','Núcleo','Nucleo']);
+    const rawTail=l=>{const m=flat.match(l);return m?(m[1].match(/-?\d+(?:\.\d+)?/g)||[]).map(Number):[]};
+    return{fmt,tag:t.trim(),sap:(flat.match(/N°\s*SAP:\s*(\d+)/)||[])[1]||null,denom:((flat.match(/DENOMINACI[ÓO]N:\s*(.+?)\s+SECTOR:/)||[])[1]||'').trim(),se:((flat.match(/S\.E\.:\s*(.+?)\s+EQUIPO:/)||[])[1]||'').trim(),
+      fecha_doc:fd,sector:sec?+sec:null,t_amb:num((flat.match(/T\. ambiente:\s*(-?[\d.]+)/)||[])[1]),camara:((flat.match(/EQUIPO DE PRUEBA:\s*(.+?)\s+T\. ambiente/)||[])[1]||'').trim()||null,
+      placa:{kva:nC((flat.match(/Capacidad \/ Tipo\s*([\d,]+(?:\.\d+)?)/i)||[])[1]),v_prim:m1?nC(m1[1]):null,a_prim:m1?nC(m1[2]):null,v_sec:m2?nC(m2[1]):null,a_sec:m2?nC(m2[2]):null,clase:cl||null,elev_imp:nC((flat.match(/Elev\. temp\. \/ Impedancia\s*([\d.]*)/i)||[])[1])},
+      i_medida:{prim:im?nC(im[1]):null,sec:im?nC(im[2]):null},
+      bt:bt&&Object.keys(bt).length?bt:undefined,alta:al&&Object.keys(al).length?al:undefined,
+      bt_vals:rawTail(/DEVANADO LADO BAJA\s+(?:Xo|X0)?\s*X1 X2 X3\s+TEMPERATURA\s+(.*?)\s+DEVANADO LADO ALTA/i),alta_vals:rawTail(/DEVANADO LADO ALTA\s+H1 H2 H3 N[úu]cleo\s+TEMPERATURA\s+(.*?)\s+Criterio/i),obs:'',...c}}
+  if(fmt==='TMO'){
+    const t=(flat.match(/CIRCUITO \(TAG\):\s*(.+?)\s+SECTOR:/)||[])[1];if(!t)return null;
+    const mp=flat.match(/N°\s*SAP:\s*(\d+)\s*[·•]\s*Marca:\s*(.*?)\s*[·•]\s*Potencia dise[ñn]o:\s*([\d.]+)\s*[·•]\s*NEMA:\s*(\S*)\s*[·•]\s*V oper\.:\s*([\d.]+)/i),ma=flat.match(/[ÁA]REA:\s*(.+?)\s+T\. amb:\s*(-?[\d.]+)\s*°C\s*[·•]\s*Emis\.:\s*([\d.]+)\s+C[ÁA]MARA:\s*(.+?)(?:\s+MANTENIMIENTO|\s+TERMOGRAF|$)/i);
+    const ob=(flat.match(/OBSERVACIONES GENERALES\s*(.*?)\s*(?:EVIDENCIA FOTOGR|OPERARIO SICM|Capturado:|$)/i)||[])[1]||'';
+    return{fmt,tag:t.trim(),fecha_doc:fd,sector:sec?+sec:null,sap:mp?mp[1]:null,marca:mp?mp[2].trim():null,potencia:mp?num(mp[3]):null,nema:mp?mp[4]:null,v_oper:mp?num(mp[5]):null,
+      area:ma?ma[1].trim():'',t_amb:ma?num(ma[2]):null,emis:ma?num(ma[3]):null,camara:ma?ma[4].trim():null,
+      int_ent:tri(flat,'INTERRUPTOR\\s*[—–-]\\s*ENTRADA'),int_sal:tri(flat,'INTERRUPTOR\\s*[—–-]\\s*SALIDA'),arr_ent:tri(flat,'ARRANCADOR\\s*[—–-]\\s*ENTRADA'),arr_sal:tri(flat,'ARRANCADOR\\s*[—–-]\\s*SALIDA'),
+      i:tri(flat,'CORRIENTE \\(A\\)'),obs:ob.length<200&&!/SICM|Capturado/i.test(ob)?ob.trim():'',...c}}
+  return null}
+async function parsePdf(file){
+  const pages=await pdfPages(file),info={paginas:pages.length,recs:[],warn:[],folio:null,total:null,formato:null,unk:0};
+  const nameFolio=(file.name.match(FOLIO_RE)||[])[0]||null;
+  const first=flatOf(pages[0]||[]);info.folio=((first.match(FOLIO_RE)||[])[0]||nameFolio||file.name.replace(/\.pdf$/i,'')).replace(/\s+/g,'');
+  const tm=first.match(/TOTAL (?:INTERRUPTORES|TRANSFORMADORES|ARRANCADORES|EQUIPOS):\s*(\d+)/i);info.total=tm?+tm[1]:null;
+  for(let k=0;k<pages.length;k++){const items=pages[k],flat=flatOf(items);
+    const fmt=/CONEXIONES LADO L[ÍI]NEA/i.test(flat)?'TBL':/DEVANADO LADO BAJA/i.test(flat)?'TRAN':/CIRCUITO \(TAG\)|TERMOGRAF[ÍI]A DEL MOTOR/i.test(flat)?'TMO':null;
+    if(!fmt){if(!/RESUMEN EJECUTIVO/i.test(flat)&&flat.length>40){info.unk++;info.warn.push(`Pág. ${k+1}: formato no reconocido (omitida)`)}continue}
+    info.formato=fmt;const r=parseEquipPage(items,flat,fmt);if(!r){info.unk++;info.warn.push(`Pág. ${k+1}: equipo no identificado (omitida)`);continue}
+    r.folio=info.folio;r.archivo=file.name;
+    if(fmt==='TBL'){if(!r.v&&/VOLTAJE/i.test(flat))info.warn.push(`${r.tag}: tensión no legible como 3 valores (¿celda en blanco o tecleo?)`);if(!r.i&&/CORRIENTE \(A\)/i.test(flat))info.warn.push(`${r.tag}: corriente no legible como 3 valores (¿celda en blanco o tecleo?)`)}
+    if(fmt==='TMO'&&!r.i&&/CORRIENTE \(A\)/i.test(flat))info.warn.push(`${r.tag}: corriente no legible como 3 valores (¿celda en blanco o tecleo?)`);
+    const need=fmt==='TBL'?['linea','carga']:fmt==='TMO'?['int_ent','int_sal','arr_ent','arr_sal']:[];
+    const miss=need.filter(n=>!r[n]);if(miss.length)info.warn.push(`${r.tag}: no se pudieron leer ${miss.join(', ')}`);
+    if(!r.capturado)info.warn.push(`${r.tag}: sin hora de captura (se usa la fecha del documento 12:00)`);
+    info.recs.push(r)}
+  if(info.total!=null&&info.total!==info.recs.length)info.warn.unshift(`Equipos extraídos (${info.recs.length}) ≠ TOTAL del resumen (${info.total}): revisar`);
+  if(!info.recs.length)info.warn.unshift('No se extrajo ningún equipo: ¿es un reporte de termografía SICM?');
+  return info}
+
+/* ---------- Carga por lotes con vista previa ---------- */
+let STAGE=[];
+async function handleFiles(files){
+  const ok=[...files].filter(f=>/\.(json|pdf)$/i.test(f.name));if(!ok.length){toast('Solo se aceptan archivos .pdf o .json');return}
+  switchView('data');$('#stBusy').textContent='Leyendo archivos…';$('#stage').hidden=false;STAGE=[];
+  for(const f of ok){$('#stBusy').textContent=`Leyendo ${f.name}…`;const pdf=/\.pdf$/i.test(f.name);
+    try{if(pdf){const info=await parsePdf(f);STAGE.push({name:f.name,kind:'PDF',obj:{recorridos:info.recs},info})}else STAGE.push({name:f.name,kind:'JSON',obj:JSON.parse(await f.text()),info:{}})}
+    catch(e){STAGE.push({name:f.name,kind:pdf?'PDF':'JSON',obj:null,info:{error:e.message||String(e)}})}}
+  const bk=structuredClone(DB);try{STAGE.forEach(s=>{if(s.obj)s.rep=ingest(s.obj,s.name)})}finally{DB=bk}
+  $('#stBusy').textContent='';renderStage()}
+function renderStage(){
+  const st=$('#stage');if(!STAGE.length){st.hidden=true;return}st.hidden=false;
+  const newL=STAGE.reduce((s,x)=>s+(x.rep?x.rep.lec:0),0);
+  $('#stTable').innerHTML='<tr><th>Archivo</th><th>Tipo</th><th>Folio</th><th class="n">Págs.</th><th class="n">Equipos / total</th><th class="n">Lecturas nuevas</th><th class="n">Duplicadas</th><th>Avisos</th></tr>'+STAGE.map(s=>{const i=s.info,r=s.rep||{};
+    const warn=[...(i.error?['⛔ '+i.error]:[]),...(i.warn||[]),...(r.warn||[])];
+    return`<tr><td><b>${esc(s.name)}</b></td><td>${s.kind}${i.formato?' · '+i.formato:''}</td><td class="small">${esc(i.folio||'—')}</td><td class="n">${i.paginas??'—'}</td><td class="n">${i.recs?`${i.recs.length} / ${i.total??'?'}`:r.act!=null?r.act+' activos':'—'}</td><td class="n"><b>${r.lec??'—'}</b></td><td class="n">${r.dup??'—'}</td><td class="small" style="color:${warn.length?'var(--warn)':'var(--ok)'}">${warn.length?warn.slice(0,4).map(esc).join('<br>')+(warn.length>4?`<br>… +${warn.length-4}`:''):'✓ sin avisos'}</td></tr>`}).join('');
+  $('#stSummary').textContent=`${STAGE.length} archivo(s) · ${newL} lecturas nuevas por agregar`;$('#stCommit').disabled=!STAGE.some(s=>s.obj);$('#stCommit').textContent=`Agregar a la base (${newL} lecturas)`}
+function commitStage(){
+  let n=0;for(const s of STAGE){if(s.obj){ingest(s.obj,s.name);n++}else DB.archivos.unshift({nombre:s.name,ts:Date.now(),act:0,lec:0,insp:0,pob:0,dup:0,skip:0,warn:[s.info.error||'error']})}
+  STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} archivo(s) agregados a la base`)}
+
+/* ---------- Captura diaria manual ---------- */
+const DEFPTS={Tablero:['Conexiones lado línea F1','Conexiones lado línea F2','Conexiones lado línea F3','Conexiones lado carga F1','Conexiones lado carga F2','Conexiones lado carga F3'],
+  Motor:['Interruptor — entrada F1','Interruptor — entrada F2','Interruptor — entrada F3','Interruptor — salida F1','Interruptor — salida F2','Interruptor — salida F3','Arrancador — entrada F1','Arrancador — entrada F2','Arrancador — entrada F3','Arrancador — salida F1','Arrancador — salida F2','Arrancador — salida F3'],
+  Transformador:['Devanado BT X1','Devanado BT X2','Devanado BT X3','Núcleo']};
+function renderCapture(){
+  const sel=$('#mTag'),cur=sel.value;sel.innerHTML=assets().map(a=>`<option value="${esc(a.tag)}">${esc(a.tag)} — ${esc(a.tipo)}</option>`).join('')+'<option value="__new">＋ Nuevo activo…</option>';
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:(S.sel&&DB.activos[S.sel]?S.sel:sel.options[0]?.value);
+  if(!$('#mFecha').value)$('#mFecha').value=toInput(Date.now());capPoints()}
+function capPoints(){
+  const tag=$('#mTag').value,isNew=tag==='__new';$('#mNew').hidden=!isNew;let names,last={};
+  if(isNew)names=DEFPTS[$('#mNTipo').value]||[];else{const sn=IX.snaps.get(tag)||[],e=IX.cur.get(tag);names=[...new Set(sn.flatMap(s=>s.pts.map(p=>p.punto)))];if(!names.length)names=DEFPTS[DB.activos[tag]?.tipo]||[];if(e)e.pp.forEach(p=>last[p.punto]=p.temp)}
+  const tipo=isNew?$('#mNTipo').value:DB.activos[tag]?.tipo,le=!isNew&&IX.cur.get(tag)?IX.cur.get(tag).elec:null;
+  const eh=tipo==='Transformador'?[['i0','Corriente primaria (A)'],['i1','Corriente secundaria (A)']]:tipo==='Tablero'?[['i0','Corriente L1 (A)'],['i1','Corriente L2 (A)'],['i2','Corriente L3 (A)'],['v0','Tensión L1 (V)'],['v1','Tensión L2 (V)'],['v2','Tensión L3 (V)']]:[['i0','Corriente L1 (A)'],['i1','Corriente L2 (A)'],['i2','Corriente L3 (A)']];
+  $('#mElec').innerHTML=eh.map(([k,l])=>{const idx=+k[1],val=le?(k[0]==='i'?le.i[idx]:(le.v||[])[idx]):null;return`<label class="mp">${l}<input type="number" step="any" data-e="${k}" placeholder="${val!=null?'últ. '+(k[0]==='v'?fV(val):fI(val)):''}"></label>`}).join('');
+  $('#mPts').innerHTML=names.map((n,i)=>`<label class="mp">${esc(n)}<input type="number" step="0.1" data-n="${esc(n)}" placeholder="${last[n]!=null?'últ. '+f1(last[n]):'°C'}"></label>`).join('')}
+function saveCapture(){
+  let tag=$('#mTag').value;const ts=parseTs($('#mFecha').value);if(!Number.isFinite(ts)){toast('Fecha inválida');return}
+  if(tag==='__new'){tag=normTag($('#mNTag').value);if(!tag){toast('Captura el TAG del nuevo activo');return}
+    if(!DB.activos[tag]){const tipo=$('#mNTipo').value;DB.activos[tag]={tag,tipo,planta:$('#mNPlanta').value||'—',sector:num($('#mNSector').value),ubicacion:$('#mNPlanta').value||'—',sap:null,gps:null,estado_operativo:'En servicio',metadatos:{},umbrales:tipo==='Transformador'?TH_TRAFO:TH_TAB,umbrales_por_punto:tipo==='Transformador'?{'Núcleo':TH_NUCLEO}:null,poblacion:tipo}}}
+  const tipoC=DB.activos[tag].tipo,isT=tipoC==='Transformador',Lb=isT?['Primario','Secundario']:['L1','L2','L3'],ge=k=>{const e=$('#mElec [data-e="'+k+'"]');return e?num(e.value):null};
+  const iRaw=Lb.map((_,k)=>ge('i'+k)),vRaw=tipoC==='Tablero'?Lb.map((_,k)=>ge('v'+k)):[],hasIE=iRaw.some(x=>x!=null),hasVE=vRaw.some(x=>x!=null);
+  const iC=hasIE?cleanPhases(iRaw,'I',Lb,{noConsistency:isT}):{v:[],issues:[]},vC=hasVE?cleanPhases(vRaw,'V',Lb):{v:[],issues:[]};
+  const badE=[...iC.issues,...vC.issues].filter(x=>x.acc==='descartado');
+  if(badE.length){toast('Valor imposible descartado: '+badE.map(x=>`${x.campo}=${x.valor}`).join(', '));DB.descartes=DB.descartes||[];badE.forEach(x=>DB.descartes.push({tag,ts,campo:x.campo,valor:x.valor,motivo:x.motivo+' (captura manual)',acc:'descartado',fuente:'captura manual'}))}
+  const amb=num($('#mAmb').value),iA=hasIE?(isT?iC.v[1]:meanOk(iC.v)):null,carga=num($('#mLoad').value),seen=new Set(DB.lecturas.map(r=>r.tag+'|'+r.ts+'|'+r.punto));let n=0,dup=0;
+  $$('#mPts input').forEach(inp=>{const t=num(inp.value);if(t==null)return;if(t<12||t>(tipoC==='Transformador'?300:250)){toast('Temperatura imposible (12–'+(tipoC==='Transformador'?300:250)+' °C): '+inp.dataset.n);return}const k=tag+'|'+ts+'|'+inp.dataset.n;if(seen.has(k)){dup++;return}DB.lecturas.push({tag,ts,punto:inp.dataset.n,grupo:grupoOf(inp.dataset.n),temp:t,amb,carga,corr:iA,origen:'manual'});n++});
+  const extraN=$('#mXN').value.trim(),extraT=num($('#mXT').value);if(extraN&&extraT!=null){DB.lecturas.push({tag,ts,punto:extraN,grupo:grupoOf(extraN),temp:extraT,amb,carga,corr:iA,origen:'manual'});n++}
+  if(!n){toast(dup?'Esa lectura ya existe (misma fecha y punto)':'Captura al menos una temperatura');return}
+  if((iC.v.some(x=>x!=null)||vC.v.some(x=>x!=null))&&!DB.elec.some(e=>e.tag===tag&&e.ts===ts))DB.elec.push({tag,ts,i:iC.v,il:Lb,v:vC.v,vl:Lb,origen:'manual'});
+  rebuild();const ev=(IX.ev.get(tag)||[]).find(e=>e.ts===ts);
+  if($('#mInsp').checked&&ev)DB.inspecciones.push({id:'I'+hash(tag+ts+Math.random()),tag,ts,inspector:$('#mInsp2').value||'Captura manual',tipo:'Termografía',hallazgos:$('#mObs').value||'Captura diaria manual.',sev:ev.sev,t_comp:null,t_ref:null,ref_modo:'sim',delta_t:ev.dtMax!=null?+ev.dtMax.toFixed(1):null,ttf_h:null,folio:null,url:null,origen:'captura manual',imgs:[]});
+  DB.archivos.unshift({nombre:`Captura manual · ${tag}`,ts:Date.now(),act:0,lec:n,insp:$('#mInsp').checked?1:0,pob:0,dup,skip:0,warn:[]});
+  save();S.sel=tag;refreshAll();$$('#mPts input,#mElec input').forEach(i=>i.value='');$('#mObs').value='';toast(`${n} lectura(s) guardadas en ${tag}${ev?' · '+SEV[ev.sev].n:''}`)}
+
+/* ===================== NAVEGACIÓN / INIT ===================== */
+function fillAssetSelects(){
+  const html=assets().map(a=>`<option value="${esc(a.tag)}">${esc(a.tag)} — ${esc(a.tipo)}</option>`).join('');
+  $$('.selAsset').forEach(s=>{if(s.id==='iAsset')return;s.innerHTML=html;s.value=S.sel||''});
+}
+function refreshAll(){
+  if(!S.sel||!DB.activos[S.sel])S.sel=assets()[0]?.tag||null;
+  fillAssetSelects();renderExec();renderData();
+  if(S.view==='trend')renderTrend(true);if(S.view==='insp')renderInsp();if(S.view==='wb')renderWeibull();
+  const ts=refTs();$('#statusbar').innerHTML=`<span>${Object.keys(DB.activos).length} activos · ${DB.lecturas.length.toLocaleString('es-MX')} lecturas · ${DB.inspecciones.length} inspecciones</span><span>Datos hasta: ${DB.lecturas.length?fDT(ts):'—'} (hora centro)</span><span>Persistencia: ${Store.mode()}</span><span>Sin conexión externa</span>`;
+}
+function switchView(v){
+  S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
+  requestAnimationFrame(()=>{if(v==='trend')renderTrend(true);if(v==='insp')renderInsp();if(v==='wb')renderWeibull();if(v==='data')renderData();window.scrollTo(0,0)});
+}
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('sicm_theme',t)}catch(e){}Object.values(CH).forEach(c=>c.draw())}
+async function init(){
+  let th='dark';try{th=localStorage.getItem('sicm_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){}
+  document.documentElement.dataset.theme=th;
+  await Store.open('sicm_termico');renderSuiteNav('termico');
+  let saved=null;try{saved=await Store.get('kv','db')}catch(e){}
+  if(saved&&saved.activos&&Object.keys(saved.activos).length){DB={...emptyDB(),...saved};if((saved.v||1)<2){await loadSeed();DB.v=2;save();setTimeout(()=>toast('Base actualizada: ahora incluye corriente y tensión por fase. Vuelve a subir tus PDF anteriores para completar esos datos.'),600)}}else{await loadSeed();save()}
+  rebuild();
+  // gráficas
+  CH.T=new Chart($('#cT'));CH.D=new Chart($('#cD'));CH.I=new Chart($('#cI'));CH.V=new Chart($('#cV'));CH.S=new Chart($('#cS'));CH.T.group=CH.D.group=CH.I.group=CH.V.group=[CH.T,CH.D,CH.I,CH.V];
+  CH.WP=new Chart($('#wP'));CH.WF=new Chart($('#wF'));CH.WR=new Chart($('#wR'));CH.WH=new Chart($('#wH'));
+  CH.WF.group=CH.WR.group=CH.WH.group=[CH.WF,CH.WR,CH.WH];
+  // eventos
+  $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+  $('#btnTheme').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+  $('#btnLoad').addEventListener('click',()=>$('#fileIn').click());$('#fileIn').addEventListener('change',e=>{handleFiles(e.target.files);e.target.value=''});
+  $('#btnExport').addEventListener('click',exportDB);$('#btnExport2').addEventListener('click',exportDB);
+  $('#btnSample').addEventListener('click',()=>download('sicm-termico-ejemplo.json',$('#seed').textContent));
+  $('#btnReseed').addEventListener('click',async()=>{if(!confirm('¿Reemplazar toda la base por los datos de ejemplo?'))return;await Store.clear();DB=emptyDB();await loadSeed();rebuild();save();S.sel=null;refreshAll();toast('Datos de ejemplo restablecidos')});
+  $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar toda la base local (activos, lecturas, inspecciones e imágenes)?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.sel=null;refreshAll()});
+  const drop=$('#drop');drop.addEventListener('click',()=>$('#fileIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#fileIn').click()});
+  let dc=0;const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragenter',e=>{if(!hasFiles(e))return;dc++;$('#dropOverlay').style.display='flex'});
+  window.addEventListener('dragleave',e=>{if(!hasFiles(e))return;dc=Math.max(0,dc-1);if(!dc)$('#dropOverlay').style.display='none'});
+  window.addEventListener('dragover',e=>{if(hasFiles(e))e.preventDefault()});
+  window.addEventListener('drop',e=>{if(!hasFiles(e))return;e.preventDefault();dc=0;$('#dropOverlay').style.display='none';handleFiles(e.dataTransfer.files)});
+  // filtros
+  [['fTipo','fTipo'],['fPlanta','fPlanta'],['fSev','fSev']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{S[k]=e.target.value;S.limit=60;renderExec()}));
+  $('#fQ').addEventListener('input',e=>{S.q=e.target.value;S.limit=60;renderExec()});
+  $$('.selAsset').forEach(s=>s.addEventListener('change',e=>{if(s.id==='iAsset'){S.insp.asset=e.target.value;renderInsp();return}S.sel=e.target.value;fillAssetSelects();if(S.view==='trend')renderTrend(true);if(S.view==='wb')renderWeibull()}));
+  $('#tPrimary').addEventListener('change',e=>{S.tr.primary=e.target.value;renderTrend(true)});
+  ['tSmooth','tRate','tDynM','tAmb','tRight','tDyn','tHideSim'].forEach(id=>$('#'+id).addEventListener('change',()=>{if(id==='tDynM')CFG.dynMargin=+$('#tDynM').value||15;renderTrend(id==='tHideSim')}));
+  $$('[data-win]').forEach(b=>b.addEventListener('click',()=>{const d=+b.dataset.win;if(!CH.T.full)return;const e=CH.T.full[1];CH.T.setView(d?[Math.max(CH.T.full[0],e-d*864e5),e]:[...CH.T.full])}));
+  $('#iTipo').addEventListener('change',e=>{S.insp.tipo=e.target.value;renderInsp()});$('#iSev').addEventListener('change',e=>{S.insp.sev=e.target.value;renderInsp()});$('#iQ').addEventListener('input',renderInsp);
+  $('#btnNewInsp').addEventListener('click',newInspDialog);['cTc','cTr','cMode','cLoad'].forEach(id=>$('#'+id).addEventListener('input',calc));
+  $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{STAGE=[];renderStage()});
+  $('#qMot').addEventListener('change',renderQuality);$('#qQ').addEventListener('input',renderQuality);$('#qCsv').addEventListener('click',exportQuality);
+  $('#mTag').addEventListener('change',capPoints);$('#mNTipo').addEventListener('change',capPoints);$('#mSave').addEventListener('click',saveCapture);
+  $('#imgClose').addEventListener('click',()=>$('#dlgImg').close());
+  $('#wPop').addEventListener('change',e=>{S.wb.pop=e.target.value;renderWeibull()});
+  $('#wAge').addEventListener('change',e=>{S.wb.age=num(e.target.value);renderWeibull()});$('#wAgeReset').addEventListener('click',()=>{S.wb.age=null;renderWeibull()});
+  refreshAll();
+  window.__ready=true;
+}
+init();
+</script>
+</body>
+</html>
