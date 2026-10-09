@@ -241,3 +241,20 @@ Archivo **único y autocontenido** (2 MB; sin CDN ni peticiones de red, CSP `con
 - Persistencia en IndexedDB **de ese navegador/equipo**: usar «Exportar base» periódicamente como respaldo o para pasarla a otro equipo.
 
 **Regenerar:** `python3 scripts/build_termico_real.py <dir con TBL_*.jsonl TRAN_*.jsonl TMO_*.jsonl>` → `data/termico/seed_real.json`; luego `python3 scripts/build_termico.py` (plantilla `app/sicm-termico.template.html` + `vendor/pdfjs`). Los datos de `data/termico/demo_simulado_*.json` son **simulados** (monitoreo continuo) y sirven solo para probar la carga de JSON y las gráficas de dT/dt. Las poblaciones Weibull incluidas también son simuladas.
+
+## Suite modular: arquitectura compartida y módulo SFI (`app/sicm-sfi.html`)
+
+Cada módulo es **un solo `.html` autocontenido** (sin CDN; CSP `connect-src 'none'`) y comparten núcleo para ensamblarse después en una sola app:
+
+| Pieza | Archivo | Contenido |
+|---|---|---|
+| Núcleo compartido | `app/shared/core.js`, `core.css` | utilidades, IndexedDB (`Store.open(nombre)`), motor de gráficas Canvas, Weibull, lector PDF, menú de módulos (`SUITE`) |
+| Módulo térmico | `app/sicm-termico.template.html` → `scripts/build_termico.py` | transformadores, tableros, motores |
+| Módulo SFI | `app/sfi/{template.html,model.js,ingest.js,views.js,init.js}` → `scripts/build_sfi.py` | SFI/UPS, cargadores y bancos de baterías |
+| Datos | `data/sfi/seed_real_sfi.json` ← `scripts/build_sfi_real.py <dir JSONL>` | 152 inspecciones / 136 TAG (PDF jul–oct 2026) |
+
+Cada módulo guarda su base por separado (`sicm_termico`, `sicm_sfi`) y exporta con la misma envolvente JSON (`schema`, `activos[]`, `poblaciones[]`).
+
+**SFI — qué hace:** (1) ejecutivo y censo con filtros Sector/SE/Planta/Marca/Servicio/Tipo/Condición, semáforo SICM, alertas y mapa GPS; (2) expediente por equipo (placa, mediciones, protecciones, alarmas, LEDs, verificación física incl. extractor/H₂, matriz de celdas, diagnóstico ISO 14224, línea de tiempo, impresión); (3) tendencias (V de flotación vs placa ±1/±2 %, corrientes, temperatura 30/35 °C, celda por celda, comparativo de flota); (4) confiabilidad (SoH, Arrhenius, Weibull por modo de falla con R/F/h/RUL, matriz prioridad × condición); (5) carga de PDF/JSON por lotes con vista previa, captura manual, calidad de datos, exportación JSON/CSV.
+
+**Limitaciones declaradas:** los PDF llegan **sin diagnóstico** (veredicto vacío) → la condición se **calcula por reglas** (criterios institucionales editables en `model.js`/pestaña 3); casi todos los equipos tienen **una sola visita**, así que las tendencias maduran al cargar más recorridos; el SoH requiere capturar la **edad** del banco; las poblaciones Weibull son **simuladas** (`origen:"simulado"`) hasta cargar fallas reales; los códigos ISO 14224 son **sugeridos**.

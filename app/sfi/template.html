@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-SFI · Expediente digital de SFI/UPS, cargadores y baterías</title>
+<style>
+/*__CORE_CSS__*/
+/* ---- Identidad del módulo SFI: semáforo conforme al formato SICM ---- */
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16)}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px}
+.chk div{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:7px 10px;background:var(--surface);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.chk .ok{border-left-color:var(--ok)}.chk .bad{border-left-color:var(--crit)}.chk .na{border-left-color:var(--line);color:var(--muted)}
+.chk b{white-space:nowrap}
+.alertbar{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:13px;border:1px solid}
+.alertbar.crit{background:var(--crit-bg);border-color:var(--crit)}.alertbar.warn{background:var(--warn-bg);border-color:var(--warn-fill)}.alertbar.oos{background:var(--oos-bg);border-color:var(--oos)}
+.tlitem{border-left:3px solid var(--line);padding:2px 0 10px 14px;position:relative}
+.tlitem:before{content:"";position:absolute;left:-7px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--gris)}
+.tlitem.c0:before{background:var(--ok)}.tlitem.c1:before{background:var(--warn-fill)}.tlitem.c2:before{background:var(--crit)}.tlitem.c3:before{background:var(--oos)}
+.map{width:100%;height:300px;background:var(--surface2);border:1px solid var(--line);border-radius:8px}
+td.d-up{color:var(--crit);font-weight:700}td.d-dn{color:var(--warn);font-weight:700}
+.sub2{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.mx3{display:grid;grid-template-columns:repeat(3,auto 1fr);gap:4px 10px;font-size:12px}
+.mx3 b{font-variant-numeric:tabular-nums;font-size:13px}.mx3 span{color:var(--muted)}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.capgrid label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.capgrid input,.capgrid select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+.prio-0{background:var(--crit-bg)}.prio-1{background:var(--warn-bg)}
+@media print{header.top,.tabs,.bar,.statusbar,#btnPrint,.zb{display:none!important}.view{display:none!important}#v-exp{display:block!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-SFI · Expediente digital y confiabilidad de SFI / UPS, cargadores y bancos de baterías</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · LV 1255-SICM-ME-PO-005 · Anexo 9.4/9.5 · IEEE 1184 · 1106 · 450 · ISO 14224</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar PDF / JSON</button>
+  <button class="btn ghost" id="btnExport">⬇ Exportar JSON</button>
+  <button class="btn ghost" id="btnCsv">⬇ Resumen CSV</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="exec" aria-selected="true">1 · Ejecutivo y censo</button>
+  <button role="tab" data-view="exp" aria-selected="false">2 · Expediente por equipo</button>
+  <button role="tab" data-view="trend" aria-selected="false">3 · Tendencias</button>
+  <button role="tab" data-view="rel" aria-selected="false">4 · Confiabilidad y degradación</button>
+  <button role="tab" data-view="data" aria-selected="false">5 · Datos y carga</button>
+</nav>
+
+<main>
+<!-- ============ 1 · EJECUTIVO ============ -->
+<section id="v-exec" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar">
+    <label>Sector<select id="fSector"></select></label>
+    <label>Subestación<select id="fSE"></select></label>
+    <label>Planta / unidad<select id="fPlanta"></select></label>
+    <label>Marca (equipo / banco)<select id="fMarca"></select></label>
+    <label>Servicio<select id="fServ"></select></label>
+    <label>Tipo<select id="fTipo"></select></label>
+    <label>Condición<select id="fCond"></select></label>
+    <label>Buscar TAG<input type="text" id="fQ" placeholder="SFI-12, CB-121…"></label>
+    <span class="sp"></span><span class="small muted" id="fCount"></span>
+  </div>
+  <div class="grid2">
+    <div class="cards" id="cards"></div>
+    <div>
+      <div class="panel"><h2>Alertas y hallazgos prioritarios</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel"><h2>Censo georreferenciado</h2><svg id="map" class="map" role="img" aria-label="Mapa de equipos por coordenadas GPS"></svg><div class="small muted" id="mapNote"></div></div>
+      <div class="panel"><h2>Censo por planta</h2><div class="tw" style="max-height:260px"><table id="plantTable"></table></div></div>
+      <div class="panel small"><h3>Semáforo (formato SICM)</h3><div style="display:flex;flex-direction:column;gap:5px">
+        <div><span class="chip c0">● SATISFACTORIA</span> sin desviaciones</div>
+        <div><span class="chip c1">▲ CONDICIONADA / ATENCIÓN</span> hallazgo a programar</div>
+        <div><span class="chip c2">■ DEFICIENTE</span> riesgo de pérdida de respaldo / seguridad</div>
+        <div><span class="chip c3">◆ FUERA DE SERVICIO</span> libranza o en bypass</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · EXPEDIENTE ============ -->
+<section id="v-exp" class="view" hidden>
+  <div class="bar"><label>Equipo (TAG)<select class="selAsset" id="expSel"></select></label><span class="sp"></span>
+    <button class="btn sm" id="btnPrint">🖶 Imprimir expediente</button></div>
+  <div id="expBody"></div>
+</section>
+
+<!-- ============ 3 · TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="bar">
+    <label>Equipo (TAG)<select class="selAsset" id="trSel"></select></label>
+    <label>Voltaje a graficar<select id="trV"><option value="auto">Automático (mejor fuente)</option><option value="flot">Tensión de flotación medida</option><option value="bat">Batería (cargador)</option><option value="total">Voltaje total medido en sitio</option><option value="bus">Bus CD / rectificador</option></select></label>
+    <label>Alarma temp. (°C)<input type="number" id="trTw" value="30" style="min-width:80px"></label>
+    <label>Crítico temp. (°C)<input type="number" id="trTc" value="35" style="min-width:80px"></label>
+    <label>Tolerancia flotación ±%<select id="trTol"><option value="1">±1 % (alarma) / ±2 % (crítico)</option><option value="2">±2 % (alarma) / ±3 % (crítico)</option></select></label>
+  </div>
+  <div class="stats" id="trStats"></div>
+  <div class="chartbox tall"><div class="ttl">Voltaje de flotación real vs. placa y tolerancias IEEE 1106 · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cV"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Corrientes (A) y % de carga del SFI (eje der.)</div><canvas id="cI"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Temperatura del banco (°C) · advertencia / crítico</div><canvas id="cT"></canvas><div class="tip"></div></div>
+  <div class="panel"><div class="bar" style="margin:0"><label>Inspección con celdas<select id="cellSel"></select></label></div></div>
+  <div class="chartbox tall"><div class="ttl">Voltaje celda por celda (V/celda) · banda de flotación por química</div><canvas id="cC"></canvas><div class="tip"></div></div>
+  <div class="infobox">Comparativo de flota (una lectura por equipo, última inspección): útil cuando aún no hay historial.</div>
+  <div class="chartbox"><div class="ttl">Flota · temperatura del banco por equipo (ordenado; color = condición del equipo)</div><canvas id="cF1"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Flota · desviación del voltaje de flotación vs. placa (%) (color = condición)</div><canvas id="cF2"></canvas><div class="tip"></div></div>
+</section>
+
+<!-- ============ 4 · CONFIABILIDAD ============ -->
+<section id="v-rel" class="view" hidden>
+  <div class="bar"><label>Equipo (TAG)<select class="selAsset" id="relSel"></select></label>
+    <label>Edad del banco (años)<input type="number" id="relAge" min="0" step="0.5" style="min-width:110px"></label>
+    <label>Vida de diseño (años)<input type="number" id="relLife" min="1" step="1" style="min-width:110px"></label>
+    <label>Modo de falla (Weibull)<select id="relMode"></select></label>
+    <label>Edad (h) para R(t)<input type="number" id="relAgeH" min="0" step="1000" style="min-width:120px"></label></div>
+  <div id="relWarn"></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(360px,1fr))">
+    <div class="panel"><h2>Salud del banco (SoH) y envejecimiento térmico</h2><div id="sohBody"></div></div>
+    <div class="panel"><h2>Matriz de criticidad ISO 14224</h2><div id="matBody"></div></div>
+  </div>
+  <div class="stats" id="wStats"></div>
+  <div class="infobox" id="wInterp"></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(520px,1fr))">
+    <div><div class="chartbox tall"><div class="ttl">Gráfica de probabilidad Weibull (MRR)</div><canvas id="wP"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">F(t) · probabilidad acumulada de falla</div><canvas id="wF"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">R(t) · confiabilidad</div><canvas id="wR"></canvas><div class="tip"></div></div></div>
+    <div><div class="chartbox tall"><div class="ttl">h(t) · tasa de falla (fallas / 10⁶ h)</div><canvas id="wH"></canvas><div class="tip"></div></div></div>
+  </div>
+</section>
+
+<!-- ============ 5 · DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos">
+        <b>Actualizar expediente: arrastra reportes PDF (SFI/UPS o cargador y banco) o archivos .json</b><br>
+        <span class="muted">Se agregan sin borrar lo anterior (por TAG, folio y fecha) · se guardan en este navegador</span></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <div class="tw" style="max-height:300px"><table id="stTable"></table></div><p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
+        <p class="small muted">Se omiten los registros que ya existen (mismo TAG, folio y fecha). Revisa que «Sistemas / total» coincida con el resumen del PDF y que no haya avisos de «sin marcas ✓».</p></div>
+      <div class="panel" style="margin-top:12px"><h2>Captura manual de inspección</h2><div id="capForm"></div></div>
+      <div class="panel" id="qPanel"><h2>Calidad de datos · valores en blanco o imposibles</h2>
+        <p class="small muted">Los reportes traen celdas vacías y errores de tecleo. Al importar, los valores imposibles se <b>descartan</b> y se listan aquí; los sospechosos se conservan marcados «revisar».</p>
+        <div id="qSum" class="stats"></div>
+        <div class="bar"><label>Motivo<select id="qMot"></select></label><label>Buscar TAG<input type="text" id="qQ"></label><span class="sp"></span><button class="btn sm" id="qCsv">⬇ CSV</button></div>
+        <div class="tw" style="max-height:320px"><table id="qTable"></table></div></div>
+      <div class="panel"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-sfi/v1</code></h2><p class="small muted">Comparte la envolvente de la suite: <code>activos[]</code> (TAG, tipo, planta, sector, ubicación, SAP, GPS, metadatos) + <code>inspecciones[]</code>. También se aceptan los <code>recorridos[]</code> extraídos de los PDF.</p><pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnExport2">⬇ Exportar base (.json)</button><button class="btn" id="btnCsv2">⬇ Resumen (.csv / Excel)</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos incluidos</button><button class="btn" id="btnWipe">🗑 Vaciar base</button></div></div>
+      <div class="panel small"><h3>Seguridad y modularidad</h3>
+        Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). Comparte núcleo (estilos, almacenamiento, gráficas, Weibull, lector PDF) con el módulo térmico para ensamblarse después en una sola app; cada módulo guarda su base por separado y puede exportarla con la misma envolvente JSON.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos para cargarlos</div>
+<dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
+
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>
