@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Ensambla app/sicm-termico.html (autocontenido) = plantilla + seed_completo.json."""
-import os
+"""Ensambla app/sicm-termico.html (autocontenido) = plantilla + pdf.js + seed_real.json (recorridos reales)."""
+import os, sys
 root = os.path.join(os.path.dirname(__file__), '..')
-tpl = open(os.path.join(root, 'app', 'sicm-termico.template.html'), encoding='utf-8').read()
-seed = open(os.path.join(root, 'data', 'termico', 'seed_completo.json'), encoding='utf-8').read()
-seed = seed.replace('</', '<\\/')
-out = tpl.replace('/*__SEED__*/', seed)
+rd = lambda *a: open(os.path.join(root, *a), encoding='utf-8').read()
+pdfdir = os.environ.get('PDFJS_DIR') or os.path.join(root, 'vendor', 'pdfjs')
+esc = lambda t: t.replace('</script', '<\\/script').replace('</Script', '<\\/Script')
+tpl = rd('app', 'sicm-termico.template.html')
+seed = esc(rd('data', 'termico', 'seed_real.json'))
+out = (tpl.replace('/*__SEED__*/', seed)
+          .replace('/*__PDFJS__*/', esc(open(os.path.join(pdfdir, 'pdf.min.js'), encoding='utf-8').read()))
+          .replace('/*__PDFWORKER__*/', esc(open(os.path.join(pdfdir, 'pdf.worker.min.js'), encoding='utf-8').read())))
 open(os.path.join(root, 'app', 'sicm-termico.html'), 'w', encoding='utf-8').write(out)
 print('app/sicm-termico.html', len(out) // 1024, 'KB')

@@ -227,8 +227,13 @@ Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, 
 
 ## Dashboard térmico de activos críticos (`app/sicm-termico.html`)
 
-Archivo **único y autocontenido** (sin CDN ni peticiones de red; CSP `connect-src 'none'`) para monitoreo de salud, confiabilidad y análisis predictivo de **transformadores, tableros y motores**: semáforo de criticidad (normal / alarma 1 / alarma 2 / fuera de servicio), tendencias con zoom y dT/dt, correlación T–carga–ambiente, bitácora de inspecciones con ΔT (NETA MTS 100.18) y galería, y Weibull (β, η, F(t), R(t), h(t), RUL).
+Archivo **único y autocontenido** (2 MB; sin CDN ni peticiones de red, CSP `connect-src 'none'`; lector PDF `pdf.js` 3.11 incrustado) para monitoreo de salud, confiabilidad y análisis predictivo de **transformadores, tableros y motores/arrancadores**: semáforo de criticidad, tendencias con zoom y dT/dt, correlación T–carga–ambiente, bitácora de inspecciones con ΔT (NETA MTS 100.18) y galería, y Weibull (β, η, F(t), R(t), h(t), RUL).
 
-- **Uso:** abrir el `.html` en Chrome/Edge/Firefox. Arrastrar uno o varios `.json` (esquema `sicm-termico/v1`, ver pestaña «Datos y carga»); se fusionan por TAG y persisten en IndexedDB.
-- **Datos de ejemplo:** `data/termico/{transformadores,tableros,motores}.json` (carga multi-archivo) y `seed_completo.json` (embebido). La **última lectura de cada activo es real** (PDF de termografía de Drive, folios `ROLM-SCM-SICM-…`); el **histórico previo y las poblaciones Weibull son simulados** y están marcados `origen: "simulado"`.
-- **Regenerar:** `python3 scripts/gen_termico_seed.py && python3 scripts/build_termico.py` (la plantilla es `app/sicm-termico.template.html`).
+**Base real incluida:** 94 reportes PDF de termografía (Drive «json de temperatura 08102026», 20-jul → 8-oct-2026) → 1,118 activos, ~9,800 lecturas válidas y 1,214 inspecciones. Se omiten lecturas imposibles (<12 °C o >250/300 °C) por error de captura del reporte; las >150 °C en conexiones se marcan «verificar lectura». La mayoría de los equipos tiene **una sola visita**: las tendencias aparecen conforme se agregan datos.
+
+**Actualizar la base día a día** (pestaña «Datos y carga»):
+- Arrastrar **PDF** de termografía (tableros ANSI C37.20, transformadores secos NMX-J-351, arrancadores POE-009) o **JSON** → vista previa con «equipos / total del resumen», lecturas nuevas y duplicadas → «Agregar a la base». Re-subir un reporte no duplica datos (llave TAG + fecha + punto).
+- **Captura diaria manual** por activo (o activo nuevo) con T ambiente, corriente, temperaturas por punto y observaciones; clasifica severidad y crea la inspección.
+- Persistencia en IndexedDB **de ese navegador/equipo**: usar «Exportar base» periódicamente como respaldo o para pasarla a otro equipo.
+
+**Regenerar:** `python3 scripts/build_termico_real.py <dir con TBL_*.jsonl TRAN_*.jsonl TMO_*.jsonl>` → `data/termico/seed_real.json`; luego `python3 scripts/build_termico.py` (plantilla `app/sicm-termico.template.html` + `vendor/pdfjs`). Los datos de `data/termico/demo_simulado_*.json` son **simulados** (monitoreo continuo) y sirven solo para probar la carga de JSON y las gráficas de dT/dt. Las poblaciones Weibull incluidas también son simuladas.

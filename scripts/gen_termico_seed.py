@@ -158,7 +158,7 @@ def write(name, obj):
 
 hdr = lambda: dict(schema='sicm-termico/v1', generado=iso(mxdt(2026, 10, 9, 9, 0)),
                    fuente='PDF de termografía SICM (Drive: json de temperatura 08102026). Última lectura de cada activo = REAL; histórico previo = SIMULADO.')
-write('transformadores.json', dict(hdr(), activos=[tr1, tr2], poblaciones=[pobs[0]]))
-write('tableros.json', dict(hdr(), activos=[tb1, tb2], poblaciones=[pobs[1]]))
-write('motores.json', dict(hdr(), activos=[m1, m2], poblaciones=[pobs[2]]))
-write('seed_completo.json', dict(hdr(), activos=[tr1, tr2, tb1, tb2, m1, m2], poblaciones=pobs))
+write('demo_simulado_transformadores.json', dict(hdr(), activos=[tr1, tr2], poblaciones=[pobs[0]]))
+write('demo_simulado_tableros.json', dict(hdr(), activos=[tb1, tb2], poblaciones=[pobs[1]]))
+write('demo_simulado_motores.json', dict(hdr(), activos=[m1, m2], poblaciones=[pobs[2]]))
+write('demo_simulado_completo.json', dict(hdr(), activos=[tr1, tr2, tb1, tb2, m1, m2], poblaciones=pobs))
