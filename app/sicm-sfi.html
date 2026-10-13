@@ -556,7 +556,8 @@ function colVals(items,labelRe,heads){ // asigna cada valor a su columna por pos
 /* ---------- Menú de módulos de la suite ---------- */
 const SUITE=[
   {id:'termico',file:'sicm-termico.html',nombre:'Térmico',desc:'Transformadores · Tableros · Motores'},
-  {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'}
+  {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'},
+  {id:'motores',file:'sicm-motores.html',nombre:'Motores',desc:'Vibraciones, variador y espectros FFT'}
 ];
 function renderSuiteNav(cur){const el=document.getElementById('suiteNav');if(!el)return;
   el.innerHTML=SUITE.map(m=>m.id===cur?`<span class="cur" aria-current="page" title="${esc(m.desc)}">${esc(m.nombre)}</span>`:`<a href="${esc(m.file)}" title="${esc(m.desc)}">${esc(m.nombre)}</a>`).join('')}

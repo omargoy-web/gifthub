@@ -258,3 +258,23 @@ Cada módulo guarda su base por separado (`sicm_termico`, `sicm_sfi`) y exporta 
 **SFI — qué hace:** (1) ejecutivo y censo con filtros Sector/SE/Planta/Marca/Servicio/Tipo/Condición, semáforo SICM, alertas y mapa GPS; (2) expediente por equipo (placa, mediciones, protecciones, alarmas, LEDs, verificación física incl. extractor/H₂, matriz de celdas, diagnóstico ISO 14224, línea de tiempo, impresión); (3) tendencias (V de flotación vs placa ±1/±2 %, corrientes, temperatura 30/35 °C, celda por celda, comparativo de flota); (4) confiabilidad (SoH, Arrhenius, Weibull por modo de falla con R/F/h/RUL, matriz prioridad × condición); (5) carga de PDF/JSON por lotes con vista previa, captura manual, calidad de datos, exportación JSON/CSV.
 
 **Limitaciones declaradas:** los PDF llegan **sin diagnóstico** (veredicto vacío) → la condición se **calcula por reglas** (criterios institucionales editables en `model.js`/pestaña 3); casi todos los equipos tienen **una sola visita**, así que las tendencias maduran al cargar más recorridos; el SoH requiere capturar la **edad** del banco; las poblaciones Weibull son **simuladas** (`origen:"simulado"`) hasta cargar fallas reales; los códigos ISO 14224 son **sugeridos**.
+
+## Módulo Motores (`app/sicm-motores.html`)
+
+Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (mismo código en la app y en Node) | `app/motores/parse.js` |
+| CSV, FFT, indicadores y reglas de diagnóstico | `app/motores/dsp.js` |
+| Modelo, limpieza y reglas (ISO 20816-3, IEEE 841/API 541, NEMA MG-1, ISO 14224) | `app/motores/model.js` |
+| Ingesta (PDF/JSON/CSV), captura manual, exportaciones | `app/motores/ingest.js` |
+| Vistas y arranque | `app/motores/views.js`, `init.js`, `template.html` |
+| Datos incluidos (313 PDF jul–oct 2026) | `data/motores/seed_real_mot.json` ← `node scripts/extract_motores.js <dirs con PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_motores.py` |
+
+**Pestañas:** 1 ejecutivo y censo (zonas ISO, ranking, alertas) · 2 expediente por motor (placa, última vibración con zonas, variador, espectros, diagnóstico, línea de tiempo; genera **.json** con espectros, **.csv** de tendencia y **.html** imprimible por equipo) · 3 tendencias (velocidad por punto/eje con zonas, gE, temperaturas, eléctricos, y del variador T1–T10, kW, par, RPM) · 4 espectros FFT y ondas (superposición de fechas, marcadores 1×–3×, rodamiento, 2×LF, bandas laterales; indicadores, picos, indicios y tendencia de indicadores espectrales) · 5 datos y carga (PDF/JSON/CSV por lote con vista previa y asignación de motor/punto/eje, captura manual, calidad de datos).
+
+**Formatos CSV:** onda (`Tiempo, Amplitud`) o FFT (`Frecuencia, Amplitud`), una o varias columnas; separador `, ; tab` o espacio, coma decimal, líneas previas `Clave: valor` (Tag, Punto, Eje, Sample Rate, RPM, Fecha); unidades mm/s, g, in/s, µm, m/s². El botón «CSV de ejemplo» baja un par de muestra.
+
+**Limitaciones declaradas:** los PDF llegan sin diagnóstico (la condición se calcula por reglas editables); casi todos los motores con vibración tienen una o dos visitas; los PDF no traen espectros (solo valores globales), por eso los FFT/ondas dependen de los .csv que se carguen; las frecuencias de rodamiento usan multiplicadores aproximados (0.4·n, 0.6·n) hasta capturar la geometría exacta; cimentación rígida y grupo ISO por potencia (o por nivel de tensión si falta la placa) son supuestos editables.

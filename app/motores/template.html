@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Motores · Vibraciones, variador y espectros</title>
+<style>
+/*__CORE_CSS__*/
+/* ---- Identidad del módulo Motores (mismo semáforo del formato SICM) ---- */
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED;--zA:#2E7D32;--zB:#7CB342;--zC:#F57F17;--zD:#C62828}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16);--zA:#5BD07A;--zB:#A7D86B;--zC:#FFB04D;--zD:#FF7B7B}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px}
+.chk div{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:7px 10px;background:var(--surface);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.chk .ok{border-left-color:var(--ok)}.chk .bad{border-left-color:var(--crit)}.chk .wr{border-left-color:var(--warn-fill)}.chk .na{border-left-color:var(--line);color:var(--muted)}
+.chk b{white-space:nowrap}
+.alertbar{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:13px;border:1px solid}
+.alertbar.crit{background:var(--crit-bg);border-color:var(--crit)}.alertbar.warn{background:var(--warn-bg);border-color:var(--warn-fill)}.alertbar.oos{background:var(--oos-bg);border-color:var(--oos)}.alertbar.info{background:var(--surface2);border-color:var(--line)}
+.tlitem{border-left:3px solid var(--line);padding:2px 0 10px 14px;position:relative}
+.tlitem:before{content:"";position:absolute;left:-7px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--gris)}
+.tlitem.c0:before{background:var(--ok)}.tlitem.c1:before{background:var(--warn-fill)}.tlitem.c2:before{background:var(--crit)}.tlitem.c3:before{background:var(--oos)}
+.mx3{display:grid;grid-template-columns:repeat(3,auto 1fr);gap:4px 10px;font-size:12px}
+.mx3 b{font-variant-numeric:tabular-nums;font-size:13px}.mx3 span{color:var(--muted)}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.capgrid label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.capgrid input,.capgrid select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{background:color-mix(in srgb,var(--zB) 22%,transparent)}td.zC,.zC{background:color-mix(in srgb,var(--zC) 30%,transparent)}td.zD,.zD{background:color-mix(in srgb,var(--zD) 30%,transparent);font-weight:700}
+.zbar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}.zbar i{display:block;font-style:normal;font-size:11px;color:#fff;text-align:center;line-height:22px;min-width:0;overflow:hidden}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.vtab{width:100%;border-collapse:collapse;font-size:13px}.vtab td,.vtab th{padding:5px 8px;border:1px solid var(--line);text-align:center}.vtab th{background:var(--surface2);font-size:11.5px}
+.sel-inline{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mk{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;align-items:center}.mk label{display:flex;gap:4px;align-items:center;flex-direction:row;color:var(--text)}
+.stg select,.stg input{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 4px;font-size:12px;max-width:140px}
+@media print{header.top,.tabs,.bar,.statusbar,#btnPrint,.zb,.btn{display:none!important}.view{display:none!important}#v-exp{display:block!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Motores · Monitoreo de motores: vibraciones mecánicas, variador y espectros FFT</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · 4128-11422-IT-001 · ISO 20816-3 · ISO 14224 · IEEE 841 / API 541 · NEMA MG-1</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar PDF / JSON / CSV</button>
+  <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
+  <button class="btn ghost" id="btnCsv">⬇ Resumen CSV</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="exec" aria-selected="true">1 · Ejecutivo y censo</button>
+  <button role="tab" data-view="exp" aria-selected="false">2 · Expediente por motor</button>
+  <button role="tab" data-view="trend" aria-selected="false">3 · Tendencias</button>
+  <button role="tab" data-view="spec" aria-selected="false">4 · Espectros FFT y ondas</button>
+  <button role="tab" data-view="data" aria-selected="false">5 · Datos y carga</button>
+</nav>
+
+<main>
+<!-- ============ 1 · EJECUTIVO ============ -->
+<section id="v-exec" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar">
+    <label>Sector<select id="fSector"></select></label>
+    <label>Planta / área<select id="fArea"></select></label>
+    <label>Nivel de tensión<select id="fNivel"></select></label>
+    <label>Fuente de datos<select id="fFuente"></select></label>
+    <label>Condición<select id="fCond"></select></label>
+    <label>Zona ISO 20816-3<select id="fZona"></select></label>
+    <label>Buscar TAG<input type="text" id="fQ" placeholder="GAM-11102, MBV-00205…"></label>
+    <span class="sp"></span><span class="small muted" id="fCount"></span>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="panel"><h2>Vibración global (mm/s RMS) por motor — última inspección, ordenado</h2><div class="legend" id="zLegend"></div>
+        <div class="chartbox" style="height:260px;margin:0"><canvas id="cRank"></canvas><div class="tip"></div></div>
+        <div class="small muted" id="rankNote"></div></div>
+      <div class="cards" id="cards"></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Distribución de zonas ISO 20816-3</h2><div id="zoneDist"></div></div>
+      <div class="panel"><h2>Alertas y hallazgos prioritarios</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel"><h2>Censo por planta</h2><div class="tw" style="max-height:260px"><table id="plantTable"></table></div></div>
+      <div class="panel small"><h3>Semáforo (formato SICM)</h3><div style="display:flex;flex-direction:column;gap:5px">
+        <div><span class="chip c0">● SATISFACTORIA</span> zona A/B, sin desviaciones</div>
+        <div><span class="chip c1">▲ CONDICIONADA / ATENCIÓN</span> zona C o hallazgo a programar</div>
+        <div><span class="chip c2">■ DEFICIENTE</span> zona D, temperatura de disparo o falla grave</div>
+        <div><span class="chip c3">◆ FUERA DE SERVICIO</span> libranza o equipo parado</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · EXPEDIENTE ============ -->
+<section id="v-exp" class="view" hidden>
+  <div class="bar"><label>Motor (TAG)<select class="selAsset" id="expSel"></select></label><span class="sp"></span>
+    <button class="btn sm" id="btnExpJson">⬇ Expediente (.json con espectros)</button><button class="btn sm" id="btnExpCsv">⬇ Tendencia (.csv)</button><button class="btn sm" id="btnExpHtml">⬇ Reporte (.html)</button><button class="btn sm" id="btnPrint">🖶 Imprimir</button></div>
+  <div id="expBody"></div>
+</section>
+
+<!-- ============ 3 · TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="bar">
+    <label>Motor (TAG)<select class="selAsset" id="trSel"></select></label>
+    <label>Eje de vibración<select id="trAxis"><option value="all">Todos (V, H, A)</option><option value="v">Vertical</option><option value="h">Horizontal</option><option value="a">Axial</option></select></label>
+    <label>Cimentación (ISO 20816-3)<select id="trFound"><option value="rigid">Rígida</option><option value="flex">Flexible</option></select></label>
+    <label>gE alerta / crítico<span class="sel-inline"><input type="number" id="trGeW" step="0.1" value="1.0" style="min-width:70px"><input type="number" id="trGeC" step="0.1" value="2.0" style="min-width:70px"></span></label>
+    <label>Temp. rodamiento alarma / disparo<span class="sel-inline"><input type="number" id="trTbW" value="85" style="min-width:70px"><input type="number" id="trTbC" value="95" style="min-width:70px"></span></label>
+    <label>Temp. devanado alarma / disparo<span class="sel-inline"><input type="number" id="trTwW" value="130" style="min-width:70px"><input type="number" id="trTwC" value="155" style="min-width:70px"></span></label>
+  </div>
+  <div class="stats" id="trStats"></div>
+  <div class="chartbox tall"><div class="ttl">Velocidad de vibración (mm/s) por punto y eje · zonas ISO 20816-3 · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cVel"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Aceleración gE (envolvente de impactos en rodamientos)</div><canvas id="cGe"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Temperaturas del reporte de vibración (rodamientos, cuerpo y RTD)</div><canvas id="cTmp"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Parámetros eléctricos: corriente por fase (A) y tensión (V, eje der.)</div><canvas id="cEl"></canvas><div class="tip"></div></div>
+  <div class="infobox" id="vfdNote">Motores con variador (reportes «Monitoreo de motores»): temperaturas T1–T10, potencia, corriente, par y velocidad.</div>
+  <div class="chartbox tall"><div class="ttl">Variador · temperaturas de rodamientos (T1–T4) y devanados (T5–T10), °C</div><canvas id="cV1"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Variador · potencia (kW), corriente del motor (A) y par (p.u., eje der.)</div><canvas id="cV2"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Variador · velocidad (RPM) y corriente de línea (A, eje der.)</div><canvas id="cV3"></canvas><div class="tip"></div></div>
+</section>
+
+<!-- ============ 4 · ESPECTROS ============ -->
+<section id="v-spec" class="view" hidden>
+  <div class="bar">
+    <label>Motor (TAG)<select class="selAsset" id="spSel"></select></label>
+    <label>Frecuencia máx. (Hz)<input type="number" id="spFmax" value="" placeholder="auto" style="min-width:90px"></label>
+    <label>RPM del motor<input type="number" id="spRpm" style="min-width:90px"></label>
+    <label>Rodamiento (n° de bolas)<input type="number" id="spNb" min="5" max="30" style="min-width:90px"></label>
+    <label>Eje vertical<select id="spScale"><option value="lin">Lineal</option><option value="log">Logarítmico</option></select></label>
+    <label>Unidad del espectro<select id="spUnit"><option value="asis">Como se importó</option><option value="vel">Velocidad (mm/s)</option></select></label>
+    <label>Ventana FFT (ondas)<select id="spWin"><option value="flattop">Flat-top (amplitud exacta)</option><option value="hann">Hann</option><option value="hamming">Hamming</option><option value="rect">Rectangular</option></select></label>
+    <button class="btn sm" id="btnSpDemo">＋ Generar espectro de ejemplo</button>
+  </div>
+  <div class="mk" id="spMarks" style="margin-bottom:10px"></div>
+  <div class="panel"><h2>Mediciones cargadas (CSV) <span class="small muted" id="spCount"></span></h2>
+    <div class="tw" style="max-height:230px"><table id="spTable"></table></div>
+    <div class="small muted">Marca «Comparar» para superponer varias fechas / puntos. Clic en una fila para analizarla.</div></div>
+  <div class="chartbox tall"><div class="ttl" id="spTtl1">Espectro FFT</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cFFT"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl" id="spTtl2">Onda en el tiempo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cWave"></canvas><div class="tip"></div></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(360px,1fr))">
+    <div class="panel"><h2>Indicadores de la medición seleccionada</h2><div class="stats" id="spStats"></div></div>
+    <div class="panel"><h2>Diagnóstico por reglas (indicios)</h2><div id="spFind"></div></div>
+  </div>
+  <div class="panel"><h2>Picos principales</h2><div class="tw" style="max-height:240px"><table id="spPeaks"></table></div></div>
+  <div class="bar"><label>Indicador a tendenciar<select id="spFeat"></select></label><label>Punto / eje<select id="spFeatPt"></select></label></div>
+  <div class="chartbox"><div class="ttl">Tendencia del indicador espectral entre mediciones</div><canvas id="cFeat"></canvas><div class="tip"></div></div>
+</section>
+
+<!-- ============ 5 · DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos">
+        <b>Actualizar la base: arrastra reportes PDF (motores / vibraciones), archivos .json o mediciones .csv (FFT y onda)</b><br>
+        <span class="muted">Se agregan sin borrar lo anterior (por TAG y fecha) · se guardan en este navegador</span></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,.csv,.txt,.tsv,application/pdf,application/json,text/csv" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <div class="tw stg" style="max-height:340px"><table id="stTable"></table></div><p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
+        <p class="small muted">PDF: revisa que «motores / total» coincida con el resumen. CSV: confirma motor, punto, eje, tipo (FFT u onda), unidades y fecha; el nombre del archivo y las líneas de encabezado se usan para proponerlos.</p></div>
+      <div class="panel" style="margin-top:12px"><h2>Captura manual</h2>
+        <div class="bar" style="margin-bottom:6px"><label>Tipo de captura<select id="capTipo"><option value="vib">Vibración (reporte VME)</option><option value="mot">Variador (reporte MOT)</option></select></label></div>
+        <div id="capForm"></div></div>
+      <div class="panel" id="qPanel"><h2>Calidad de datos · valores en blanco o imposibles</h2>
+        <p class="small muted">Los reportes traen celdas vacías, V/I invertidos, temperaturas pegadas sin guion y otros errores de tecleo. Al importar se <b>corrigen o descartan</b> y se listan aquí.</p>
+        <div id="qSum" class="stats"></div>
+        <div class="bar"><label>Motivo<select id="qMot"></select></label><label>Buscar TAG<input type="text" id="qQ"></label><span class="sp"></span><button class="btn sm" id="qCsv">⬇ CSV</button></div>
+        <div class="tw" style="max-height:320px"><table id="qTable"></table></div></div>
+      <div class="panel"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-motores/v1</code> y formatos CSV aceptados</h2><pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnExport2">⬇ Exportar base (.json)</button><button class="btn" id="btnCsv2">⬇ Resumen (.csv / Excel)</button>
+          <button class="btn" id="btnSampleCsv">⬇ CSV de ejemplo</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos incluidos</button><button class="btn" id="btnWipe">🗑 Vaciar base</button></div></div>
+      <div class="panel small"><h3>Archivos por equipo</h3>
+        En <b>2 · Expediente</b> se genera, para cada motor: el expediente completo (.json con vibraciones, variador y espectros), la tendencia (.csv) y un reporte (.html) imprimible. Aquí puedes exportar toda la base o el resumen de flota.</div>
+      <div class="panel small"><h3>Seguridad y modularidad</h3>
+        Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). Comparte núcleo (estilos, almacenamiento, gráficas, lector PDF) con los módulos Térmico y SFI para ensamblarse después en una sola app; cada módulo guarda su base por separado.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos para cargarlos</div>
+<dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
+
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>
