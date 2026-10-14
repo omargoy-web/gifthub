@@ -273,6 +273,21 @@ Importa la carpeta histórica del colector (**Sector › Planta › Equipo › P
 
 **Supuestos editables:** ISO 20816-3 clase 2/rígida por defecto; aceleración, demodulación y desplazamiento con umbral relativo (2× / 4× la línea base de las 3 primeras lecturas); FASIT vigilar 31 %, atención 62 %, crítico 100 %. Los FASIT no traen fecha (se tendencian por n.º de registro). El pronóstico exige ≥ 4 lecturas y ≥ 14 días de ventana; el Weibull de flota usa como «evento» el primer cruce de zona D, no una falla confirmada.
 
+## Módulo Desbalance de tensión en CCM 480 V (`app/sicm-desbalance.html`)
+
+Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anexos 6.4 / 6.5; folio `ROLM-SCM-SICM-S##-ELE-DBL-…`) y los vuelve trazables: cada medición conserva folio, archivo, hoja, N° SAP, orden SAP, transformador, fecha y GPS de captura, responsables y la lista de verificación de 19 puntos. Se agregan reportes nuevos arrastrando los PDF (lo repetido se omite por folio + CCM) y se forma el histórico y la tendencia por bus.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (columnas ajustadas por hoja) | `app/desbalance/parse.js` |
+| Cálculo, criterios, calidad de datos | `app/desbalance/model.js` |
+| Ingesta, captura manual, exportaciones | `app/desbalance/ingest.js` |
+| Vistas y arranque | `app/desbalance/views.js`, `init.js`, `template.html` |
+| Datos incluidos (7 PDF, 48 hojas, 65 buses) | `data/desbalance/seed_real_dbl.json` ← `node scripts/extract_desbalance.js <dir con PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_desbalance.py` |
+
+**Cálculo:** % desbalance = desviación máxima respecto al promedio ÷ promedio (NEMA MG-1), recalculado en fase-neutro y en línea-línea y comparado con lo reportado. Estado por bus: ≤ 3 % satisfactoria, 3–5 % condicionada, > 5 % deficiente (límites editables; 3 % = ANSI C84.1 / IEEE 1159, 5 % = NEMA MG-1). Voltajes en cero = «sin medición» (no 0 %). Fase-neutro desbalanceada con línea-línea equilibrada se marca como condicionada (neutro, cargas monofásicas o medidor). Los criterios son una propuesta: el formato no trae criterio de aceptación.
+
 ## Módulo Motores (`app/sicm-motores.html`)
 
 Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.
