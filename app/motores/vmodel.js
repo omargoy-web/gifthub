@@ -77,6 +77,7 @@ function vRebuild(){
   for(const s of DB.vsp){let a=VIX.sp.get(s.pid);if(!a){a=[];VIX.sp.set(s.pid,a)}a.push(s)}for(const a of VIX.sp.values())a.sort((p,q)=>p.ts-q.ts);
   for(const s of DB.vser){let m=VIX.ser.get(s.pid);if(!m){m=new Map();VIX.ser.set(s.pid,m)}m.set(s.par,s)}
   for(const s of DB.vfas)VIX.fas.set(s.pid,s);
+  const aks=Object.keys(DB.activos);for(const p of Object.values(DB.vpts)){if(p.motorK&&DB.activos[p.motorK])continue;delete p.motorK;const txt=keyOf(p.names?p.names.join(' '):[p.equipo,p.punto].join(' '));const k=aks.find(k=>k.length>=6&&txt.includes(k));if(k)p.motorK=k}
   for(const p of Object.values(DB.vpts)){const ek=[p.sector,p.planta,p.equipo].join('|');let e=VIX.eq.get(ek);if(!e){e={key:ek,sector:p.sector,planta:p.planta,equipo:p.equipo,pids:[]};VIX.eq.set(ek,e)}e.pids.push(p.id);VIX.pts.set(p.id,p)}
   for(const p of VIX.pts.values())VIX.ev.set(p.id,vEvalPoint(p));
   for(const e of VIX.eq.values()){const evs=e.pids.map(id=>VIX.ev.get(id));e.sev=Math.max(0,...evs.map(v=>v.sev));e.n=e.pids.length;e.ts=Math.max(0,...evs.map(v=>v.ts||0))}}
