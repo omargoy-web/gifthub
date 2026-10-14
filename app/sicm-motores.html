@@ -266,6 +266,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
     <label>Eje vertical<select id="spScale"><option value="lin">Lineal</option><option value="log">Logarítmico</option></select></label>
     <label>Unidad del espectro<select id="spUnit"><option value="asis">Como se importó</option><option value="vel">Velocidad (mm/s)</option></select></label>
     <label>Ventana FFT (ondas)<select id="spWin"><option value="flattop">Flat-top (amplitud exacta)</option><option value="hann">Hann</option><option value="hamming">Hamming</option><option value="rect">Rectangular</option></select></label>
+    <label>Onda sintética (fase supuesta)<select id="spPhase"><option value="rand">Desde la FFT · fase aleatoria</option><option value="rpm">Desde la FFT · armónicos en fase</option><option value="off">No generar</option></select></label>
     <button class="btn sm" id="btnSpDemo">＋ Generar espectro de ejemplo</button>
   </div>
   <div class="mk" id="spMarks" style="margin-bottom:10px"></div>
@@ -308,7 +309,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   <div class="chartbox"><div class="ttl">Temperatura del punto</div><canvas id="cHt"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl">Todos los puntos del equipo · velocidad RMS</div><canvas id="cHe"></canvas><div class="tip"></div></div>
   <div class="panel"><h2>Espectros FFT y ondas del punto</h2>
-    <div class="bar"><label>Parámetro<select id="vSpPar"></select></label><label>Frecuencia máx. (Hz)<input type="number" id="vSpFmax" placeholder="auto" style="min-width:90px"></label><label>Varias fechas<select id="vSpMode"><option value="over">Superpuestas</option><option value="cas">Cascada</option></select></label></div>
+    <div class="bar"><label>Parámetro<select id="vSpPar"></select></label><label>Frecuencia máx. (Hz)<input type="number" id="vSpFmax" placeholder="auto" style="min-width:90px"></label><label>Onda sintética (fase supuesta)<select id="vSpPhase"><option value="rand">Desde la FFT · fase aleatoria</option><option value="rpm">Desde la FFT · armónicos en fase</option><option value="off">No generar</option></select></label><label>Varias fechas<select id="vSpMode"><option value="over">Superpuestas</option><option value="cas">Cascada</option></select></label></div>
     <div class="tw" style="max-height:230px"><table id="vSpTable"></table></div><div class="small muted">Marca «Comparar» para superponer fechas o verlas en cascada. Clic en una fila para analizarla.</div></div>
   <div class="chartbox tall"><div class="ttl" id="vSpTtl1">Espectro</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cSp"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl" id="vSpTtl2">Onda en el tiempo</div><canvas id="cSw"></canvas><div class="tip"></div></div>
@@ -853,6 +854,20 @@ function spectrum(y,fs,opt={}){
   fftInPlace(re,im);const half=N/2,a=new Float64Array(half),f=new Float64Array(half),df=fs/N;
   for(let k=0;k<half;k++){a[k]=2*Math.hypot(re[k],im[k])/cg;f[k]=k*df}a[0]=0;
   return{f,a,df,fmax:fs/2.56}}
+// Onda SINTÉTICA a partir de un espectro de amplitud (pico): FFT inversa con fase supuesta.
+// El espectro de magnitud no contiene la fase, por lo que la onda NO es la medida: conserva el contenido en frecuencia
+// y el RMS (Parseval), pero no los impactos, cresta ni curtosis reales. mode: 'rand' = fases pseudoaleatorias reproducibles;
+// 'rpm' = armónicos de la velocidad de giro en fase (cos), el resto aleatorio.
+function waveFromSpectrum(f,a,opt={}){
+  const M=f.length;if(M<8)return null;const df=f[1]-f[0];if(!(df>0))return null;
+  let kmax=0;for(let i=0;i<M;i++)kmax=Math.max(kmax,Math.round(f[i]/df));
+  const N=Math.min(pow2(2*(kmax+1)),131072),fs=N*df,re=new Float64Array(N),im=new Float64Array(N);let seed=12345;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  const f1=opt.rpm?opt.rpm/60:0,tol=Math.max(df*0.6,f1*0.02);
+  for(let i=0;i<M;i++){const k=Math.round(f[i]/df);if(k<1||k>=N/2||!(a[i]>0))continue;
+    let ph=2*Math.PI*rnd();if(opt.mode==='rpm'&&f1){const n=f[i]/f1;if(n>=0.9&&Math.abs(f[i]-Math.round(n)*f1)<tol)ph=0}
+    const m=a[i]/2;re[k]=m*Math.cos(ph);im[k]=-m*Math.sin(ph);re[N-k]=m*Math.cos(ph);im[N-k]=m*Math.sin(ph)} // conj(Y) para usar la FFT directa
+  fftInPlace(re,im);const nn=Math.min(N,opt.maxN||N),x=new Float64Array(nn),y=new Float64Array(nn);for(let i=0;i<nn;i++){x[i]=i/fs;y[i]=re[i]}
+  return{x,y,fs,N}}
 // aceleración (g o m/s²) → velocidad (mm/s pico) en el dominio de la frecuencia; fmin = corte pasa-altas
 function accelSpectrumToVel(sp,unit,fmin=2){
   const k=unit==='g'?G_MM:unit==='m/s²'?1000:1;const a=new Float64Array(sp.a.length);
@@ -1886,7 +1901,10 @@ async function renderSpec(){
   // onda
   if(main.wave){const w=main.wave,N=w.x.length,pts=decimate(w.x,w.y,2400);$('#spTtl2').textContent=`Onda en el tiempo — ${fmtN(N)} muestras · ${f1(w.x[N-1]-w.x[0],3)} s · ${sel.unit}`;
     CH.Wave.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:fmtAmp(''),y2Fmt:String,yLabel:sel.unit,xLabel:'Tiempo (s)',series:[{name:'Onda',color:'#4C8BD6',pts,kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[w.x[0],w.x[N-1]]},true)}
-  else{$('#spTtl2').textContent='Onda en el tiempo';CH.Wave.setData({series:[],noData:'La medición cargada es un espectro (FFT); carga también la onda en el tiempo para ver este dominio'},true)}
+  else{const ph=$('#spPhase').value,sw=ph==='off'?null:waveFromSpectrum(main.f,main.a,{rpm,mode:ph}),uw=mode==='vel'?'mm/s':sel.unit;
+    if(sw){$('#spTtl2').textContent=`Onda SINTÉTICA reconstruida de la FFT (transformada inversa, fase supuesta) — ${fmtN(sw.N)} muestras · ${f1(sw.N/sw.fs,3)} s · ${uw} · no es una medición`;
+      CH.Wave.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:fmtAmp(''),y2Fmt:String,yLabel:uw,xLabel:'Tiempo (s) · sintético',series:[{name:'Onda sintética',color:'#9A6BC4',pts:decimate(sw.x,sw.y,2400),kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[sw.x[0],sw.x[sw.x.length-1]]},true)}
+    else{$('#spTtl2').textContent='Onda en el tiempo';CH.Wave.setData({series:[],noData:'Medición FFT: sin onda en el tiempo (activa «Onda sintética» para reconstruirla)'},true)}}
   // indicadores
   const sp=main.sp,st=[];
   if(main.wave){const ws=waveStats(main.wave.y);st.push(['RMS de la onda',f1(ws.rms,3)+' '+sel.unit,''],['Pico',f1(ws.peak,3),'p-p '+f1(ws.p2p,3)],['Factor de cresta',f1(ws.crest,2),ws.crest>4?'alto (>4): impactos':'normal'],['Curtosis',f1(ws.kurt,2),ws.kurt>4?'alta (>4): posible falla de rodamiento':'normal (≈3)'])}
@@ -2105,7 +2123,10 @@ async function renderVSpec(){
   VCH.Sp.setData({xType:'lin',xFmt:v=>f1(v,v>=100?0:1)+' Hz',yFmt:cas?(()=>''):(v=>fmtSig(v)),y2Fmt:String,xLabel:'Frecuencia (Hz)',yLabel:sel.unit,series,vlines:vl,xdom:[0,fmax],hInclude:false,yMin0:true},true);
   if(main.wave){const w=main.wave,N=w.x.length;$('#vSpTtl2').textContent=`Onda en el tiempo — ${pesos(N)} muestras · ${f1(w.x[N-1]-w.x[0],3)} s · ${sel.unit}`;
     VCH.Sw.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:v=>fmtSig(v),y2Fmt:String,xLabel:'Tiempo (s)',yLabel:sel.unit,series:[{name:'Onda',color:'#4C8BD6',pts:decimate(w.x,w.y,2400),kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[w.x[0],w.x[N-1]]},true)}
-  else{$('#vSpTtl2').textContent='Onda en el tiempo';VCH.Sw.setData({series:[],noData:'Medición FFT: no incluye onda en el tiempo (carga también el archivo *_Onda / Time)'},true)}
+  else{const ph=$('#vSpPhase').value,sw=ph==='off'?null:waveFromSpectrum(main.f,main.a,{rpm:sel.rpm||p.rpm,mode:ph});
+    if(sw){$('#vSpTtl2').textContent=`Onda SINTÉTICA reconstruida de la FFT (transformada inversa, fase supuesta) — ${pesos(sw.N)} muestras · ${f1(sw.N/sw.fs,3)} s · ${sel.unit} · no es una medición`;
+      VCH.Sw.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:v=>fmtSig(v),y2Fmt:String,xLabel:'Tiempo (s) · sintético',yLabel:sel.unit,series:[{name:'Onda sintética',color:'#9A6BC4',pts:decimate(sw.x,sw.y,2400),kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[sw.x[0],sw.x[sw.x.length-1]]},true)}
+    else{$('#vSpTtl2').textContent='Onda en el tiempo';VCH.Sw.setData({series:[],noData:'Medición FFT: sin onda en el tiempo (activa «Onda sintética»)'},true)}}
   const st=[];if(sel.feat){const f=sel.feat;st.push(['Global (RMS)',fmtSig(f.overall)+' '+sel.unit,''],['Pico máximo',fmtSig(f.peak)+' '+sel.unit,f.fpeak!=null?f1(f.fpeak,2)+' Hz'+(rpm?` · ${f1(f.fpeak/(rpm/60),2)}×`:''):''],['1× / 2× / 3×',[f.x1,f.x2,f.x3].map(v=>v==null?'—':fmtSig(v)).join(' / '),rpm?f1(rpm/60,2)+' Hz':'sin RPM'],['Banda alta (>50 %)',fmtSig(f.hf),''])}
   if(sel.ws){const w=sel.ws;st.push(['RMS de la onda',fmtSig(w.rms)+' '+sel.unit,''],['Pico / p-p',fmtSig(w.peak)+' / '+fmtSig(w.p2p),''],['Factor de cresta',f1(w.crest,2),w.crest>4?'alto (>4): impactos':'normal'],['Curtosis',f1(w.kurt,2),w.kurt>4?'alta (>4): posible falla de rodamiento':'normal (≈3)'])}
   if(sel.find&&sel.find.length)st.push(['Indicios por reglas',sel.find.map(q=>q.t).join('; '),'confirmar con fase y tendencia']);
@@ -2279,7 +2300,7 @@ async function init(){
   const applyCfg=()=>{CFG.foundation=$('#trFound').value;CFG.ge.warn=+$('#trGeW').value||1;CFG.ge.crit=+$('#trGeC').value||2;CFG.tBear.warn=+$('#trTbW').value||85;CFG.tBear.crit=+$('#trTbC').value||95;CFG.tWind.warn=+$('#trTwW').value||130;CFG.tWind.crit=+$('#trTwC').value||155;rebuild();refreshAll()};
   ['trFound','trGeW','trGeC','trTbW','trTbC','trTwW','trTwC'].forEach(id=>$('#'+id).addEventListener('change',applyCfg));
   // espectros
-  ['spFmax','spRpm','spNb','spScale','spUnit','spWin'].forEach(id=>$('#'+id).addEventListener('change',()=>{const a=DB.activos[S.sel];if(a&&id==='spRpm'){const v=num($('#spRpm').value);if(v){a.rpm=v;save()}}if(a&&id==='spNb'){const v=num($('#spNb').value);if(v){a.nb=v;save()}}renderSpec()}));
+  ['spFmax','spRpm','spNb','spScale','spUnit','spWin','spPhase'].forEach(id=>$('#'+id).addEventListener('change',()=>{const a=DB.activos[S.sel];if(a&&id==='spRpm'){const v=num($('#spRpm').value);if(v){a.rpm=v;save()}}if(a&&id==='spNb'){const v=num($('#spNb').value);if(v){a.nb=v;save()}}renderSpec()}));
   $('#spFeat').addEventListener('change',e=>{S.sp.feat=e.target.value;renderSpec()});$('#spFeatPt').addEventListener('change',e=>{S.sp.featPt=e.target.value;renderSpec()});
   $('#btnSpDemo').addEventListener('click',loadDemoSpectra);
   // datos
@@ -2294,7 +2315,7 @@ async function init(){
   $('#vEquipo').addEventListener('change',e=>{V.equipo=e.target.value;V.pid=null;vGo()});
   $('#vPunto').addEventListener('change',e=>{V.pid=e.target.value;vGo()});
   const vCfg=()=>{CFGV.cls=+$('#vCls').value;CFGV.found=$('#vFound').value;rebuild();RLCACHE=null;refreshAll()};$('#vCls').addEventListener('change',vCfg);$('#vFound').addEventListener('change',vCfg);
-  $('#vSpPar').addEventListener('change',e=>{V.sp.par=e.target.value;V.sp.id=null;V.sp.cmp.clear();renderVSpec()});$('#vSpMode').addEventListener('change',renderVSpec);$('#vSpFmax').addEventListener('change',renderVSpec);
+  $('#vSpPar').addEventListener('change',e=>{V.sp.par=e.target.value;V.sp.id=null;V.sp.cmp.clear();renderVSpec()});$('#vSpMode').addEventListener('change',renderVSpec);$('#vSpPhase').addEventListener('change',renderVSpec);$('#vSpFmax').addEventListener('change',renderVSpec);
   $('#vSpFeat').addEventListener('change',e=>{V.sp.feat=e.target.value;renderVSpec()});
   $('#vBtnJson').addEventListener('click',exportVibPoint);$('#vBtnCsv').addEventListener('click',exportVibCsv);$('#vBtnHtml').addEventListener('click',()=>download(`vibrio-${stripId((VIX.eq.get(V.equipo)||{}).equipo||'equipo')}-${new Date().toISOString().slice(0,10)}.html`.replace(/[^\w.\-]+/g,'_'),vReportHtml(),'text/html;charset=utf-8'));
   $('#rlEq').addEventListener('change',e=>{V.equipo=e.target.value;V.pid=null;V.ind=null;fillVSelects();renderRel()});$('#rlPt').addEventListener('change',e=>{V.pid=e.target.value;V.ind=null;fillVSelects();renderRel()});

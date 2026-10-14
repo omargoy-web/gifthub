@@ -37,7 +37,7 @@ async function init(){
   const applyCfg=()=>{CFG.foundation=$('#trFound').value;CFG.ge.warn=+$('#trGeW').value||1;CFG.ge.crit=+$('#trGeC').value||2;CFG.tBear.warn=+$('#trTbW').value||85;CFG.tBear.crit=+$('#trTbC').value||95;CFG.tWind.warn=+$('#trTwW').value||130;CFG.tWind.crit=+$('#trTwC').value||155;rebuild();refreshAll()};
   ['trFound','trGeW','trGeC','trTbW','trTbC','trTwW','trTwC'].forEach(id=>$('#'+id).addEventListener('change',applyCfg));
   // espectros
-  ['spFmax','spRpm','spNb','spScale','spUnit','spWin'].forEach(id=>$('#'+id).addEventListener('change',()=>{const a=DB.activos[S.sel];if(a&&id==='spRpm'){const v=num($('#spRpm').value);if(v){a.rpm=v;save()}}if(a&&id==='spNb'){const v=num($('#spNb').value);if(v){a.nb=v;save()}}renderSpec()}));
+  ['spFmax','spRpm','spNb','spScale','spUnit','spWin','spPhase'].forEach(id=>$('#'+id).addEventListener('change',()=>{const a=DB.activos[S.sel];if(a&&id==='spRpm'){const v=num($('#spRpm').value);if(v){a.rpm=v;save()}}if(a&&id==='spNb'){const v=num($('#spNb').value);if(v){a.nb=v;save()}}renderSpec()}));
   $('#spFeat').addEventListener('change',e=>{S.sp.feat=e.target.value;renderSpec()});$('#spFeatPt').addEventListener('change',e=>{S.sp.featPt=e.target.value;renderSpec()});
   $('#btnSpDemo').addEventListener('click',loadDemoSpectra);
   // datos
@@ -52,7 +52,7 @@ async function init(){
   $('#vEquipo').addEventListener('change',e=>{V.equipo=e.target.value;V.pid=null;vGo()});
   $('#vPunto').addEventListener('change',e=>{V.pid=e.target.value;vGo()});
   const vCfg=()=>{CFGV.cls=+$('#vCls').value;CFGV.found=$('#vFound').value;rebuild();RLCACHE=null;refreshAll()};$('#vCls').addEventListener('change',vCfg);$('#vFound').addEventListener('change',vCfg);
-  $('#vSpPar').addEventListener('change',e=>{V.sp.par=e.target.value;V.sp.id=null;V.sp.cmp.clear();renderVSpec()});$('#vSpMode').addEventListener('change',renderVSpec);$('#vSpFmax').addEventListener('change',renderVSpec);
+  $('#vSpPar').addEventListener('change',e=>{V.sp.par=e.target.value;V.sp.id=null;V.sp.cmp.clear();renderVSpec()});$('#vSpMode').addEventListener('change',renderVSpec);$('#vSpPhase').addEventListener('change',renderVSpec);$('#vSpFmax').addEventListener('change',renderVSpec);
   $('#vSpFeat').addEventListener('change',e=>{V.sp.feat=e.target.value;renderVSpec()});
   $('#vBtnJson').addEventListener('click',exportVibPoint);$('#vBtnCsv').addEventListener('click',exportVibCsv);$('#vBtnHtml').addEventListener('click',()=>download(`vibrio-${stripId((VIX.eq.get(V.equipo)||{}).equipo||'equipo')}-${new Date().toISOString().slice(0,10)}.html`.replace(/[^\w.\-]+/g,'_'),vReportHtml(),'text/html;charset=utf-8'));
   $('#rlEq').addEventListener('change',e=>{V.equipo=e.target.value;V.pid=null;V.ind=null;fillVSelects();renderRel()});$('#rlPt').addEventListener('change',e=>{V.pid=e.target.value;V.ind=null;fillVSelects();renderRel()});

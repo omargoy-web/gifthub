@@ -228,7 +228,10 @@ async function renderSpec(){
   // onda
   if(main.wave){const w=main.wave,N=w.x.length,pts=decimate(w.x,w.y,2400);$('#spTtl2').textContent=`Onda en el tiempo — ${fmtN(N)} muestras · ${f1(w.x[N-1]-w.x[0],3)} s · ${sel.unit}`;
     CH.Wave.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:fmtAmp(''),y2Fmt:String,yLabel:sel.unit,xLabel:'Tiempo (s)',series:[{name:'Onda',color:'#4C8BD6',pts,kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[w.x[0],w.x[N-1]]},true)}
-  else{$('#spTtl2').textContent='Onda en el tiempo';CH.Wave.setData({series:[],noData:'La medición cargada es un espectro (FFT); carga también la onda en el tiempo para ver este dominio'},true)}
+  else{const ph=$('#spPhase').value,sw=ph==='off'?null:waveFromSpectrum(main.f,main.a,{rpm,mode:ph}),uw=mode==='vel'?'mm/s':sel.unit;
+    if(sw){$('#spTtl2').textContent=`Onda SINTÉTICA reconstruida de la FFT (transformada inversa, fase supuesta) — ${fmtN(sw.N)} muestras · ${f1(sw.N/sw.fs,3)} s · ${uw} · no es una medición`;
+      CH.Wave.setData({xType:'lin',xFmt:v=>f1(v,3)+' s',yFmt:fmtAmp(''),y2Fmt:String,yLabel:uw,xLabel:'Tiempo (s) · sintético',series:[{name:'Onda sintética',color:'#9A6BC4',pts:decimate(sw.x,sw.y,2400),kind:'line',width:1.1,markers:false}],hInclude:false,xdom:[sw.x[0],sw.x[sw.x.length-1]]},true)}
+    else{$('#spTtl2').textContent='Onda en el tiempo';CH.Wave.setData({series:[],noData:'Medición FFT: sin onda en el tiempo (activa «Onda sintética» para reconstruirla)'},true)}}
   // indicadores
   const sp=main.sp,st=[];
   if(main.wave){const ws=waveStats(main.wave.y);st.push(['RMS de la onda',f1(ws.rms,3)+' '+sel.unit,''],['Pico',f1(ws.peak,3),'p-p '+f1(ws.p2p,3)],['Factor de cresta',f1(ws.crest,2),ws.crest>4?'alto (>4): impactos':'normal'],['Curtosis',f1(ws.kurt,2),ws.kurt>4?'alta (>4): posible falla de rodamiento':'normal (≈3)'])}

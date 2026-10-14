@@ -71,6 +71,20 @@ function spectrum(y,fs,opt={}){
   fftInPlace(re,im);const half=N/2,a=new Float64Array(half),f=new Float64Array(half),df=fs/N;
   for(let k=0;k<half;k++){a[k]=2*Math.hypot(re[k],im[k])/cg;f[k]=k*df}a[0]=0;
   return{f,a,df,fmax:fs/2.56}}
+// Onda SINTÉTICA a partir de un espectro de amplitud (pico): FFT inversa con fase supuesta.
+// El espectro de magnitud no contiene la fase, por lo que la onda NO es la medida: conserva el contenido en frecuencia
+// y el RMS (Parseval), pero no los impactos, cresta ni curtosis reales. mode: 'rand' = fases pseudoaleatorias reproducibles;
+// 'rpm' = armónicos de la velocidad de giro en fase (cos), el resto aleatorio.
+function waveFromSpectrum(f,a,opt={}){
+  const M=f.length;if(M<8)return null;const df=f[1]-f[0];if(!(df>0))return null;
+  let kmax=0;for(let i=0;i<M;i++)kmax=Math.max(kmax,Math.round(f[i]/df));
+  const N=Math.min(pow2(2*(kmax+1)),131072),fs=N*df,re=new Float64Array(N),im=new Float64Array(N);let seed=12345;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  const f1=opt.rpm?opt.rpm/60:0,tol=Math.max(df*0.6,f1*0.02);
+  for(let i=0;i<M;i++){const k=Math.round(f[i]/df);if(k<1||k>=N/2||!(a[i]>0))continue;
+    let ph=2*Math.PI*rnd();if(opt.mode==='rpm'&&f1){const n=f[i]/f1;if(n>=0.9&&Math.abs(f[i]-Math.round(n)*f1)<tol)ph=0}
+    const m=a[i]/2;re[k]=m*Math.cos(ph);im[k]=-m*Math.sin(ph);re[N-k]=m*Math.cos(ph);im[N-k]=m*Math.sin(ph)} // conj(Y) para usar la FFT directa
+  fftInPlace(re,im);const nn=Math.min(N,opt.maxN||N),x=new Float64Array(nn),y=new Float64Array(nn);for(let i=0;i<nn;i++){x[i]=i/fs;y[i]=re[i]}
+  return{x,y,fs,N}}
 // aceleración (g o m/s²) → velocidad (mm/s pico) en el dominio de la frecuencia; fmin = corte pasa-altas
 function accelSpectrumToVel(sp,unit,fmin=2){
   const k=unit==='g'?G_MM:unit==='m/s²'?1000:1;const a=new Float64Array(sp.a.length);

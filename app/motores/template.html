@@ -130,6 +130,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
     <label>Eje vertical<select id="spScale"><option value="lin">Lineal</option><option value="log">Logarítmico</option></select></label>
     <label>Unidad del espectro<select id="spUnit"><option value="asis">Como se importó</option><option value="vel">Velocidad (mm/s)</option></select></label>
     <label>Ventana FFT (ondas)<select id="spWin"><option value="flattop">Flat-top (amplitud exacta)</option><option value="hann">Hann</option><option value="hamming">Hamming</option><option value="rect">Rectangular</option></select></label>
+    <label>Onda sintética (fase supuesta)<select id="spPhase"><option value="rand">Desde la FFT · fase aleatoria</option><option value="rpm">Desde la FFT · armónicos en fase</option><option value="off">No generar</option></select></label>
     <button class="btn sm" id="btnSpDemo">＋ Generar espectro de ejemplo</button>
   </div>
   <div class="mk" id="spMarks" style="margin-bottom:10px"></div>
@@ -172,7 +173,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   <div class="chartbox"><div class="ttl">Temperatura del punto</div><canvas id="cHt"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl">Todos los puntos del equipo · velocidad RMS</div><canvas id="cHe"></canvas><div class="tip"></div></div>
   <div class="panel"><h2>Espectros FFT y ondas del punto</h2>
-    <div class="bar"><label>Parámetro<select id="vSpPar"></select></label><label>Frecuencia máx. (Hz)<input type="number" id="vSpFmax" placeholder="auto" style="min-width:90px"></label><label>Varias fechas<select id="vSpMode"><option value="over">Superpuestas</option><option value="cas">Cascada</option></select></label></div>
+    <div class="bar"><label>Parámetro<select id="vSpPar"></select></label><label>Frecuencia máx. (Hz)<input type="number" id="vSpFmax" placeholder="auto" style="min-width:90px"></label><label>Onda sintética (fase supuesta)<select id="vSpPhase"><option value="rand">Desde la FFT · fase aleatoria</option><option value="rpm">Desde la FFT · armónicos en fase</option><option value="off">No generar</option></select></label><label>Varias fechas<select id="vSpMode"><option value="over">Superpuestas</option><option value="cas">Cascada</option></select></label></div>
     <div class="tw" style="max-height:230px"><table id="vSpTable"></table></div><div class="small muted">Marca «Comparar» para superponer fechas o verlas en cascada. Clic en una fila para analizarla.</div></div>
   <div class="chartbox tall"><div class="ttl" id="vSpTtl1">Espectro</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cSp"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl" id="vSpTtl2">Onda en el tiempo</div><canvas id="cSw"></canvas><div class="tip"></div></div>
