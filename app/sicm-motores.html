@@ -300,6 +300,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
     <div class="panel"><h2>Equipos <span class="small muted" id="vEqCount"></span></h2><div class="tw" style="max-height:300px"><table id="vEqTable"></table></div></div>
     <div class="panel"><h2>Puntos del equipo seleccionado</h2><div class="tw" style="max-height:300px"><table id="vPtTable"></table></div></div>
   </div>
+  <div class="panel"><h2>Gráficos disponibles del punto <span class="small muted">· clic en una miniatura para verla ampliada</span></h2><div class="capgrid" id="vGal" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))"></div></div>
   <div class="panel"><h2>FASIT · severidad por registro</h2><div class="small" id="vFasNote" style="margin-bottom:6px"></div>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr))">
       <div class="chartbox"><div class="ttl">Severidad de máquina y rodamientos (%)</div><canvas id="cFm"></canvas><div class="tip"></div></div>
@@ -390,6 +391,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
 
 <div class="statusbar" id="statusbar"></div>
 <div id="dropOverlay">Suelta los archivos para cargarlos</div>
+<dialog id="dlgChart" style="width:min(1100px,94vw);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text)"><div class="chartbox tall" style="margin:0"><div class="ttl" id="dcTtl"></div><canvas id="cBig"></canvas><div class="tip"></div></div><div style="text-align:right;margin-top:8px"><button class="btn" id="dcClose">Cerrar</button></div></dialog>
 <dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
 
 <script>/**
@@ -2083,14 +2085,16 @@ function vFasit(){
   const fl=fasitLatest(fas);$('#vFasNote').innerHTML=fl?`Último registro FASIT: máquina <b>${f1(fl.mach,0)} %</b>, rodamientos <b>${f1(fl.bear,0)} %</b>${fl.dom?`, falla dominante <b>${esc(fl.dom.n)} (${f1(fl.dom.v,0)} %)</b>`:''}. <span class="muted">El % es la fracción del límite del algoritmo FASIT: ≥${f.vig} vigilar, ≥${f.att} atención, ≥${f.crit} crítico (umbrales editables en el código; confirmar contra el manual del colector).</span>`:'<span class="muted">Sin FASIT.</span>'}
 function vHist(){
   const p=vSel(),S=p&&VIX.ser.get(p.id)||new Map(),lim=velLim(),cz=[cssv('--zB'),cssv('--zC'),cssv('--zD')];
+  const INDS=p?vIndicators(p.id):[],fftInd=k=>{const i=INDS.find(q=>q.key===k+'_fft_overall');return i&&i.pts.length?{name:i.label,color:{vel:'#4C8BD6',acc:'#E07A45',demod:'#9A6BC4'}[k],pts:i.pts,kind:'line',markers:true,width:1.8}:null};
   const mk=(par,ax)=>{const s=S.get(par);return s&&s.pts.length?{name:PAR_LBL[par]+' ('+s.unit+')',color:PAR_COL[par],pts:s.pts.map(q=>[q[0],q[1]]),kind:'line',markers:true,axis:ax}:null};
   const base={xType:'time',xFmt:fDT,y2Fmt:v=>fmtSig(v),yMin0:true,hInclude:true};
-  VCH.Hv.setData({...base,yFmt:v=>fmtSig(v),yLabel:'mm/s',series:[mk('vel_rms'),mk('vel_pico')].filter(Boolean),hlines:[{y:lim[0],color:cz[0],label:`A/B ${lim[0]}`},{y:lim[1],color:cz[1],label:`B/C ${lim[1]}`},{y:lim[2],color:cz[2],label:`C/D ${lim[2]}`}],noData:S.has('vel_rms')||S.has('vel_pico')?null:'Sin histórico de velocidad en este punto'},true);
-  VCH.Ha.setData({...base,yFmt:v=>fmtSig(v),yLabel:'g / g-E',series:[mk('acc_rms'),mk('acc_pico'),mk('demod_rms','r'),mk('demod_pico','r')].filter(Boolean),noData:['acc_rms','acc_pico','demod_rms','demod_pico'].some(k=>S.has(k))?null:'Sin aceleración / demodulación'},true);
+  VCH.Hv.setData({...base,yFmt:v=>fmtSig(v),yLabel:'mm/s',series:[mk('vel_rms'),mk('vel_pico'),fftInd('vel')].filter(Boolean),hlines:[{y:lim[0],color:cz[0],label:`A/B ${lim[0]}`},{y:lim[1],color:cz[1],label:`B/C ${lim[1]}`},{y:lim[2],color:cz[2],label:`C/D ${lim[2]}`}],noData:S.has('vel_rms')||S.has('vel_pico')||fftInd('vel')?null:'Sin histórico de velocidad en este punto'},true);
+  VCH.Ha.setData({...base,yFmt:v=>fmtSig(v),yLabel:'g / g-E',series:[mk('acc_rms'),mk('acc_pico'),fftInd('acc'),mk('demod_rms','r'),mk('demod_pico','r'),(()=>{const d=fftInd('demod');return d&&{...d,axis:'r'}})()].filter(Boolean),noData:['acc_rms','acc_pico','demod_rms','demod_pico'].some(k=>S.has(k))||fftInd('acc')||fftInd('demod')?null:'Sin aceleración / demodulación'},true);
   VCH.Ht.setData({...base,yMin0:false,yFmt:v=>f1(v,0)+' °C',yLabel:'°C',series:[mk('temp')].filter(Boolean),hlines:S.has('temp')?[{y:CFG.tBear.warn,color:cz[1],label:'Alarma'},{y:CFG.tBear.crit,color:cz[2],label:'Disparo'}]:[],noData:S.has('temp')?null:'Sin temperatura'},true);
   // comparativo de los puntos del equipo (velocidad RMS)
   const eq=VIX.eq.get(V.equipo),ser=[];(eq?eq.pids:[]).forEach((id,i)=>{const s=(VIX.ser.get(id)||new Map()).get('vel_rms');if(s&&s.pts.length)ser.push({name:stripId(VIX.pts.get(id).punto),color:SPCOL[i%SPCOL.length],pts:s.pts.map(q=>[q[0],q[1]]),kind:'line',markers:true})});
-  VCH.He.setData({...base,yFmt:v=>fmtSig(v)+' mm/s',yLabel:'mm/s',series:ser,hlines:[{y:lim[1],color:cz[1],label:`B/C ${lim[1]}`},{y:lim[2],color:cz[2],label:`C/D ${lim[2]}`}],noData:ser.length?null:'Sin velocidad RMS en los puntos de este equipo'},true)}
+  VCH.He.setData({...base,yFmt:v=>fmtSig(v)+' mm/s',yLabel:'mm/s',series:ser,hlines:[{y:lim[1],color:cz[1],label:`B/C ${lim[1]}`},{y:lim[2],color:cz[2],label:`C/D ${lim[2]}`}],noData:ser.length?null:'Sin velocidad RMS en los puntos de este equipo'},true);
+  for(const k of['Hv','Ha','Ht','He']){const ok=VCH[k].data&&VCH[k].data.series&&VCH[k].data.series.length;VCH[k].c.closest('.chartbox').style.display=ok?'':'none'}}
 
 /* espectros y ondas del punto */
 let VSPBUSY=0;
@@ -2132,7 +2136,7 @@ async function renderVSpec(){
   if(sel.find&&sel.find.length)st.push(['Indicios por reglas',sel.find.map(q=>q.t).join('; '),'confirmar con fase y tendencia']);
   $('#vSpStats').innerHTML=st.map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('')}
 function renderVib(){
-  fillVSelects();vCensus();vEqTable();vPtTable();vFasit();vHist();renderVSpec();
+  fillVSelects();vCensus();vEqTable();vPtTable();vGallery();vFasit();vHist();renderVSpec();
   const has=VIX.pts.size>0;$('#vEmpty').style.display=has?'none':'block';$('#vMain').style.display=has?'':'none'}
 
 /* ---------- 6 · CONFIABILIDAD Y PRONÓSTICO ---------- */
@@ -2261,6 +2265,34 @@ function vLoadSeed(){const el=$('#seedv');let txt='';try{txt=el&&el.textContent.
   return Promise.all(puts).then(()=>true)}
 function vDbStats(){return`<tr><td>Puntos Vibrio / equipos</td><td class="n"><b>${Object.keys(DB.vpts||{}).length} / ${VIX.eq.size}</b></td></tr><tr><td>Lecturas históricas (RMS, pico, temp.)</td><td class="n"><b>${pesos(DB.vser.reduce((s,x)=>s+x.pts.length,0))}</b></td></tr><tr><td>FASIT / FFT / ondas Vibrio</td><td class="n"><b>${DB.vfas.length} / ${DB.vsp.filter(s=>s.tipo==='fft').length} / ${DB.vsp.filter(s=>s.tipo==='wave').length}</b></td></tr>`}
 
+/* ---------- Galería de miniaturas con ampliación en ventana ---------- */
+function vGallery(){
+  const p=vSel(),box=$('#vGal');if(!p){box.innerHTML='';return}
+  const inds=vIndicators(p.id),sps=VIX.sp.get(p.id)||[],cards=[];
+  for(const i of inds){const L=[i.warn,i.crit].filter(v=>v!=null);cards.push(`<div class="vcard" data-ind="${esc(i.key)}" style="cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 8px"><div class="small"><b>${esc(i.label)}</b></div>${spark(i.pts,{lines:i.idx?[]:L})}<div class="small muted">${i.pts.length} lectura(s)${i.idx?' · por registro':` · ${fDate(i.pts[0][0])}${i.pts.length>1?' → '+fDate(i.pts[i.pts.length-1][0]):''}`}</div></div>`)}
+  const byPar=new Map();for(const s of sps){(byPar.get(s.par)||byPar.set(s.par,[]).get(s.par)).push(s)}
+  for(const [par,a] of byPar){const last=a[a.length-1];cards.push(`<div class="vcard" data-spar="${par}" style="cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 8px"><div class="small"><b>${esc(PAR_LBL[par]||par)}</b></div><svg class="spth" data-id="${last.id}" viewBox="0 0 200 48" style="width:100%;height:48px;background:var(--surface2);border-radius:4px"></svg><div class="small muted">${a.length} medición(es) · ${fDate(a[0].ts)}${a.length>1?' → '+fDate(last.ts):''}</div></div>`)}
+  box.innerHTML=cards.join('')||'<span class="muted small">Este punto no tiene datos para graficar.</span>';
+  $$('#vGal [data-ind]').forEach(c=>c.addEventListener('click',()=>vBigIndicator(p.id,c.dataset.ind)));
+  $$('#vGal [data-spar]').forEach(c=>c.addEventListener('click',()=>vBigSpectra(p,c.dataset.spar)));
+  vThumbs()}
+async function vThumbs(){
+  for(const sv of $$('#vGal svg.spth')){const m=DB.vsp.find(x=>x.id===sv.dataset.id);if(!m)continue;const d=await vSpec(m);if(!d||!sv.isConnected)continue;
+    const fm=Math.min(m.fmax||1e9,d.f[d.f.length-1]),xs=[],ys=[];for(let i=1;i<d.f.length&&d.f[i]<=fm;i++){xs.push(d.f[i]);ys.push(d.a[i])}
+    const dec=decimate(Float64Array.from(xs),Float64Array.from(ys),160);if(dec.length<2)continue;let mx=0;for(const q of dec)if(q[1]>mx)mx=q[1];
+    const x0=dec[0][0],x1=dec[dec.length-1][0];sv.innerHTML=`<polyline fill="none" stroke="var(--dorado)" stroke-width="1.2" points="${dec.map(q=>(3+(q[0]-x0)/((x1-x0)||1)*194).toFixed(1)+','+(45-q[1]/(mx||1)*42).toFixed(1)).join(' ')}"/>`}}
+function vOpenDlg(title){const dlg=$('#dlgChart');$('#dcTtl').textContent=title;if(!dlg.open)dlg.showModal();if(!VCH.Big)VCH.Big=new Chart($('#cBig'));return VCH.Big}
+function vBigIndicator(pid,key){
+  const i=vIndicators(pid).find(q=>q.key===key);if(!i)return;const ch=vOpenDlg(i.label+' — '+stripId(VIX.pts.get(pid).punto)),cz=[cssv('--zB'),cssv('--zC'),cssv('--zD')],hl=[];
+  if(i.warn!=null)hl.push({y:i.warn,color:cz[1],label:'Alerta '+fmtSig(i.warn)});if(i.crit!=null)hl.push({y:i.crit,color:cz[2],label:'Crítico '+fmtSig(i.crit)});
+  const base=Date.UTC(2000,0,1);setTimeout(()=>ch.setData({xType:i.idx?'lin':'time',xFmt:i.idx?(v=>Number.isInteger(v)?'#'+v:''):fDT,yFmt:v=>fmtSig(v),y2Fmt:String,yLabel:i.unit,yMin0:true,hInclude:true,series:[{name:i.label,color:'#E07A45',pts:i.idx?i.pts.map(q=>[(q[0]-base)/864e5+1,q[1]]):i.pts,kind:'line',markers:true,width:1.8}],hlines:hl},true),60)}
+async function vBigSpectra(p,par){
+  const a=(VIX.sp.get(p.id)||[]).filter(s=>s.par===par),use=a.slice(-4),ch=vOpenDlg(`${PAR_LBL[par]||par} — ${stripId(p.punto)} · ${use.length} fecha(s)`);
+  const series=[];for(let k=0;k<use.length;k++){const d=await vSpec(use[k]);if(!d)continue;const fm=Math.min(use[k].fmax||1e9,d.f[d.f.length-1]),xs=[],ys=[];for(let i=1;i<d.f.length&&d.f[i]<=fm;i++){xs.push(d.f[i]);ys.push(d.a[i])}
+    series.push({name:fDate(use[k].ts),color:SPCOL[(use.length-1-k)%SPCOL.length],pts:decimate(Float64Array.from(xs),Float64Array.from(ys),2400),kind:'line',width:k===use.length-1?1.6:1.1,markers:false})}
+  const rpm=use[use.length-1].rpm||p.rpm,vl=[];if(rpm)[1,2,3].forEach(n=>vl.push({x:n*rpm/60,label:n+'×',color:cssv('--dorado'),dash:[4,3]}));
+  setTimeout(()=>ch.setData({xType:'lin',xFmt:v=>f1(v,v>=100?0:1)+' Hz',yFmt:v=>fmtSig(v),y2Fmt:String,xLabel:'Frecuencia (Hz)',yLabel:use[0].unit,series,vlines:vl,hInclude:false,yMin0:true},true),60)}
+
 /* =====================================================================
    SICM-MOTORES · ARRANQUE Y EVENTOS
    ===================================================================== */
@@ -2323,6 +2355,7 @@ async function init(){
   const pick=async e=>{const files=await collectFiles(null,e.target.files);e.target.value='';vLoadFiles(files)};
   $('#btnLoadDir').addEventListener('click',()=>{switchView('data');$('#vDirIn').click()});$('#vBtnDir').addEventListener('click',()=>$('#vDirIn').click());$('#vBtnZip').addEventListener('click',()=>$('#vFileIn').click());
   $('#vDirIn').addEventListener('change',pick);$('#vFileIn').addEventListener('change',pick);$('#vDrop').addEventListener('click',()=>$('#vDirIn').click());
+  $('#dcClose').addEventListener('click',()=>$('#dlgChart').close());
   $('#vStCommit').addEventListener('click',vCommit);$('#vStCancel').addEventListener('click',()=>{VSTAGE=null;vRenderStage(false)});
   refreshAll();
   window.__ready=true;

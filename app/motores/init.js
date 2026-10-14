@@ -60,6 +60,7 @@ async function init(){
   const pick=async e=>{const files=await collectFiles(null,e.target.files);e.target.value='';vLoadFiles(files)};
   $('#btnLoadDir').addEventListener('click',()=>{switchView('data');$('#vDirIn').click()});$('#vBtnDir').addEventListener('click',()=>$('#vDirIn').click());$('#vBtnZip').addEventListener('click',()=>$('#vFileIn').click());
   $('#vDirIn').addEventListener('change',pick);$('#vFileIn').addEventListener('change',pick);$('#vDrop').addEventListener('click',()=>$('#vDirIn').click());
+  $('#dcClose').addEventListener('click',()=>$('#dlgChart').close());
   $('#vStCommit').addEventListener('click',vCommit);$('#vStCancel').addEventListener('click',()=>{VSTAGE=null;vRenderStage(false)});
   refreshAll();
   window.__ready=true;

@@ -164,6 +164,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
     <div class="panel"><h2>Equipos <span class="small muted" id="vEqCount"></span></h2><div class="tw" style="max-height:300px"><table id="vEqTable"></table></div></div>
     <div class="panel"><h2>Puntos del equipo seleccionado</h2><div class="tw" style="max-height:300px"><table id="vPtTable"></table></div></div>
   </div>
+  <div class="panel"><h2>Gráficos disponibles del punto <span class="small muted">· clic en una miniatura para verla ampliada</span></h2><div class="capgrid" id="vGal" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))"></div></div>
   <div class="panel"><h2>FASIT · severidad por registro</h2><div class="small" id="vFasNote" style="margin-bottom:6px"></div>
     <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr))">
       <div class="chartbox"><div class="ttl">Severidad de máquina y rodamientos (%)</div><canvas id="cFm"></canvas><div class="tip"></div></div>
@@ -254,6 +255,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
 
 <div class="statusbar" id="statusbar"></div>
 <div id="dropOverlay">Suelta los archivos para cargarlos</div>
+<dialog id="dlgChart" style="width:min(1100px,94vw);border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text)"><div class="chartbox tall" style="margin:0"><div class="ttl" id="dcTtl"></div><canvas id="cBig"></canvas><div class="tip"></div></div><div style="text-align:right;margin-top:8px"><button class="btn" id="dcClose">Cerrar</button></div></dialog>
 <dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
 
 <script>/*__PDFJS__*/</script>
