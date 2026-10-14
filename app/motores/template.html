@@ -44,6 +44,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   </div>
   <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
   <button class="btn ghost" id="btnLoad">⬆ Cargar PDF / JSON / CSV</button>
+  <button class="btn ghost" id="btnLoadDir" title="Carpeta o ZIP con las mediciones del colector Vibrio">📁 Carpeta / ZIP Vibrio</button>
   <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
   <button class="btn ghost" id="btnCsv">⬇ Resumen CSV</button>
 </header>
@@ -52,7 +53,9 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   <button role="tab" data-view="exp" aria-selected="false">2 · Expediente por motor</button>
   <button role="tab" data-view="trend" aria-selected="false">3 · Tendencias</button>
   <button role="tab" data-view="spec" aria-selected="false">4 · Espectros FFT y ondas</button>
-  <button role="tab" data-view="data" aria-selected="false">5 · Datos y carga</button>
+  <button role="tab" data-view="vib" aria-selected="false">5 · Puntos Vibrio · FASIT</button>
+  <button role="tab" data-view="rel" aria-selected="false">6 · Confiabilidad y pronóstico</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos y carga</button>
 </nav>
 
 <main>
@@ -144,8 +147,74 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   <div class="chartbox"><div class="ttl">Tendencia del indicador espectral entre mediciones</div><canvas id="cFeat"></canvas><div class="tip"></div></div>
 </section>
 
-<!-- ============ 5 · DATOS ============ -->
+<!-- ============ 5 · PUNTOS VIBRIO ============ -->
+<section id="v-vib" class="view" hidden>
+  <div class="infobox" id="vEmpty" style="display:none">Aún no hay puntos Vibrio en la base. Ve a <b>7 · Datos y carga</b> y arrastra la carpeta (o el ZIP) de mediciones: la estructura <i>Sector › Planta › Equipo › Punto › Parámetro › CSV</i> se interpreta sola. Puedes seguir agregando carpetas o archivos después; lo repetido se omite y las series se alargan con las nuevas fechas.</div>
+  <div id="vMain">
+  <div class="stats" id="vStats"></div>
+  <div class="bar">
+    <label>Sector<select id="vSector"></select></label><label>Planta<select id="vPlanta"></select></label>
+    <label>Equipo<select id="vEquipo"></select></label><label>Punto de medición<select id="vPunto"></select></label>
+    <label>Clase ISO 20816-3<select id="vCls"><option value="1">Clase 1 (&lt;15 kW)</option><option value="2" selected>Clase 2 (15–300 kW)</option><option value="3">Clase 3 (&gt;300 kW, rígida)</option><option value="4">Clase 4 (&gt;300 kW, flexible)</option></select></label>
+    <label>Cimentación<select id="vFound"><option value="rigid">Rígida</option><option value="flex">Flexible</option></select></label>
+    <span class="sp"></span><button class="btn sm" id="vBtnJson">⬇ Punto (.json con espectros)</button><button class="btn sm" id="vBtnHtml">⬇ Reporte del equipo (.html)</button><button class="btn sm" id="vBtnCsv">⬇ Resumen y pronóstico (.csv)</button>
+  </div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))">
+    <div class="panel"><h2>Equipos <span class="small muted" id="vEqCount"></span></h2><div class="tw" style="max-height:300px"><table id="vEqTable"></table></div></div>
+    <div class="panel"><h2>Puntos del equipo seleccionado</h2><div class="tw" style="max-height:300px"><table id="vPtTable"></table></div></div>
+  </div>
+  <div class="panel"><h2>FASIT · severidad por registro</h2><div class="small" id="vFasNote" style="margin-bottom:6px"></div>
+    <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr))">
+      <div class="chartbox"><div class="ttl">Severidad de máquina y rodamientos (%)</div><canvas id="cFm"></canvas><div class="tip"></div></div>
+      <div class="chartbox"><div class="ttl">Contribución por tipo de falla (%)</div><canvas id="cFf"></canvas><div class="tip"></div></div></div></div>
+  <div class="chartbox tall"><div class="ttl">Histórico de velocidad (mm/s) del punto · zonas ISO 20816-3</div><canvas id="cHv"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Histórico de aceleración (izq.) y demodulación / envolvente (der.)</div><canvas id="cHa"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Temperatura del punto</div><canvas id="cHt"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Todos los puntos del equipo · velocidad RMS</div><canvas id="cHe"></canvas><div class="tip"></div></div>
+  <div class="panel"><h2>Espectros FFT y ondas del punto</h2>
+    <div class="bar"><label>Parámetro<select id="vSpPar"></select></label><label>Frecuencia máx. (Hz)<input type="number" id="vSpFmax" placeholder="auto" style="min-width:90px"></label><label>Varias fechas<select id="vSpMode"><option value="over">Superpuestas</option><option value="cas">Cascada</option></select></label></div>
+    <div class="tw" style="max-height:230px"><table id="vSpTable"></table></div><div class="small muted">Marca «Comparar» para superponer fechas o verlas en cascada. Clic en una fila para analizarla.</div></div>
+  <div class="chartbox tall"><div class="ttl" id="vSpTtl1">Espectro</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cSp"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl" id="vSpTtl2">Onda en el tiempo</div><canvas id="cSw"></canvas><div class="tip"></div></div>
+  <div class="panel"><h2>Indicadores de la medición seleccionada</h2><div class="stats" id="vSpStats"></div></div>
+  <div class="bar"><label>Indicador espectral a tendenciar<select id="vSpFeat"></select></label></div>
+  <div class="chartbox"><div class="ttl">Tendencia del indicador entre fechas (mismo punto y parámetro)</div><canvas id="cSf"></canvas><div class="tip"></div></div>
+  </div>
+</section>
+
+<!-- ============ 6 · CONFIABILIDAD ============ -->
+<section id="v-rel" class="view" hidden>
+  <div class="bar"><label>Equipo<select id="rlEq"></select></label><label>Punto<select id="rlPt"></select></label>
+    <label>Indicador a pronosticar<select id="rlInd"></select></label>
+    <label>Modelo de tendencia<select id="rlModel"><option value="auto">Automático (AIC)</option><option value="lin">Lineal</option><option value="exp">Exponencial</option></select></label>
+    <label>Horizonte (días)<input type="number" id="rlHor" value="365" min="30" max="1825" style="min-width:90px"></label></div>
+  <div id="rlVerdict"></div>
+  <div class="stats" id="rlStats"></div>
+  <div class="chartbox tall"><div class="ttl" id="rlTtl">Pronóstico</div><canvas id="cRf"></canvas><div class="tip"></div></div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))">
+    <div class="panel"><h2>Próximas fallas · puntos que llegarán al límite crítico</h2><div class="tw" style="max-height:340px"><table id="rlNext"></table></div><div class="small muted">Orden por días hasta cruzar el límite (mediana de la tendencia). Los FASIT se expresan en registros porque no traen fecha.</div></div>
+    <div class="panel"><h2>Ya en condición deficiente</h2><div class="tw" style="max-height:340px"><table id="rlAlready"></table></div></div>
+  </div>
+  <div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(420px,1fr))">
+    <div class="panel"><h2>Criticidad tipo FMEA (RPN = S × O × D)</h2><div class="tw" style="max-height:320px"><table id="rlRpn"></table></div><div class="small muted">S = severidad (% del límite), O = ocurrencia (pendiente mensual), D = detección (3 monitoreo continuo / 5 ruta). Escala 1–10, RPN máx. 1000.</div></div>
+    <div class="panel"><h2>Índice de salud de la flota</h2><div id="rlHealth"></div>
+      <h2 style="margin-top:14px">Intervalo P-F observado</h2><div id="rlPf"></div></div>
+  </div>
+  <div class="panel"><h2>Weibull de flota (con censura)</h2><div id="rlWb"></div>
+    <div class="chartbox"><div class="ttl">Probabilidad acumulada de cruzar el límite crítico</div><canvas id="cRw"></canvas><div class="tip"></div></div></div>
+  <div class="infobox small"><b>Alcance y límites.</b> Los pronósticos extrapolan la tendencia de cada indicador con regresión (lineal o exponencial, elegida por AIC) y una banda de predicción t-Student al 80 %. Son <b>estimaciones de cuándo se alcanzará un umbral</b>, no fechas de falla; fallas súbitas (grieta, holgura que se suelta) no se anticipan por tendencia. Los umbrales para aceleración y demodulación son relativos (2× / 4× la línea base de las primeras 3 lecturas) y los de FASIT/ISO son los configurados en la pestaña 5. Se requieren ≥ 4 lecturas por serie.</div>
+</section>
+
+<!-- ============ 7 · DATOS ============ -->
 <section id="v-data" class="view" hidden>
+  <div class="panel" id="vLoader"><h2>Cargar mediciones Vibrio · carpeta, ZIP o CSV</h2>
+    <div class="drop" id="vDrop" tabindex="0" role="button" aria-label="Zona de carga de carpeta Vibrio"><b>Arrastra aquí la carpeta de mediciones (o un .zip, o varios .csv)</b><br><span class="muted">Vel / Acc / Demod · FFT, onda, RMS, pico · Temp · FASIT. La jerarquía Sector › Planta › Equipo › Punto se toma de las carpetas. Se agrega sin borrar lo anterior; lo repetido se omite.</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="vBtnDir">📁 Elegir carpeta</button><button class="btn" id="vBtnZip">🗜 Elegir ZIP / CSV</button></div>
+    <input type="file" id="vDirIn" webkitdirectory directory multiple hidden><input type="file" id="vFileIn" accept=".zip,.csv,.txt" multiple hidden>
+    <div id="vStage" hidden style="margin-top:10px"><div id="vStSummary"></div><progress id="vProg" hidden style="width:100%"></progress><div class="small muted" id="vStBusy"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn pri" id="vStCommit">Agregar a la base</button><button class="btn" id="vStCancel">Descartar</button></div></div>
+    <div id="vRep" style="margin-top:8px"></div>
+    <p class="small muted">Desde Drive: descarga la carpeta (Drive la entrega como ZIP), y arrástrala aquí sin descomprimir. Con miles de archivos el proceso toma de decenas de segundos a unos minutos; los datos quedan guardados en este navegador.</p></div>
   <div class="grid2">
     <div>
       <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos">
@@ -189,6 +258,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
 <script>/*__PDFJS__*/</script>
 <script>/*__PDFWORKER__*/</script>
 <script id="seed" type="application/json">/*__SEED__*/</script>
+<script id="seedv" type="application/json">/*__SEEDV__*/</script>
 <script>
 'use strict';
 /*__CORE_JS__*/

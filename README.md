@@ -259,6 +259,20 @@ Cada módulo guarda su base por separado (`sicm_termico`, `sicm_sfi`) y exporta 
 
 **Limitaciones declaradas:** los PDF llegan **sin diagnóstico** (veredicto vacío) → la condición se **calcula por reglas** (criterios institucionales editables en `model.js`/pestaña 3); casi todos los equipos tienen **una sola visita**, así que las tendencias maduran al cargar más recorridos; el SoH requiere capturar la **edad** del banco; las poblaciones Weibull son **simuladas** (`origen:"simulado"`) hasta cargar fallas reales; los códigos ISO 14224 son **sugeridos**.
 
+### Puntos Vibrio · FASIT · pronóstico (pestañas 5–7 del módulo Motores)
+
+Importa la carpeta histórica del colector (**Sector › Planta › Equipo › Punto › Parámetro › CSV**) arrastrándola (o su ZIP, sin descomprimir) a «7 · Datos y carga». Reconoce `Vel/Acc/Demod/Disp` × `FFT/Time/RMS/PICO/PP`, `Temp` y `FASIT`; omite lo repetido y alarga las series con cada carga nueva.
+
+| Pieza | Archivo |
+|---|---|
+| Parser Vibrio, ZIP/carpeta, jerarquía | `app/motores/vibrio.js` |
+| Tendencia con banda de predicción, tiempo a umbral, Weibull con censura, P-F, RPN | `app/motores/reli.js` |
+| Base de puntos, importación por lotes, evaluación | `app/motores/vmodel.js` |
+| Vistas 5 (FASIT, históricos, FFT/onda, cascada) y 6 (pronóstico) | `app/motores/vviews.js` |
+| Semilla real (muestra cosechada de Drive) | `data/motores/seed_vibrio.json` ← `node scripts/build_vibrio_seed.js <dir con json>` |
+
+**Supuestos editables:** ISO 20816-3 clase 2/rígida por defecto; aceleración, demodulación y desplazamiento con umbral relativo (2× / 4× la línea base de las 3 primeras lecturas); FASIT vigilar 31 %, atención 62 %, crítico 100 %. Los FASIT no traen fecha (se tendencian por n.º de registro). El pronóstico exige ≥ 4 lecturas y ≥ 14 días de ventana; el Weibull de flota usa como «evento» el primer cruce de zona D, no una falla confirmada.
+
 ## Módulo Motores (`app/sicm-motores.html`)
 
 Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.

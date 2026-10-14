@@ -276,7 +276,7 @@ const SCHEMA_DOC=`{
 function renderData(){
   $('#schema').textContent=SCHEMA_DOC;renderCapture();renderQuality();
   $('#log').innerHTML=DB.archivos.length?DB.archivos.map(l=>`<div><b>${esc(l.nombre)}</b> <span class="muted">${fDT(l.ts)}</span><br>${l.act} motores nuevos · ${l.vib} vibraciones · ${l.mot} tomas de variador · ${l.sp||0} espectros${l.dup?` · ${l.dup} duplicadas omitidas`:''}${l.skip?` · ${l.skip} descartadas`:''}${(l.warn||[]).map(w=>`<br><span style="color:var(--warn)">⚠ ${esc(w)}</span>`).join('')}</div>`).join(''):'<p class="muted small">Sin cargas.</p>';
-  $('#dbStats').innerHTML=`<table><tr><td>Motores</td><td class="n"><b>${Object.keys(DB.activos).length}</b></td></tr><tr><td>Inspecciones de vibración</td><td class="n"><b>${pesos(DB.vib.length)}</b></td></tr><tr><td>Tomas de variador</td><td class="n"><b>${pesos(DB.mot.length)}</b></td></tr><tr><td>Mediciones FFT / onda</td><td class="n"><b>${DB.espectros.length}</b></td></tr><tr><td>Valores corregidos / descartados / en blanco</td><td class="n"><b>${pesos((DB.descartes||[]).length)}</b></td></tr><tr><td>Almacenamiento</td><td class="n"><b>${esc(Store.mode())}</b></td></tr></table>`}
+  $('#dbStats').innerHTML=`<table><tr><td>Motores</td><td class="n"><b>${Object.keys(DB.activos).length}</b></td></tr><tr><td>Inspecciones de vibración</td><td class="n"><b>${pesos(DB.vib.length)}</b></td></tr><tr><td>Tomas de variador</td><td class="n"><b>${pesos(DB.mot.length)}</b></td></tr><tr><td>Mediciones FFT / onda</td><td class="n"><b>${DB.espectros.length}</b></td></tr>${vDbStats()}<tr><td>Valores corregidos / descartados / en blanco</td><td class="n"><b>${pesos((DB.descartes||[]).length)}</b></td></tr><tr><td>Almacenamiento</td><td class="n"><b>${esc(Store.mode())}</b></td></tr></table>`}
 
 /* ---------------------------------------------------------------- Reporte HTML por motor (autocontenido) */
 function svgPlot(series,o={}){
@@ -315,8 +315,8 @@ function fillAssetSelects(){
 function refreshAll(){
   if(!S.sel||!DB.activos[S.sel])S.sel=assets()[0]&&assets()[0].k||null;
   fillAssetSelects();renderExec();
-  if(S.view==='exp')renderExp();if(S.view==='trend')renderTrend(true);if(S.view==='spec')renderSpec();if(S.view==='data')renderData();
-  const ts=refTs();$('#statusbar').innerHTML=`<span>${Object.keys(DB.activos).length} motores · ${pesos(DB.vib.length)} inspecciones de vibración · ${pesos(DB.mot.length)} tomas de variador · ${DB.espectros.length} espectros</span><span>Último registro: ${DB.vib.length+DB.mot.length?fDT(ts):'—'} (hora de Tabasco)</span><span>Almacenamiento: ${esc(Store.mode())}</span>`}
+  if(S.view==='exp')renderExp();if(S.view==='trend')renderTrend(true);if(S.view==='spec')renderSpec();if(S.view==='data')renderData();if(S.view==='vib')renderVib();if(S.view==='rel'){fillVSelects();renderRel()}
+  const ts=refTs();$('#statusbar').innerHTML=`<span>${Object.keys(DB.activos).length} motores · ${pesos(DB.vib.length)} inspecciones de vibración · ${pesos(DB.mot.length)} tomas de variador · ${DB.espectros.length} espectros · ${pesos(VIX.pts.size)} puntos Vibrio (${pesos(DB.vsp.length)} FFT/ondas)</span><span>Último registro: ${DB.vib.length+DB.mot.length?fDT(ts):'—'} (hora de Tabasco)</span><span>Almacenamiento: ${esc(Store.mode())}</span>`}
 function switchView(v){
   S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
-  requestAnimationFrame(()=>{if(v==='exec')renderExec();if(v==='exp')renderExp();if(v==='trend')renderTrend(true);if(v==='spec')renderSpec();if(v==='data')renderData();window.scrollTo(0,0)})}
+  requestAnimationFrame(()=>{if(v==='exec')renderExec();if(v==='exp')renderExp();if(v==='trend')renderTrend(true);if(v==='spec')renderSpec();if(v==='data')renderData();if(v==='vib')renderVib();if(v==='rel'){fillVSelects();renderRel()}window.scrollTo(0,0)})}
