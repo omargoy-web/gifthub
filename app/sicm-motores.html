@@ -1735,6 +1735,18 @@ function spark(pts,o={}){
   const ls=(o.lines||[]).map((v,i)=>`<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(${['--zB','--zC','--zD'][i%3]})" stroke-dasharray="3 3" opacity=".8"/>`).join('');
   const pl=pts.length>1?`<polyline fill="none" stroke="var(--dorado)" stroke-width="2" points="${pts.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`:'';
   return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:64px">${ls}${pl}${pts.map(p=>`<circle cx="${X(p[0]).toFixed(1)}" cy="${Y(p[1]).toFixed(1)}" r="3.2" fill="var(--dorado)"><title>${fDT(p[0])}: ${f1(p[1],2)}</title></circle>`).join('')}</svg>`}
+// resumen de gráficos espectrales por punto / eje / parámetro con miniatura del último espectro
+function spGallery(sps){
+  if(!sps.length)return'<p class="small muted">Sin mediciones espectrales. Carga la carpeta Vibrio o archivos .csv en «7 · Datos y carga».</p>';
+  const G=new Map();for(const s of sps){const key=[s.punto,s.eje,s.vpar||s.tipo,s.vpt||''].join('|');let g=G.get(key);if(!g){g={key,label:`${PTS[s.punto]} · ${s.eje.toUpperCase()} · ${s.vpar?PAR_LBL[s.vpar]||s.vpar:(s.tipo==='fft'?'FFT':'Onda')}${s.vpt?' ('+esc(s.vpt)+')':''}`,items:[]};G.set(key,g)}g.items.push(s)}
+  const gs=[...G.values()].sort((a,b)=>a.label.localeCompare(b.label)),show=gs.slice(0,18);
+  return`<div class="capgrid" style="grid-template-columns:repeat(auto-fill,minmax(210px,1fr))">${show.map(g=>{const last=g.items[g.items.length-1],first=g.items[0];return`<div style="border:1px solid var(--line);border-radius:8px;padding:6px 8px"><div class="small"><b>${g.label}</b></div><svg class="spth" data-id="${esc(last.id)}" viewBox="0 0 200 48" style="width:100%;height:48px;background:var(--surface2);border-radius:4px"></svg><div class="small muted">${g.items.length} medición(es) · ${fDate(first.ts)}${g.items.length>1?' → '+fDate(last.ts):''}</div><button class="btn sm" data-spg="${esc(last.id)}" style="margin-top:4px">Abrir gráfica</button></div>`}).join('')}</div>${gs.length>show.length?`<p class="small muted">+${gs.length-show.length} gráficos más en la pestaña 4.</p>`:''}`}
+async function spThumbs(){
+  for(const sv of $$('#expBody svg.spth')){const s=(IX.sp.get(S.sel)||[]).find(x=>x.id===sv.dataset.id);if(!s)continue;const d=await spGet(s.id);if(!d||!sv.isConnected)continue;
+    const{x,y}=spXY(d);let xs=x,ys=y;if(s.tipo==='fft'){const fm=Math.min(x[x.length-1],s.fmax||1000);let n=x.length;while(n>1&&x[n-1]>fm)n--;xs=x.subarray(1,n);ys=y.subarray(1,n)}
+    const dec=decimate(Float64Array.from(xs),Float64Array.from(ys),160);if(dec.length<2)continue;let mx=0,mn=0;for(const p of dec){if(p[1]>mx)mx=p[1];if(p[1]<mn)mn=p[1]}
+    const x0=dec[0][0],x1=dec[dec.length-1][0],X=v=>3+(v-x0)/((x1-x0)||1)*194,Y=v=>45-(v-mn)/((mx-mn)||1)*42;
+    sv.innerHTML=`<polyline fill="none" stroke="var(--dorado)" stroke-width="1.2" points="${dec.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"/>`}}
 function accionDe(h){const t=h.modo;
   if(/zona D|Incremento significativo|zona C/i.test(t))return'Confirmar con espectro FFT y fase en el punto de mayor vibración (desbalance, desalineación, holgura, rodamiento); revisar anclaje y cople; programar corrección en OT PM02.';
   if(/gE/i.test(t))return'Revisar lubricación y condición de rodamientos (análisis de envolvente / ultrasonido); programar relubricación o reemplazo.';
@@ -1779,7 +1791,7 @@ function renderExp(){
   ${mdLast?`<div class="panel"><h2>Variador · última jornada (${fDate(mdLast.ts)}) · ${mdLast.reads.length} toma(s)</h2><div class="tw" style="max-height:260px"><table class="vtab"><tr><th>Hora</th><th>V línea</th><th>I línea</th><th>F.P.</th><th>kW</th><th>V sal.</th><th>I motor</th><th>RPM</th><th>Par</th>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<th>T${n}</th>`).join('')}</tr>
     ${mdLast.reads.map(r=>{const c=r.c;return`<tr><td>${(r.ts?fDT(r.ts).slice(-5):'')}</td><td>${c.v??'—'}</td><td>${c.i??'—'}</td><td>${c.fp??'—'}</td><td>${c.kw??'—'}</td><td>${c.vs??'—'}</td><td>${c.im??'—'}</td><td>${c.rpm??'—'}</td><td>${c.tq??'—'}</td>${c.T.map((t,j)=>{const lim_=j<4?CFG.tBear:CFG.tWind,cl=t==null?'':t>=lim_.crit?'zD':t>=lim_.warn?'zC':'';return`<td class="${cl}">${t??'—'}</td>`}).join('')}</tr>`}).join('')}</table></div>
     <div class="small muted">${mds.length} jornada(s) con lecturas de variador · T1–T4 rodamientos, T5–T10 devanados (°C). ${esc(mdLast.reads[0].obs||'')}</div></div>`:''}
-  <div class="panel"><h2>Espectros FFT y ondas cargados (${sps.length})</h2>${sps.length?`<div class="tw" style="max-height:200px"><table><tr><th>Fecha</th><th>Punto</th><th>Eje</th><th>Tipo</th><th class="n">1× (mm/s)</th><th class="n">Global (mm/s)</th><th>Indicios</th><th></th></tr>${sps.slice().reverse().map(s=>`<tr><td>${fDT(s.ts)}${s.origen==='ejemplo'?' <span class="badge sim">ejemplo</span>':''}</td><td>${PTS[s.punto]}</td><td>${s.eje.toUpperCase()}</td><td>${s.tipo==='fft'?'FFT':'Onda'}</td><td class="n">${s.feat?f1(s.feat.x1,2):'—'}</td><td class="n">${s.feat?f1(s.feat.overall,2):'—'}</td><td class="small">${(s.find||[]).map(f=>esc(f.t)).join('; ')||'—'}</td><td><button class="btn sm" data-sp="${esc(s.id)}">Ver</button></td></tr>`).join('')}</table></div>`:'<p class="small muted">Sin mediciones espectrales. Carga archivos .csv en «7 · Datos y carga».</p>'}</div>
+  <div class="panel"><h2>Gráficos de espectros disponibles (${sps.length} mediciones)</h2>${spGallery(sps)}</div>
   <div class="panel"><h2>Diagnóstico (ISO 14224)</h2><table>${[
     ['Condición calculada',e?COND[e.sev].n+(e.fuera&&e.rawSev>0?` (hallazgos subyacentes: ${COND[e.rawSev].n})`:''):null],['Veredicto capturado en campo',x&&x.veredicto?x.veredicto:'— (los formatos llegan sin diagnóstico: la condición se calcula por reglas)'],
     ['Hallazgo dominante',e&&e.modo],['Código ISO 14224 (sugerido)',e&&e.iso?e.iso+' — '+(ISO14224[e.iso]||''):null],['Acción recomendada',hall[0]?accionDe(hall[0]):null],['Prioridad',e&&e.prioridad],['Observaciones del recorrido',x&&[x.obs,x.obs_gen].filter(Boolean).join(' · ')||(mdLast&&mdLast.reads[0].obs)]].map(([l,v])=>rowKV(l,v)).join('')}</table>
@@ -1788,6 +1800,7 @@ function renderExp(){
     return tl.length?tl.map(r=>`<div class="tlitem c${r.sev}">${r.t==='vib'?`<a href="#" data-ins="${esc(r.id)}" style="color:inherit"><b>${fDT(r.ts)}</b></a>`:`<b>${fDT(r.ts)}</b>`} ${chip(r.sev)} <span class="small muted">${esc(r.txt)}${r.sub?' · '+esc(r.sub):''}</span>${r.modo?`<div class="small">${esc(r.modo)}</div>`:''}</div>`).join(''):'<p class="muted small">Sin registros.</p>'})()}</div>`;
   $$('#expBody [data-ins]').forEach(l=>l.addEventListener('click',ev=>{ev.preventDefault();S.insId=l.dataset.ins;renderExp()}));
   $$('#expBody [data-sp]').forEach(b=>b.addEventListener('click',()=>{S.sp.id=b.dataset.sp;switchView('spec')}));
+  $$('#expBody [data-spg]').forEach(b=>b.addEventListener('click',()=>{S.sp.id=b.dataset.spg;switchView('spec')}));spThumbs()
 }
 
 /* ---------------------------------------------------------------- 3 · TENDENCIAS */
