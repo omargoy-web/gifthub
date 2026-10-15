@@ -153,7 +153,8 @@ dialog h2{margin:0 0 10px;font-size:16px}
     <div class="sub">Refinería Olmeca · Subdirección de Producción de Petrolíferos · Monitoreo de variables térmicas (transformadores · tableros · motores)</div>
   </div>
   <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
-  <button class="btn ghost" id="btnLoad">⬆ Cargar JSON</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar PDF / JSON</button>
+  <button class="btn ghost" id="btnLoadDir" title="Carpeta completa o ZIP con reportes PDF">📁 Carpeta / ZIP</button>
   <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
 </header>
 <nav class="tabs" role="tablist" aria-label="Módulos">
@@ -270,12 +271,14 @@ dialog h2{margin:0 0 10px;font-size:16px}
 <section id="v-data" class="view" hidden>
   <div class="grid2">
     <div>
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos JSON">
-        <b>Actualizar base: arrastra reportes PDF de termografía o archivos .json</b><br>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de reportes">
+        <b>Actualizar base: arrastra una carpeta completa (o un .zip) con los reportes PDF de termografía, o archivos .pdf / .json sueltos</b><br>
         <span class="muted">Tableros (ANSI C37.20), transformadores secos (NMX-J-351) y arrancadores (POE-009) · se agregan sin borrar lo anterior, por TAG y fecha · se guardan en este navegador</span>
       </div>
-      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="btnDir">📁 Elegir carpeta</button><button class="btn" id="btnZip">🗜 Elegir ZIP</button><button class="btn" id="btnPick">📄 Elegir archivos PDF / JSON</button></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden><input type="file" id="dirIn" webkitdirectory directory multiple hidden><input type="file" id="zipIn" accept=".zip,application/zip" multiple hidden>
       <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <progress id="stProg" hidden style="width:100%"></progress><div class="stats" id="stStats"></div>
         <div class="tw" style="max-height:300px"><table id="stTable"></table></div>
         <p class="small muted" id="stSummary"></p>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
@@ -327,7 +330,7 @@ dialog h2{margin:0 0 10px;font-size:16px}
 <aside class="drawer" id="drawer" role="dialog" aria-modal="false" aria-label="Ficha técnica"></aside>
 <dialog id="dlgInsp"></dialog>
 <dialog id="dlgImg"><img id="bigImg" alt="" style="max-width:100%;max-height:80vh;display:block;margin:auto"><div style="text-align:right;margin-top:8px"><button class="btn" id="imgClose">Cerrar</button></div></dialog>
-<div id="dropOverlay">Suelta los archivos .json para cargarlos</div>
+<div id="dropOverlay">Suelta la carpeta, el ZIP o los archivos para cargarlos</div>
 <div class="statusbar" id="statusbar"></div>
 
 <script>/**
@@ -580,6 +583,48 @@ function colVals(items,labelRe,heads){ // asigna cada valor a su columna por pos
   return out}
 
 /* ---------- Menú de módulos de la suite ---------- */
+/* ---------- Carga masiva: carpeta arrastrada, selector de carpeta, ZIP o archivos sueltos (compartido por los módulos) ---------- */
+async function bulkZipList(file){
+  const size=file.size,tail=Math.min(size,66000),buf=new Uint8Array(await file.slice(size-tail).arrayBuffer()),dv=new DataView(buf.buffer);
+  let eocd=-1;for(let i=tail-22;i>=0;i--)if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}
+  if(eocd<0)throw new Error('No es un archivo ZIP válido');
+  let total=dv.getUint16(eocd+10,true),cdSize=dv.getUint32(eocd+12,true),cdOff=dv.getUint32(eocd+16,true);
+  if(total===0xffff||cdOff===0xffffffff){const loc=eocd-20;if(loc>=0&&dv.getUint32(loc,true)===0x07064b50){const off64=Number(dv.getBigUint64(loc+8,true)),b2=new DataView(await file.slice(off64,off64+56).arrayBuffer());total=Number(b2.getBigUint64(32,true));cdSize=Number(b2.getBigUint64(40,true));cdOff=Number(b2.getBigUint64(48,true))}}
+  const cd=new DataView(await file.slice(cdOff,cdOff+cdSize).arrayBuffer()),td=new TextDecoder('utf-8'),out=[];let p=0;
+  for(let k=0;k<total&&p+46<=cd.byteLength;k++){
+    if(cd.getUint32(p,true)!==0x02014b50)break;
+    const flags=cd.getUint16(p+8,true),method=cd.getUint16(p+10,true);let csz=cd.getUint32(p+20,true),usz=cd.getUint32(p+24,true);
+    const nl=cd.getUint16(p+28,true),el=cd.getUint16(p+30,true),cl=cd.getUint16(p+32,true);let lho=cd.getUint32(p+42,true);
+    const name=td.decode(new Uint8Array(cd.buffer,cd.byteOffset+p+46,nl));
+    if(csz===0xffffffff||usz===0xffffffff||lho===0xffffffff){let q=p+46+nl,end=q+el;while(q+4<=end){const id=cd.getUint16(q,true),sz=cd.getUint16(q+2,true);if(id===1){let r=q+4;if(usz===0xffffffff){usz=Number(cd.getBigUint64(r,true));r+=8}if(csz===0xffffffff){csz=Number(cd.getBigUint64(r,true));r+=8}if(lho===0xffffffff){lho=Number(cd.getBigUint64(r,true))}}q+=4+sz}}
+    if(!name.endsWith('/'))out.push({name,method,csz,usz,lho,enc:!!(flags&1)});
+    p+=46+nl+el+cl}
+  return out}
+async function bulkZipBlob(file,e){
+  if(e.enc)throw new Error('ZIP cifrado: no soportado');
+  const lh=new DataView(await file.slice(e.lho,e.lho+30).arrayBuffer()),start=e.lho+30+lh.getUint16(26,true)+lh.getUint16(28,true),blob=file.slice(start,start+e.csz);
+  if(e.method===0)return blob;
+  if(e.method!==8)throw new Error('método de compresión no soportado: '+e.method);
+  if(typeof DecompressionStream==='undefined')throw new Error('Este navegador no puede descomprimir ZIP: usa la carpeta sin comprimir');
+  return await new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob()}
+async function bulkReadAll(reader){const out=[];for(;;){const b=await new Promise((res,rej)=>reader.readEntries(res,rej));if(!b.length)break;out.push(...b)}return out}
+async function bulkWalk(entry,prefix,out){
+  if(entry.isFile){const f=await new Promise((res,rej)=>entry.file(res,rej));out.push({name:entry.name,path:prefix+entry.name,file:f})}
+  else if(entry.isDirectory){for(const k of await bulkReadAll(entry.createReader()))await bulkWalk(k,prefix+entry.name+'/',out)}}
+// → {files:[{name,path,size,arrayBuffer(),text(),zip?}], skipped:n, errors:[…]} con solo las extensiones pedidas (por defecto PDF y JSON).
+// Llamar de forma SÍNCRONA dentro del evento drop (los DataTransferItem caducan al primer await).
+async function bulkCollect(items,fileList,ext=/\.(pdf|json)$/i){
+  const raw=[];
+  if(items&&items.length&&items[0].webkitGetAsEntry){const ents=[...items].map(i=>i.webkitGetAsEntry()).filter(Boolean);for(const e of ents)await bulkWalk(e,'',raw)}
+  else for(const f of fileList||[])raw.push({name:f.name,path:f.webkitRelativePath||f.name,file:f});
+  const files=[],errors=[];let skipped=0;
+  for(const r of raw){
+    if(/\.zip$/i.test(r.name)){try{for(const e of await bulkZipList(r.file)){const nm=e.name.replace(/^.*\//,'');if(!ext.test(nm)||/^__MACOSX|\/\./.test(e.name)||nm.startsWith('.')){skipped++;continue}
+      files.push({name:nm,path:r.name+'/'+e.name,size:e.usz,zip:r.name,arrayBuffer:async()=>(await bulkZipBlob(r.file,e)).arrayBuffer(),text:async()=>(await bulkZipBlob(r.file,e)).text()})}}catch(err){errors.push(`${r.name}: ${err.message}`)}}
+    else if(ext.test(r.name)&&!r.name.startsWith('.'))files.push({name:r.name,path:r.path,size:r.file.size,arrayBuffer:()=>r.file.arrayBuffer(),text:()=>r.file.text()});
+    else skipped++}
+  return{files,skipped,errors}}
+
 const SUITE=[
   {id:'termico',file:'sicm-termico.html',nombre:'Térmico',desc:'Transformadores · Tableros · Motores'},
   {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'},
@@ -1181,26 +1226,47 @@ async function parsePdf(file){
   if(!info.recs.length)info.warn.unshift('No se extrajo ningún equipo: ¿es un reporte de termografía SICM?');
   return info}
 
-/* ---------- Carga por lotes con vista previa ---------- */
-let STAGE=[];
-async function handleFiles(files){
-  const ok=[...files].filter(f=>/\.(json|pdf)$/i.test(f.name));if(!ok.length){toast('Solo se aceptan archivos .pdf o .json');return}
-  switchView('data');$('#stBusy').textContent='Leyendo archivos…';$('#stage').hidden=false;STAGE=[];
-  for(const f of ok){$('#stBusy').textContent=`Leyendo ${f.name}…`;const pdf=/\.pdf$/i.test(f.name);
-    try{if(pdf){const info=await parsePdf(f);STAGE.push({name:f.name,kind:'PDF',obj:{recorridos:info.recs},info})}else STAGE.push({name:f.name,kind:'JSON',obj:JSON.parse(await f.text()),info:{}})}
-    catch(e){STAGE.push({name:f.name,kind:pdf?'PDF':'JSON',obj:null,info:{error:e.message||String(e)}})}}
+/* ---------- Carga por lotes con vista previa (archivos, carpeta completa o ZIP) ---------- */
+let STAGE=[],STAGE_ABORT=false,STAGE_BUSY=false;
+const dirOf=p=>{const i=String(p||'').lastIndexOf('/');return i<0?'':p.slice(0,i)};
+// recibe lo que devuelve bulkCollect: [{name,path,size,arrayBuffer(),text(),zip?}]
+async function handleBulk(col){
+  const files=col.files;
+  if(STAGE_BUSY){toast('Hay una carga en proceso: espera o cancélala');return}
+  if(!files.length){toast(col.errors&&col.errors.length?'ZIP no legible: '+col.errors[0]:'No se encontraron reportes .pdf ni archivos .json'+(col.skipped?` (${col.skipped} archivos de otro tipo omitidos)`:''));return}
+  switchView('data');STAGE=[];STAGE_ABORT=false;STAGE_BUSY=true;$('#stage').hidden=false;const bar=$('#stProg');bar.hidden=false;bar.max=files.length;bar.value=0;$('#stCommit').disabled=true;
+  files.sort((a,b)=>a.path.localeCompare(b.path,'es',{numeric:true}));
+  let i=0;
+  for(const f of files){
+    if(STAGE_ABORT)break;i++;bar.value=i;$('#stBusy').textContent=`Leyendo ${i} / ${files.length}: ${f.name}`;
+    const pdf=/\.pdf$/i.test(f.name),base={name:f.name,path:f.path,zip:f.zip};
+    try{if(pdf){const info=await parsePdf(f);STAGE.push({...base,kind:'PDF',obj:{recorridos:info.recs},info})}else STAGE.push({...base,kind:'JSON',obj:JSON.parse(await f.text()),info:{}})}
+    catch(e){STAGE.push({...base,kind:pdf?'PDF':'JSON',obj:null,info:{error:e.message||String(e)}})}
+    await new Promise(r=>setTimeout(r,0))}
+  STAGE_BUSY=false;bar.hidden=true;
+  if(STAGE_ABORT){STAGE=[];STAGE_ABORT=false;$('#stBusy').textContent='';renderStage();toast('Carga cancelada');return}
+  $('#stBusy').textContent='Calculando duplicados…';await new Promise(r=>setTimeout(r,0));
   const bk=structuredClone(DB);try{STAGE.forEach(s=>{if(s.obj)s.rep=ingest(s.obj,s.name)})}finally{DB=bk}
+  if(col.skipped||col.errors.length)STAGE.skippedInfo={skipped:col.skipped,errors:col.errors};
   $('#stBusy').textContent='';renderStage()}
+// compatibilidad: lista de File del selector de archivos
+async function handleFiles(fl){handleBulk(await bulkCollect(null,fl))}
+const nf=n=>Number(n).toLocaleString('es-MX');
 function renderStage(){
-  const st=$('#stage');if(!STAGE.length){st.hidden=true;return}st.hidden=false;
-  const newL=STAGE.reduce((s,x)=>s+(x.rep?x.rep.lec:0),0);
-  $('#stTable').innerHTML='<tr><th>Archivo</th><th>Tipo</th><th>Folio</th><th class="n">Págs.</th><th class="n">Equipos / total</th><th class="n">Lecturas nuevas</th><th class="n">Duplicadas</th><th>Avisos</th></tr>'+STAGE.map(s=>{const i=s.info,r=s.rep||{};
-    const warn=[...(i.error?['⛔ '+i.error]:[]),...(i.warn||[]),...(r.warn||[])];
-    return`<tr><td><b>${esc(s.name)}</b></td><td>${s.kind}${i.formato?' · '+i.formato:''}</td><td class="small">${esc(i.folio||'—')}</td><td class="n">${i.paginas??'—'}</td><td class="n">${i.recs?`${i.recs.length} / ${i.total??'?'}`:r.act!=null?r.act+' activos':'—'}</td><td class="n"><b>${r.lec??'—'}</b></td><td class="n">${r.dup??'—'}</td><td class="small" style="color:${warn.length?'var(--warn)':'var(--ok)'}">${warn.length?warn.slice(0,4).map(esc).join('<br>')+(warn.length>4?`<br>… +${warn.length-4}`:''):'✓ sin avisos'}</td></tr>`}).join('');
-  $('#stSummary').textContent=`${STAGE.length} archivo(s) · ${newL} lecturas nuevas por agregar`;$('#stCommit').disabled=!STAGE.some(s=>s.obj);$('#stCommit').textContent=`Agregar a la base (${newL} lecturas)`}
+  const st=$('#stage');if(!STAGE.length){st.hidden=true;$('#stStats').innerHTML='';return}st.hidden=false;
+  const newL=STAGE.reduce((s,x)=>s+(x.rep?x.rep.lec:0),0),dupL=STAGE.reduce((s,x)=>s+(x.rep?x.rep.dup:0),0),eq=STAGE.reduce((s,x)=>s+(x.info&&x.info.recs?x.info.recs.length:0),0);
+  const warnOf=s=>[...(s.info.error?['⛔ '+s.info.error]:[]),...(s.info.warn||[]),...((s.rep||{}).warn||[])];
+  const nWarn=STAGE.filter(s=>warnOf(s).length).length,nErr=STAGE.filter(s=>s.info.error||(s.info.recs&&!s.info.recs.length)).length,folders=new Set(STAGE.map(s=>dirOf(s.path))).size;
+  const sk=STAGE.skippedInfo;
+  $('#stStats').innerHTML=[['Archivos leídos',STAGE.length,`${folders} carpeta(s)${sk&&sk.skipped?` · ${sk.skipped} de otro tipo omitidos`:''}`],['Equipos extraídos',nf(eq),'hojas de equipo en los PDF'],['Lecturas nuevas',nf(newL),`${nf(dupL)} ya existían`],['Con avisos / sin equipos',`${nWarn} / ${nErr}`,'revisar abajo']].map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('')+(sk&&sk.errors.length?`<div class="warnbox" style="grid-column:1/-1">${sk.errors.map(esc).join('<br>')}</div>`:'');
+  // primero los archivos con problemas; hasta 150 renglones
+  const ord=STAGE.map((s,k)=>({s,k,w:warnOf(s)})).sort((p,q)=>(q.w.length>0)-(p.w.length>0)||p.k-q.k),LIM=150;
+  $('#stTable').innerHTML='<tr><th>Archivo</th><th>Carpeta</th><th>Tipo</th><th>Folio</th><th class="n">Págs.</th><th class="n">Equipos / total</th><th class="n">Lecturas nuevas</th><th class="n">Duplicadas</th><th>Avisos</th></tr>'+ord.slice(0,LIM).map(({s,w})=>{const i=s.info,r=s.rep||{};
+    return`<tr><td><b>${esc(s.name)}</b></td><td class="small muted">${esc(dirOf(s.path)||'—')}</td><td>${s.kind}${i.formato?' · '+i.formato:''}</td><td class="small">${esc(i.folio||'—')}</td><td class="n">${i.paginas??'—'}</td><td class="n">${i.recs?`${i.recs.length} / ${i.total??'?'}`:r.act!=null?r.act+' activos':'—'}</td><td class="n"><b>${r.lec??'—'}</b></td><td class="n">${r.dup??'—'}</td><td class="small" style="color:${w.length?'var(--warn)':'var(--ok)'}">${w.length?w.slice(0,4).map(esc).join('<br>')+(w.length>4?`<br>… +${w.length-4}`:''):'✓ sin avisos'}</td></tr>`}).join('')+(ord.length>LIM?`<tr><td colspan="9" class="muted small">Se muestran los primeros ${LIM} (los que tienen avisos van primero); los ${ord.length-LIM} restantes se agregan igual.</td></tr>`:'');
+  $('#stSummary').textContent=`${STAGE.length} archivo(s) · ${newL} lecturas nuevas por agregar`;$('#stCommit').disabled=STAGE_BUSY||!STAGE.some(s=>s.obj);$('#stCommit').textContent=`Agregar a la base (${nf(newL)} lecturas)`}
 function commitStage(){
   let n=0;for(const s of STAGE){if(s.obj){ingest(s.obj,s.name);n++}else DB.archivos.unshift({nombre:s.name,ts:Date.now(),act:0,lec:0,insp:0,pob:0,dup:0,skip:0,warn:[s.info.error||'error']})}
-  STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} archivo(s) agregados a la base`)}
+  const nl=STAGE.reduce((s,x)=>s+(x.rep?x.rep.lec:0),0);STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} archivo(s) agregados a la base · ${nl} lecturas nuevas`)}
 
 /* ---------- Captura diaria manual ---------- */
 const DEFPTS={Tablero:['Conexiones lado línea F1','Conexiones lado línea F2','Conexiones lado línea F3','Conexiones lado carga F1','Conexiones lado carga F2','Conexiones lado carga F3'],
@@ -1267,16 +1333,19 @@ async function init(){
   $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
   $('#btnTheme').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
   $('#btnLoad').addEventListener('click',()=>$('#fileIn').click());$('#fileIn').addEventListener('change',e=>{handleFiles(e.target.files);e.target.value=''});
+  const pickBulk=async e=>{const col=await bulkCollect(null,e.target.files);e.target.value='';handleBulk(col)};
+  $('#btnLoadDir').addEventListener('click',()=>{switchView('data');$('#dirIn').click()});$('#btnDir').addEventListener('click',()=>$('#dirIn').click());$('#btnZip').addEventListener('click',()=>$('#zipIn').click());$('#btnPick').addEventListener('click',()=>$('#fileIn').click());
+  $('#dirIn').addEventListener('change',pickBulk);$('#zipIn').addEventListener('change',pickBulk);
   $('#btnExport').addEventListener('click',exportDB);$('#btnExport2').addEventListener('click',exportDB);
   $('#btnSample').addEventListener('click',()=>download('sicm-termico-ejemplo.json',$('#seed').textContent));
   $('#btnReseed').addEventListener('click',async()=>{if(!confirm('¿Reemplazar toda la base por los datos de ejemplo?'))return;await Store.clear();DB=emptyDB();await loadSeed();rebuild();save();S.sel=null;refreshAll();toast('Datos de ejemplo restablecidos')});
   $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar toda la base local (activos, lecturas, inspecciones e imágenes)?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.sel=null;refreshAll()});
-  const drop=$('#drop');drop.addEventListener('click',()=>$('#fileIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#fileIn').click()});
+  const drop=$('#drop');drop.addEventListener('click',()=>$('#dirIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#dirIn').click()});
   let dc=0;const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
   window.addEventListener('dragenter',e=>{if(!hasFiles(e))return;dc++;$('#dropOverlay').style.display='flex'});
   window.addEventListener('dragleave',e=>{if(!hasFiles(e))return;dc=Math.max(0,dc-1);if(!dc)$('#dropOverlay').style.display='none'});
   window.addEventListener('dragover',e=>{if(hasFiles(e))e.preventDefault()});
-  window.addEventListener('drop',e=>{if(!hasFiles(e))return;e.preventDefault();dc=0;$('#dropOverlay').style.display='none';handleFiles(e.dataTransfer.files)});
+  window.addEventListener('drop',e=>{if(!hasFiles(e))return;e.preventDefault();dc=0;$('#dropOverlay').style.display='none';bulkCollect(e.dataTransfer.items,e.dataTransfer.files).then(handleBulk).catch(err=>toast('No se pudo leer lo soltado: '+err.message))});
   // filtros
   [['fTipo','fTipo'],['fPlanta','fPlanta'],['fSev','fSev']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{S[k]=e.target.value;S.limit=60;renderExec()}));
   $('#fQ').addEventListener('input',e=>{S.q=e.target.value;S.limit=60;renderExec()});
@@ -1286,7 +1355,7 @@ async function init(){
   $$('[data-win]').forEach(b=>b.addEventListener('click',()=>{const d=+b.dataset.win;if(!CH.T.full)return;const e=CH.T.full[1];CH.T.setView(d?[Math.max(CH.T.full[0],e-d*864e5),e]:[...CH.T.full])}));
   $('#iTipo').addEventListener('change',e=>{S.insp.tipo=e.target.value;renderInsp()});$('#iSev').addEventListener('change',e=>{S.insp.sev=e.target.value;renderInsp()});$('#iQ').addEventListener('input',renderInsp);
   $('#btnNewInsp').addEventListener('click',newInspDialog);['cTc','cTr','cMode','cLoad'].forEach(id=>$('#'+id).addEventListener('input',calc));
-  $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{STAGE=[];renderStage()});
+  $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{if(STAGE_BUSY){STAGE_ABORT=true;return}STAGE=[];renderStage()});
   $('#qMot').addEventListener('change',renderQuality);$('#qQ').addEventListener('input',renderQuality);$('#qCsv').addEventListener('click',exportQuality);
   $('#mTag').addEventListener('change',capPoints);$('#mNTipo').addEventListener('change',capPoints);$('#mSave').addEventListener('click',saveCapture);
   $('#imgClose').addEventListener('click',()=>$('#dlgImg').close());

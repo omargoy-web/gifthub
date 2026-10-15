@@ -543,6 +543,48 @@ function colVals(items,labelRe,heads){ // asigna cada valor a su columna por pos
   return out}
 
 /* ---------- Menú de módulos de la suite ---------- */
+/* ---------- Carga masiva: carpeta arrastrada, selector de carpeta, ZIP o archivos sueltos (compartido por los módulos) ---------- */
+async function bulkZipList(file){
+  const size=file.size,tail=Math.min(size,66000),buf=new Uint8Array(await file.slice(size-tail).arrayBuffer()),dv=new DataView(buf.buffer);
+  let eocd=-1;for(let i=tail-22;i>=0;i--)if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}
+  if(eocd<0)throw new Error('No es un archivo ZIP válido');
+  let total=dv.getUint16(eocd+10,true),cdSize=dv.getUint32(eocd+12,true),cdOff=dv.getUint32(eocd+16,true);
+  if(total===0xffff||cdOff===0xffffffff){const loc=eocd-20;if(loc>=0&&dv.getUint32(loc,true)===0x07064b50){const off64=Number(dv.getBigUint64(loc+8,true)),b2=new DataView(await file.slice(off64,off64+56).arrayBuffer());total=Number(b2.getBigUint64(32,true));cdSize=Number(b2.getBigUint64(40,true));cdOff=Number(b2.getBigUint64(48,true))}}
+  const cd=new DataView(await file.slice(cdOff,cdOff+cdSize).arrayBuffer()),td=new TextDecoder('utf-8'),out=[];let p=0;
+  for(let k=0;k<total&&p+46<=cd.byteLength;k++){
+    if(cd.getUint32(p,true)!==0x02014b50)break;
+    const flags=cd.getUint16(p+8,true),method=cd.getUint16(p+10,true);let csz=cd.getUint32(p+20,true),usz=cd.getUint32(p+24,true);
+    const nl=cd.getUint16(p+28,true),el=cd.getUint16(p+30,true),cl=cd.getUint16(p+32,true);let lho=cd.getUint32(p+42,true);
+    const name=td.decode(new Uint8Array(cd.buffer,cd.byteOffset+p+46,nl));
+    if(csz===0xffffffff||usz===0xffffffff||lho===0xffffffff){let q=p+46+nl,end=q+el;while(q+4<=end){const id=cd.getUint16(q,true),sz=cd.getUint16(q+2,true);if(id===1){let r=q+4;if(usz===0xffffffff){usz=Number(cd.getBigUint64(r,true));r+=8}if(csz===0xffffffff){csz=Number(cd.getBigUint64(r,true));r+=8}if(lho===0xffffffff){lho=Number(cd.getBigUint64(r,true))}}q+=4+sz}}
+    if(!name.endsWith('/'))out.push({name,method,csz,usz,lho,enc:!!(flags&1)});
+    p+=46+nl+el+cl}
+  return out}
+async function bulkZipBlob(file,e){
+  if(e.enc)throw new Error('ZIP cifrado: no soportado');
+  const lh=new DataView(await file.slice(e.lho,e.lho+30).arrayBuffer()),start=e.lho+30+lh.getUint16(26,true)+lh.getUint16(28,true),blob=file.slice(start,start+e.csz);
+  if(e.method===0)return blob;
+  if(e.method!==8)throw new Error('método de compresión no soportado: '+e.method);
+  if(typeof DecompressionStream==='undefined')throw new Error('Este navegador no puede descomprimir ZIP: usa la carpeta sin comprimir');
+  return await new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob()}
+async function bulkReadAll(reader){const out=[];for(;;){const b=await new Promise((res,rej)=>reader.readEntries(res,rej));if(!b.length)break;out.push(...b)}return out}
+async function bulkWalk(entry,prefix,out){
+  if(entry.isFile){const f=await new Promise((res,rej)=>entry.file(res,rej));out.push({name:entry.name,path:prefix+entry.name,file:f})}
+  else if(entry.isDirectory){for(const k of await bulkReadAll(entry.createReader()))await bulkWalk(k,prefix+entry.name+'/',out)}}
+// → {files:[{name,path,size,arrayBuffer(),text(),zip?}], skipped:n, errors:[…]} con solo las extensiones pedidas (por defecto PDF y JSON).
+// Llamar de forma SÍNCRONA dentro del evento drop (los DataTransferItem caducan al primer await).
+async function bulkCollect(items,fileList,ext=/\.(pdf|json)$/i){
+  const raw=[];
+  if(items&&items.length&&items[0].webkitGetAsEntry){const ents=[...items].map(i=>i.webkitGetAsEntry()).filter(Boolean);for(const e of ents)await bulkWalk(e,'',raw)}
+  else for(const f of fileList||[])raw.push({name:f.name,path:f.webkitRelativePath||f.name,file:f});
+  const files=[],errors=[];let skipped=0;
+  for(const r of raw){
+    if(/\.zip$/i.test(r.name)){try{for(const e of await bulkZipList(r.file)){const nm=e.name.replace(/^.*\//,'');if(!ext.test(nm)||/^__MACOSX|\/\./.test(e.name)||nm.startsWith('.')){skipped++;continue}
+      files.push({name:nm,path:r.name+'/'+e.name,size:e.usz,zip:r.name,arrayBuffer:async()=>(await bulkZipBlob(r.file,e)).arrayBuffer(),text:async()=>(await bulkZipBlob(r.file,e)).text()})}}catch(err){errors.push(`${r.name}: ${err.message}`)}}
+    else if(ext.test(r.name)&&!r.name.startsWith('.'))files.push({name:r.name,path:r.path,size:r.file.size,arrayBuffer:()=>r.file.arrayBuffer(),text:()=>r.file.text()});
+    else skipped++}
+  return{files,skipped,errors}}
+
 const SUITE=[
   {id:'termico',file:'sicm-termico.html',nombre:'Térmico',desc:'Transformadores · Tableros · Motores'},
   {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'},

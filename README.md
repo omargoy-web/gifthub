@@ -273,6 +273,10 @@ Importa la carpeta histórica del colector (**Sector › Planta › Equipo › P
 
 **Supuestos editables:** ISO 20816-3 clase 2/rígida por defecto; aceleración, demodulación y desplazamiento con umbral relativo (2× / 4× la línea base de las 3 primeras lecturas); FASIT vigilar 31 %, atención 62 %, crítico 100 %. Los FASIT no traen fecha (se tendencian por n.º de registro). El pronóstico exige ≥ 4 lecturas y ≥ 14 días de ventana; el Weibull de flota usa como «evento» el primer cruce de zona D, no una falla confirmada.
 
+### Carga masiva en Térmico
+
+En «Datos y carga» del módulo Térmico puedes **arrastrar una carpeta completa** (con subcarpetas), un **.zip** o PDF/JSON sueltos; también hay botones para elegir carpeta, ZIP o archivos. Se leen todos los PDF, se muestra el resumen (archivos, equipos, lecturas nuevas, duplicadas, avisos; primero los archivos con problemas) y al confirmar se agregan a la base sin duplicar (mismo TAG, fecha y punto). El lector de carpeta/ZIP es común a la suite: `bulkCollect()` en `app/shared/core.js`.
+
 ## Módulo Desbalance de tensión en CCM 480 V (`app/sicm-desbalance.html`)
 
 Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anexos 6.4 / 6.5; folio `ROLM-SCM-SICM-S##-ELE-DBL-…`) y los vuelve trazables: cada medición conserva folio, archivo, hoja, N° SAP, orden SAP, transformador, fecha y GPS de captura, responsables y la lista de verificación de 19 puntos. Se agregan reportes nuevos arrastrando los PDF (lo repetido se omite por folio + CCM) y se forma el histórico y la tendencia por bus.
