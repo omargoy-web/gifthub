@@ -50,30 +50,50 @@ function mapeoFromDeck(){const d=JSON.parse($('#mapeo').textContent);return{...d
 function mapeoInit(saved){MAPEO=saved&&saved.subs&&saved.tabla?saved:mapeoFromDeck()}
 function mapeoSave(){DB.mapeo=MAPEO;save()}
 const CATALOG=()=>{const m=new Map();for(const s of Object.values(MAPEO.subs))for(const t of s.tiles)if(!m.has(t.k))m.set(t.k,t.l);return[...m].map(([k,l])=>({k,l})).sort((a,b)=>a.l.localeCompare(b.l,'es'))};
-function nextFree(tiles){const used=new Set(tiles.map(t=>t.col+','+t.row));for(let r=0;r<12;r++)for(let c=0;c<6;c++)if(!used.has(c+','+r))return{col:c,row:r};return{col:0,row:12}}
+function nextFree(tiles){ // coloca el nuevo elemento en la siguiente celda libre, con la misma retícula que la presentación
+  if(!tiles.length)return{gx:5400000,gy:1770000,gw:952139,gh:685862};
+  const med=a=>{const v=a.slice().sort((x,y)=>x-y);return v[Math.floor(v.length/2)]},gw=med(tiles.map(t=>t.gw)),gh=med(tiles.map(t=>t.gh));
+  const x0=Math.min(...tiles.map(t=>t.gx)),xs=[...new Set(tiles.map(t=>Math.round(t.gx/200000)))].sort((a,b)=>a-b),stepX=1044000,cols=Math.max(1,Math.round((Math.max(...tiles.map(t=>t.gx))-x0)/stepX)+1);
+  const rows=[];tiles.slice().sort((a,b)=>a.gy-b.gy).forEach(t=>{const r=rows.find(r=>Math.abs(r.y-t.gy)<gh*0.4);if(r)r.t.push(t);else rows.push({y:t.gy,t:[t]})});
+  const last=rows[rows.length-1];
+  if(last.t.length<cols){const lx=Math.max(...last.t.map(t=>t.gx));return{gx:lx+stepX,gy:last.y,gw,gh}}
+  return{gx:x0,gy:last.y+gh+43000,gw,gh}}
 
 /* ---------- Render: tablero de una subestación (como la presentación) ---------- */
 const xyTxt=t=>t.x!=null&&t.y!=null?`[ ${t.x} / ${t.y} ]`:t.pct!=null?`[ ${t.pct} % ]`:t.x!=null?`[ ${t.x} ]`:'';
+function obsRecorrido(id){ // observaciones y comentarios del último recorrido SICM (mensual y semestral)
+  const a=IX.subs.get(seKey(id)),out=[];if(!a)return out;
+  for(const ver of ['M','S']){const m=a.recs.filter(x=>x.r.ver===ver).pop();if(!m)continue;const r=m.r,items=[];
+    for(const [k,t] of Object.entries(r.obs_sec||{}))if(t)items.push({sec:SEC_N[k]||k,t});
+    if(r.comentarios)items.push({sec:'Comentarios del recorrido',t:r.comentarios});
+    if(r.obs_gen)items.push({sec:'Observaciones generales',t:r.obs_gen});
+    const h=r.hvac;if(h&&(h.t!=null||h.hr!=null||h.pp!=null))items.push({sec:'Lecturas HVAC',t:[h.t!=null?h.t+' °C':'',h.hr!=null?h.hr+' % HR':'',h.pp!=null?h.pp+'" H₂O':''].filter(Boolean).join(' · ')});
+    out.push({ver,ts:m.ts,folio:m.folio,archivo:r.archivo,operario:r.operario,ing:r.ing_sector,est:m.e.est,ic:m.e.ic,items,nc:m.e.bad.length,crit:m.e.critNC.length})}
+  return out.sort((x,y)=>y.ts-x.ts)}
 function boardHtml(id,o={}){
   const s=MAPEO.subs[id];if(!s)return`<div class="mb"><div class="mbH"><span class="mbN">${esc(id)}</span></div><div class="muted" style="padding:14px">Sin tablero capturado para esta subestación. Agrega elementos con «＋ Elemento».</div></div>`;
   const mode=o.mode||MAP.mode,der=derivedFor(id),sum=seSummary(id,mode);
-  const rows=Math.max(1,...s.tiles.map(t=>t.row+1));
-  const tiles=s.tiles.map(t=>{const st=tileState(id,t,mode,der),why=st.d&&st.d.nc.length?'Recorrido: '+st.d.nc.map(x=>x.txt).slice(0,4).join(' · '):st.rec==='V'?'Recorrido: sin no conformidades':'Sin concepto de recorrido asignado';
+  // retícula original de la presentación, recortada a los elementos (sin espacios en blanco)
+  const T=s.tiles,x0=Math.min(...T.map(t=>t.gx)),y0=Math.min(...T.map(t=>t.gy)),x1=Math.max(...T.map(t=>t.gx+t.gw)),y1=Math.max(...T.map(t=>t.gy+t.gh)),W=x1-x0,H=y1-y0;
+  const tiles=T.map(t=>{const st=tileState(id,t,mode,der),why=st.d&&st.d.nc.length?'Recorrido: '+st.d.nc.map(x=>x.txt).slice(0,4).join(' · '):st.rec==='V'?'Recorrido: sin no conformidades':'Sin concepto de recorrido asignado';
     const hint=mode!=='man'&&st.rec&&st.rec!=='V'?`<i class="mi" title="${esc(why)}">▲ ${st.d.nc.length}</i>`:'';
-    return`<div class="mt ${st.eff}${o.static?'':' ed'}" ${o.static?'':`data-k="${esc(t.k)}"`} style="grid-column:${t.col+1};grid-row:${t.row+1}" title="${esc(t.l+' · '+MAP_NAME[st.eff]+(st.man!==st.eff?' (mapeo: '+MAP_NAME[st.man].split(' ·')[0]+')':'')+'\n'+why+(t.nota?'\nNota: '+t.nota:''))}"><span class="ml">${esc(t.l)}</span><b class="mv">${esc(xyTxt(t))}</b>${hint}${t.nota?'<i class="mn">✎</i>':''}</div>`}).join('');
-  const obs=(s.obs||[]);const ofree=mode==='man'?[]:der.free;
-  const obsRows=obs.map((x,i)=>`<tr><td class="n">${i+1}</td><td>${esc(x)}</td></tr>`).join('')+ofree.slice(0,6).map((f,i)=>`<tr class="rc"><td class="n">R${i+1}</td><td>${f.crit?'<b>[crít.]</b> ':''}${esc(f.txt)} <span class="muted">(recorrido ${f.ver==='S'?'semestral':'mensual'})</span></td></tr>`).join('');
-  const fch=der.fechas;
+    return`<div class="mt ${st.eff}${o.static?'':' ed'}" ${o.static?'':`data-k="${esc(t.k)}"`} style="left:${(100*(t.gx-x0)/W).toFixed(3)}%;top:${(100*(t.gy-y0)/H).toFixed(3)}%;width:${(100*t.gw/W).toFixed(3)}%;height:${(100*t.gh/H).toFixed(3)}%" title="${esc(t.l+' · '+MAP_NAME[st.eff]+(st.man!==st.eff?' (mapeo: '+MAP_NAME[st.man].split(' ·')[0]+')':'')+'\n'+why+(t.nota?'\nNota: '+t.nota:''))}"><span class="ml">${esc(t.l)}</span><b class="mv">${esc(xyTxt(t))}</b>${hint}${t.nota?'<i class="mn">✎</i>':''}</div>`}).join('');
+  const rec=mode==='man'?[]:obsRecorrido(id),ofree=mode==='man'?[]:der.free;
+  const recHtml=rec.length?rec.map(r=>`<div class="mro"><div class="mrh"><b>Recorrido ${r.ver==='S'?'semestral':'mensual'} SICM · ${fDate(r.ts)}</b> <span class="muted">${esc(fshort(r.folio))} · ${r.nc} no conformes${r.crit?` (${r.crit} críticos)`:''}${r.operario?' · '+esc(r.operario):''}</span>${o.static?'':` <button class="btn sm" data-open="${esc(id)}">Abrir expediente del recorrido ›</button>`}</div>
+      ${r.items.length?`<table>${r.items.map(i=>`<tr><td class="ms">${esc(i.sec)}</td><td>${esc(i.t)}</td></tr>`).join('')}</table>`:'<div class="muted small">Sin comentarios ni observaciones capturados en este recorrido.</div>'}</div>`).join(''):`<div class="muted small">${mode==='man'?'Fuente «solo mapeo»: sin recorridos.':'Sin recorridos de inspección registrados para esta subestación.'}</div>`;
+  const freeHtml=ofree.length?`<div class="mro"><div class="mrh"><b>No conformidades del recorrido sin elemento asignado en el mapeo (${ofree.length})</b></div><table>${ofree.slice(0,12).map(f=>`<tr><td class="ms">${f.ver==='S'?'Semestral':'Mensual'} · ${esc(SEC_N[f.sec]||f.sec)}</td><td>${f.crit?'<b>[crít.]</b> ':''}${esc(f.txt)}</td></tr>`).join('')}</table></div>`:'';
+  const fch=der.fechas,mp=(s.obs||[]);
   return`<div class="mb"><div class="mbH"><span class="mbS">S${esc(s.sector)}</span><span class="mbT">ESTATUS DEL SECTOR ${esc(s.sector)}</span><span class="mbN">${esc(id)} – ${esc(s.name)}</span>
     <span class="mbC"><i style="background:${MAP_HEX.V}"></i>${sum.V}<i style="background:${MAP_HEX.A}"></i>${sum.A}<i style="background:${MAP_HEX.R}"></i>${sum.R}</span></div>
-    <div class="mbB"><div class="mbO"><div class="mbOt">OBSERVACIONES</div><table>${obsRows||'<tr><td class="muted" colspan="2">Sin observaciones</td></tr>'}</table>
-      <div class="mbF">${fch.M||fch.S?`Recorrido considerado: ${fch.M?'mensual '+fDate(fch.M):''}${fch.M&&fch.S?' · ':''}${fch.S?'semestral '+fDate(fch.S):''}`:'Sin recorridos de inspección para esta subestación'}<br>Mapeo al ${esc(MAPEO.editado&&MAPEO.editado[id]?fDate(MAPEO.editado[id]):fmtFechaIso(MAPEO.fecha))}</div></div>
-      <div class="mbG" style="grid-template-rows:repeat(${rows},minmax(66px,auto))">${tiles}</div></div></div>`}
+    <div class="mbB"><div class="mbG" style="aspect-ratio:${W}/${H}">${tiles}</div></div>
+    <div class="mbX"><div class="mbOt">OBSERVACIONES DEL ÚLTIMO RECORRIDO SICM${fch.M||fch.S?` <span>(${fch.M?'mensual '+fDate(fch.M):''}${fch.M&&fch.S?' · ':''}${fch.S?'semestral '+fDate(fch.S):''})</span>`:''}</div>${recHtml}${freeHtml}
+      ${mp.length?`<details class="mpo"><summary>Observaciones del mapeo base (${esc(fmtFechaIso(MAPEO.fecha))}) · ${mp.length}</summary><table>${mp.map((x,i)=>`<tr><td class="n">${i+1}</td><td>${esc(x)}</td></tr>`).join('')}</table></details>`:''}
+      <div class="mbF">Mapeo editado al ${esc(MAPEO.editado&&MAPEO.editado[id]?fDate(MAPEO.editado[id]):fmtFechaIso(MAPEO.fecha))}</div></div></div>`}
 const fmtFechaIso=s=>{const t=parseTs(s);return Number.isFinite(t)?fDate(t):s};
 
 /* ---------- Render: distribución eléctrica simplificada ---------- */
 function distSvg(mode,o={}){
-  const G=MAPEO.gen,W=1180,H=420,chip=(id,x,y,w=64,h=22)=>{const s=MAPEO.subs[id],sm=seSummary(id,mode),c=s?sm.worst:'V';
+  const G=MAPEO.gen,W=1180,H=450,chip=(id,x,y,w=64,h=22)=>{const s=MAPEO.subs[id],sm=seSummary(id,mode),c=s?sm.worst:'V';
     return`<g class="dchip" ${o.static?'':`data-se="${esc(id)}"`}><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${s?MAP_HEX[c]:'#cfd6dc'}" stroke="#222" stroke-width="1"/><text x="${x+w/2}" y="${y+h/2+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#111">${esc(id)}</text></g>`};
   const fu=G.fuentes,gx=[360,540,720,900];
   const gens=fu.map((f,i)=>`<g><line x1="${gx[i]}" y1="100" x2="${gx[i]}" y2="170" stroke="#333" stroke-width="2"/><circle cx="${gx[i]}" cy="62" r="38" fill="${f.op?'#22C55E':'#cfd6dc'}" stroke="#222" stroke-width="2"/><text x="${gx[i]}" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#111">${esc(f.id)}</text><text x="${gx[i]}" y="66" text-anchor="middle" font-size="10" fill="#111">${f.op?'OP':'FS'}</text><text x="${gx[i]}" y="79" text-anchor="middle" font-size="10" fill="#111">${f.mva} MVA</text><text x="${gx[i]}" y="128" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text,#111)">${f.mw} MW</text></g>`).join('');
@@ -83,8 +103,8 @@ function distSvg(mode,o={}){
   return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-width:1180px" role="img" aria-label="Distribución eléctrica simplificada">
    <rect x="296" y="168" width="676" height="9" fill="#C62828"/><text x="982" y="177" font-size="11" font-weight="700" fill="#C62828">BAHÍA GIS 115 KV</text>${gens}
    ${sep('SEP-01',250)}${sep('SEP-02',700)}
-   <text x="320" y="292" font-size="10" fill="var(--muted,#555)">13.8 Y 4.16 KV · ${s1.length} subestaciones</text><text x="750" y="292" font-size="10" fill="var(--muted,#555)">34.5, 13.8 Y 4.16 KV · ${s2.length} subestaciones</text>
-   ${grid(s1,170,304)}${grid(s2,620,304)}
+   <text x="250" y="292" font-size="10" fill="var(--muted,#555)">13.8 Y 4.16 KV · ${s1.length} subestaciones</text><text x="700" y="292" font-size="10" fill="var(--muted,#555)">34.5, 13.8 Y 4.16 KV · ${s2.length} subestaciones</text>
+   ${grid(s1,250,304)}${grid(s2,700,304)}
    <rect x="8" y="20" width="236" height="330" rx="12" fill="none" stroke="var(--muted,#888)" stroke-dasharray="5 4"/><text x="20" y="40" font-size="11" font-weight="700" fill="var(--muted,#555)">SUMINISTRO EXTERNO</text>
    <circle cx="60" cy="86" r="26" fill="#22C55E" stroke="#222"/><text x="60" y="84" text-anchor="middle" font-size="10" font-weight="700" fill="#111">CFE</text><text x="60" y="96" text-anchor="middle" font-size="8" fill="#111">COMALCO</text>
    <line x1="60" y1="112" x2="60" y2="150" stroke="#333" stroke-width="2"/><text x="68" y="136" font-size="9" fill="var(--muted,#555)">34.5 KV</text>${chip('SE-30',28,152,64,22)}<text x="100" y="168" font-size="9" fill="var(--muted,#555)">Bocatoma</text>
@@ -105,14 +125,15 @@ function criterioHtml(){return`<div class="mcr"><div class="mcrB"><div class="mt
 const MAP_CSS=`.mb{border:1px solid var(--line,#ccc);border-radius:8px;overflow:hidden;background:var(--surface,#fff)}
 .mbH{display:flex;align-items:center;gap:0;background:#10312B;color:#fff;font-weight:700;flex-wrap:wrap}.mbS{background:#111;padding:8px 14px;font-size:17px}.mbT{padding:8px 16px;font-size:14px;letter-spacing:.3px}.mbN{padding:8px 16px;font-size:15px;background:#691C32;flex:1;min-width:200px}
 .mbC{display:flex;gap:4px;align-items:center;padding:0 12px;font-size:12px}.mbC i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-left:6px}
-.mbB{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:12px;padding:12px}@media(max-width:900px){.mbB{grid-template-columns:1fr}}
-.mbO table{width:100%;border-collapse:collapse;font-size:11.5px}.mbO td{border:1px solid var(--line,#ccc);padding:4px 6px;vertical-align:top}.mbO td.n{width:26px;text-align:center;font-weight:700}.mbO tr.rc td{background:rgba(188,149,92,.14)}
-.mbOt{font-weight:700;font-size:11px;background:#d9d9d9;color:#111;padding:4px 8px;border:1px solid var(--line,#ccc);border-bottom:0}.mbF{font-size:10.5px;color:var(--muted,#555);margin-top:6px}
-.mbG{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-content:start}
-.mt{position:relative;border:1px solid #111;border-radius:10px;padding:5px 6px;text-align:center;color:#000;display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:62px;box-shadow:0 2px 3px rgba(0,0,0,.25)}
-.mt.V{background:${MAP_HEX.V}}.mt.A{background:${MAP_HEX.A}}.mt.R{background:${MAP_HEX.R};color:#000}.mt.ed{cursor:pointer}.mt.ed:hover{outline:3px solid var(--dorado,#BC955C)}
-.mt .ml{font-size:9.5px;font-weight:700;line-height:1.15;text-transform:uppercase}.mt .mv{font-size:12px;font-weight:800}.mt .mi{position:absolute;top:2px;right:5px;font-size:9px;font-style:normal;font-weight:700;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:0 4px}.mt .mn{position:absolute;bottom:2px;right:5px;font-size:9px;font-style:normal}
-.mcr{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.mcrB{display:flex;gap:10px;align-items:center}.mcrB .mt{width:110px;flex:none}
+.mbB{padding:12px}.mbG{position:relative;width:100%;max-width:940px;margin:0 auto;container-type:inline-size}
+.mbX{padding:0 12px 12px}.mbOt{font-weight:700;font-size:12px;background:#d9d9d9;color:#111;padding:5px 10px;border:1px solid var(--line,#ccc)}.mbOt span{font-weight:400}
+.mro{border:1px solid var(--line,#ccc);border-top:0;padding:6px 10px}.mrh{font-size:12px;margin-bottom:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}.mro table,.mpo table{width:100%;border-collapse:collapse;font-size:11.5px}.mro td,.mpo td{border:1px solid var(--line,#ccc);padding:3px 6px;vertical-align:top}.mro td.ms{width:190px;font-weight:700;background:rgba(0,0,0,.04)}.mpo{margin-top:8px;font-size:12px}.mpo td.n{width:26px;text-align:center;font-weight:700}
+.mbF{font-size:10.5px;color:var(--muted,#555);margin-top:6px}
+.mt{position:absolute;box-sizing:border-box;border:1px solid #111;border-radius:10px;padding:2px 4px;text-align:center;color:#000;display:flex;flex-direction:column;justify-content:center;gap:2px;box-shadow:0 2px 3px rgba(0,0,0,.25);overflow:hidden}
+.mt.V{background:${MAP_HEX.V}}.mt.A{background:${MAP_HEX.A}}.mt.R{background:${MAP_HEX.R};color:#000}.mt.ed{cursor:pointer}.mt.ed:hover{outline:3px solid var(--dorado,#BC955C);z-index:2}
+.mt .ml{font-size:max(8px,1.32cqw);font-weight:700;line-height:1.12;text-transform:uppercase}.mt .mv{font-size:max(9px,1.5cqw);font-weight:800}.mt .mi{position:absolute;top:2px;right:5px;font-size:9px;font-style:normal;font-weight:700;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:0 4px}.mt .mn{position:absolute;bottom:2px;right:5px;font-size:9px;font-style:normal}
+.mcrB .mt{position:relative;width:110px;height:62px;flex:none}.mcrB .mt .ml{font-size:9.5px}.mcrB .mt .mv{font-size:12px}
+.mcr{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}.mcrB{display:flex;gap:10px;align-items:center}
 .mtab{width:100%;border-collapse:collapse;font-size:12px}.mtab th{background:#8dc63f;color:#111;padding:4px 6px;border:1px solid var(--line,#999)}.mtab td{border:1px solid var(--line,#ccc);padding:3px 6px}.mtab td.n,.mtab td.c{text-align:center}.mtab tr.hrow{cursor:pointer}.mcn{display:inline-block;padding:1px 8px;border-radius:10px;color:#000;font-weight:700;border:1px solid #111}
 .mdist{display:grid;grid-template-columns:1fr 250px;gap:14px}@media(max-width:1000px){.mdist{grid-template-columns:1fr}}.mgen{background:#22C55E;border:2px solid #111;padding:10px;font-weight:800;font-size:15px;color:#000}.mgen b{font-size:34px;font-weight:800}.mnotes{font-size:11.5px;padding-left:16px}.dchip{cursor:pointer}.dchip:hover rect{stroke:#BC955C;stroke-width:3}`;
 
@@ -142,6 +163,7 @@ function renderMap(){
   // tablero
   $('#mBoard').innerHTML=boardHtml(MAP.se);
   $$('#mBoard .mt.ed').forEach(t=>t.addEventListener('click',()=>openTileEditor(MAP.se,t.dataset.k)));
+  $$('#mBoard [data-open]').forEach(b=>b.addEventListener('click',()=>{S.sub=seKey(b.dataset.open);fillSubSel();switchView('sub')}));
   const i=ids.indexOf(MAP.se);$('#mPrev').disabled=i<=0;$('#mNext').disabled=i<0||i>=ids.length-1;
   const cat=CATALOG().filter(c=>!(MAPEO.subs[MAP.se]||{tiles:[]}).tiles.some(t=>t.k===c.k));
   opts($('#mAddSel'),cat.map(c=>[c.k,c.l]),cat[0]&&cat[0].k);
@@ -173,7 +195,7 @@ function saveTile(){
 function removeTile(){const {se,k}=MAP.edit||{};if(!se||!confirm('¿Quitar este elemento del tablero de la subestación?'))return;const s=MAPEO.subs[se];s.tiles=s.tiles.filter(t=>t.k!==k);snapshot(se,'Elemento quitado');mapeoSave();closeEditor();renderMap()}
 function addTile(){const se=MAP.se,k=$('#mAddSel').value;if(!k)return;const l=(CATALOG().find(c=>c.k===k)||{}).l||k;
   const s=MAPEO.subs[se]||(MAPEO.subs[se]={sector:(MAPEO.tabla.find(t=>t.id===se)||{}).sector,name:(MAPEO.tabla.find(t=>t.id===se)||{}).planta||se,tiles:[],obs:[]});
-  const p=nextFree(s.tiles);s.tiles.push({k,l,c:'V',col:p.col,row:p.row});snapshot(se,'Elemento agregado: '+l);mapeoSave();renderMap();openTileEditor(se,k)}
+  const p=nextFree(s.tiles);s.tiles.push({k,l,c:'V',gx:p.gx,gy:p.gy,gw:p.gw,gh:p.gh});snapshot(se,'Elemento agregado: '+l);mapeoSave();renderMap();openTileEditor(se,k)}
 function saveObs(){const se=MAP.se,s=MAPEO.subs[se];if(!s){toast('Agrega primero un elemento a esta subestación');return}
   s.obs=$('#mObsTxt').value.split('\n').map(x=>x.trim()).filter(Boolean);snapshot(se,'Observaciones actualizadas');mapeoSave();renderMap();toast('Observaciones guardadas')}
 function saveGen(ev){const root=ev.target.parentElement,G=MAPEO.gen;G.fuentes.forEach((f,i)=>{const v=root.querySelector(`.gMw[data-i="${i}"]`);if(v)f.mw=+v.value||0;const o=root.querySelector(`.gOp[data-i="${i}"]`);if(o)f.op=o.checked});G.al=root.querySelector('.gAl').value||G.al;G.notas=root.querySelector('.gNotas').value.split('\n').map(x=>x.trim()).filter(Boolean);mapeoSave();renderMap();renderGenEditor();toast('Generación actualizada')}
