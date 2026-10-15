@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Estado · Estado aparente de subestaciones y soloaires</title>
+<style>
+/*__CORE_CSS__*/
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16)}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.grid2e{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;align-items:start}.grid3 .panel{margin-bottom:0}
+.hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.big{font-size:30px;font-weight:700;line-height:1.1;margin-top:4px;font-variant-numeric:tabular-nums}.big small{font-size:12px;font-weight:400;color:var(--muted)}
+.tw table td{vertical-align:top}.sbar{display:grid;grid-template-columns:34px 1fr 38px auto;gap:8px;align-items:center;padding:3px 0;cursor:pointer;font-size:12.5px}.sbar:hover{background:var(--surface2)}.sbar b{font-size:12px}.sbar .v{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.sbar .d{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.tr{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}.fl{height:100%;border-radius:6px}
+.zbar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}.zbar i{display:block;font-style:normal;font-size:11px;color:#fff;text-align:center;line-height:22px;min-width:0;overflow:hidden}
+.prow{display:grid;grid-template-columns:200px 1fr 120px 38px;gap:8px;align-items:center;font-size:12.5px;padding:3px 0}@media(max-width:700px){.prow{grid-template-columns:110px 1fr 90px 34px}}
+.prow .pt{position:relative;height:16px;background:var(--surface2);border-radius:4px;border:1px solid var(--line)}.prow .pf{height:100%;background:var(--guinda,#691C32);background:linear-gradient(90deg,#8d2a45,#BC4A6A);border-radius:3px}.prow .pc{position:absolute;top:-3px;width:8px;height:8px;margin-left:-4px;background:var(--dorado);border-radius:50%;border:1px solid var(--bg)}.prow .pa{color:var(--dorado);font-weight:700;text-align:right}.prow .pv{text-align:right;font-size:11.5px;color:var(--muted)}
+.mini{height:8px;background:var(--surface2);border-radius:4px;min-width:70px}.mini i{display:block;height:100%;background:var(--warn-fill);border-radius:4px}
+table.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:12.5px}table.heat th{font-size:11px;text-align:center;color:var(--muted);padding:3px 4px}table.heat td{padding:5px 6px;border-radius:4px;white-space:nowrap}table.heat td.hm{text-align:center;min-width:46px;font-variant-numeric:tabular-nums}table.heat tr.hrow{cursor:pointer}table.heat tr.hrow:hover td:first-child{outline:1px solid var(--dorado)}
+tr.hrow{cursor:pointer}tr.hrow:hover{background:var(--surface2)}
+.msec{margin-bottom:10px}.msec h4{margin:0 0 4px;font-size:12px;color:var(--dorado)}.mpl{display:inline-block;vertical-align:top;margin:0 12px 8px 0;max-width:210px}.mpt{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mcells{display:flex;flex-wrap:wrap;gap:2px}
+.mc{width:13px;height:13px;border-radius:3px;display:inline-block;cursor:pointer;background:var(--ok)}.mc.s1{background:var(--warn-fill)}.mc.s2{background:var(--crit)}.mc.s3{background:var(--oos)}.mc:hover{outline:2px solid var(--text)}
+.rd{display:grid;grid-template-columns:minmax(220px,380px) 1fr;gap:12px;align-items:center}@media(max-width:800px){.rd{grid-template-columns:1fr}}
+.sl{display:grid;grid-template-columns:150px 1fr 28px auto;gap:6px;align-items:center;font-size:12px;padding:2px 0}.sl .tr{height:9px}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}.chk div{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:6px 10px;font-size:12.5px;display:flex;justify-content:space-between;gap:8px;background:var(--surface)}.chk .ok{border-left-color:var(--ok)}.chk .bad{border-left-color:var(--crit)}.chk .na{color:var(--muted)}
+td.c{text-align:center;font-weight:700}td.c.ok{color:var(--ok)}td.c.bad{color:var(--crit)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.seg button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:3px 10px;font-size:12px;cursor:pointer}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button.on{background:var(--dorado);color:#000;font-weight:700}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}.capgrid label,.cfgg label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}.cfgg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.capgrid input,.capgrid select,.cfgg input,.stg select,table input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+tr.edited td{background:color-mix(in srgb,var(--dorado) 14%,transparent)}
+ul.alerts li.al{cursor:pointer;padding:4px 6px;border-radius:6px}ul.alerts li.al:hover{background:var(--surface2)}
+table.kv{width:100%}table.kv td{padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}td.bad{color:var(--crit);font-weight:700}
+@media print{header.top,.tabs,.bar,.statusbar,#btnPrint,.zb,.btn{display:none!important}.view{display:none!important}#v-sub{display:block!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Estado · Estado aparente de subestaciones y soloaires</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · 4128-11422-SICM-PO-002-6 / 4128-11422-IT-001 · inspección visual ponderada · NOM-001-SEDE · NFPA 70E · NOM-029-STPS · IEEE 1635 · ASHRAE</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoadDir" title="Carpeta completa o ZIP con reportes PDF">📁 Carpeta / ZIP</button>
+  <button class="btn ghost" id="btnLoad">⬆ Reportes PDF / JSON</button>
+  <button class="btn ghost" id="btnSummary">⬇ Resumen (.csv)</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="pan" aria-selected="true">1 · Panorama</button>
+  <button role="tab" data-view="sub" aria-selected="false">2 · Subestaciones</button>
+  <button role="tab" data-view="eas" aria-selected="false">3 · Soloaires</button>
+  <button role="tab" data-view="trend" aria-selected="false">4 · Histórico y tendencias</button>
+  <button role="tab" data-view="cfg" aria-selected="false">5 · Ponderación</button>
+  <button role="tab" data-view="cal" aria-selected="false">6 · Calidad y trazabilidad</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos y carga</button>
+</nav>
+<main>
+<!-- ============ 1 · PANORAMA ============ -->
+<section id="v-pan" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar"><label>Sector<select id="fSector"></select></label><label>Alcance<select id="fFmt"></select></label><span class="sp"></span><span class="small muted" id="fCount"></span></div>
+  <div class="infobox">Lectura rápida: <b>verde</b> = sin deficiencias · <b>ámbar</b> = deficiencias menores · <b>rojo</b> = deficiencias ponderadas altas o puntos críticos. El número de cada celda es el <b>IC</b> (índice de deficiencia ponderado, 0 = perfecto); «·» = sección sin puntos no conformes; «—» = sin puntos aplicables. Clic en una fila para abrir el expediente.</div>
+  <div class="grid2">
+    <div>
+      <div class="panel"><h2>Mapa de calor · deficiencias por subestación y sección (inspección más reciente)</h2><div class="tw" style="max-height:640px"><table class="heat" id="heatSub"></table></div></div>
+      <div class="panel"><h2>Pareto de deficiencias ponderadas por categoría <span class="seg" id="parTog" style="margin-left:8px"><button data-p="ALL">Todo</button><button data-p="SUB">Subestaciones</button><button data-p="EAS">Soloaires</button></span></h2>
+        <div class="small muted" style="margin-bottom:6px">Barra = puntos (peso de cada no conformidad; ×críticos). Punto dorado y % = acumulado. Pasa el cursor para ver los conceptos principales.</div><div id="pareto"></div></div>
+      <div class="panel"><h2>Conceptos no conformes más repetidos (subestaciones)</h2><div class="tw" style="max-height:340px"><table id="topItems"></table></div></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Salud por sector (100 = sin deficiencias) · clic filtra</h2><div id="secBars"></div></div>
+      <div class="panel"><h2>Puntos críticos abiertos</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel"><h2>Mosaico de soloaires <span class="small muted">(cada cuadro = un soloaire)</span></h2>
+        <div class="legend"><span><i style="background:var(--ok)"></i>Satisfactoria</span><span><i style="background:var(--warn-fill)"></i>Condicionada</span><span><i style="background:var(--crit)"></i>Deficiente</span><span><i style="background:var(--oos)"></i>Fuera de servicio</span></div>
+        <div id="mosaic"></div></div>
+    </div>
+  </div>
+</section>
+<!-- ============ 2 · SUBESTACIÓN ============ -->
+<section id="v-sub" class="view" hidden>
+  <div class="bar"><label>Subestación<select class="selSub" id="subSel"></select></label><span class="sp"></span>
+    <button class="btn sm" id="btnSubJson">⬇ Expediente (.json)</button><button class="btn sm" id="btnSubHtml">⬇ Reporte (.html)</button><button class="btn sm" id="btnPrint">🖶 Imprimir</button></div>
+  <div id="subBody"></div>
+</section>
+<!-- ============ 3 · SOLOAIRES ============ -->
+<section id="v-eas" class="view" hidden>
+  <div class="kpis" id="eKpi"></div>
+  <div class="bar"><label>Sector<select id="eSector"></select></label><label>Planta<select id="ePlanta"></select></label><label>Estado<select id="eEst"></select></label><label>Buscar TAG / motor / SAP<input type="text" id="eQ" placeholder="EC-11013, ECM-…"></label><span class="sp"></span><span class="small muted" id="eCount"></span></div>
+  <div class="grid2e" style="grid-template-columns:minmax(0,2.2fr) minmax(320px,1fr)"><div class="panel"><h2>Soloaires · clic para ver el expediente</h2><div class="tw" style="max-height:640px"><table id="easTable"></table></div><button class="btn" id="eMore" hidden style="margin-top:8px"></button></div>
+  <div class="panel" id="easDetail"></div></div>
+</section>
+<!-- ============ 4 · TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="chartbox tall"><div class="ttl">Índice de deficiencia de las inspecciones de subestación por fecha (IC medio y máximo del día) · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cFleet"></canvas><div class="tip"></div></div>
+  <div class="infobox">Cada recorrido cubre subestaciones distintas en fechas distintas: la curva de la refinería es una <b>foto de cada jornada</b>, no la evolución de una misma subestación. La tendencia real aparece cuando una subestación se inspecciona de nuevo (≥ 2 inspecciones).</div>
+  <div class="bar"><label>Subestación<select class="selSub" id="trSel"></select></label></div>
+  <div class="stats" id="trStats"></div>
+  <div class="chartbox"><div class="ttl">Subestación seleccionada: IC total y por sección</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cSub"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Soloaires por recorrido: % con deficiencia, % deficientes y % fuera de servicio</div><canvas id="cEas"></canvas><div class="tip"></div></div>
+  <div class="panel"><h2>Reincidencia · puntos no conformes que se repiten en dos inspecciones consecutivas</h2><div class="tw" style="max-height:300px"><table id="reinTable"></table></div></div>
+  <div class="panel"><h2>Histórico de inspecciones <span class="small muted" id="hCount"></span></h2>
+    <div class="bar"><label>Buscar<input type="text" id="hQ" placeholder="activo, nombre o folio"></label><span class="sp"></span><button class="btn sm" id="btnHist">⬇ Histórico (.csv)</button><button class="btn sm" id="btnFind">⬇ Deficiencias (.csv)</button></div>
+    <div class="tw" style="max-height:420px"><table id="histTable"></table></div></div>
+</section>
+<!-- ============ 5 · PONDERACIÓN ============ -->
+<section id="v-cfg" class="view" hidden>
+  <div class="infobox"><b>Cómo se pondera.</b> Cada punto del checklist tiene un <b>peso 1–5</b> según su efecto en seguridad del personal y continuidad (los pesos de fábrica salen de reglas por tipo de concepto; ajústalos en el catálogo). Algunos puntos son <b>críticos</b>. IC de una sección = Σ(peso × no conforme) ÷ Σ(peso aplicable) × 100; el IC de la subestación pondera las secciones con los pesos de abajo. Un punto crítico en NC multiplica su peso y, con el número configurado, fuerza <b>DEFICIENTE</b>. Los «N/A» no cuentan ni a favor ni en contra. <b>Estos valores son una propuesta de ingeniería para validar con tu criterio / normatividad interna: el formato PDF no define pesos.</b></div>
+  <div class="grid3">
+    <div class="panel"><h2>Peso de cada sección en la subestación</h2><div class="cfgg" id="cfgSec"></div></div>
+    <div class="panel"><h2>Umbrales y soloaires</h2><div class="cfgg" id="cfgNum"></div></div>
+  </div>
+  <div style="margin:10px 0;display:flex;gap:8px"><button class="btn pri" id="btnApplyCfg">Aplicar y recalcular</button><button class="btn" id="btnResetCfg">↺ Valores de fábrica</button></div>
+  <div class="panel"><h2>Catálogo de conceptos (pesos editables; filas doradas = ajustadas por ti)</h2><div class="tw" style="max-height:560px"><table id="catTable"></table></div>
+    <p class="small muted">Semestral (Sí/No): «Sí» es lo esperado salvo en conceptos de falla/bypass/filtración (invertidos). Un «No» en conceptos condicionales (aceite, TR secos, candados de mantenimiento, ventiladores, etc.) se toma como no aplica, porque el formato no distingue «No» de «No aplica».</p></div>
+</section>
+<!-- ============ 6 · CALIDAD ============ -->
+<section id="v-cal" class="view" hidden>
+  <div class="panel"><h2>Reconciliación con el resumen de cada PDF</h2><div class="tw" style="max-height:300px"><table id="recTable"></table></div>
+    <p class="small muted">El dictamen del formato (satisfactoria / condicionada / deficiente) proviene del resumen del PDF; aquí se compara contra la ponderación. «Total distinto» = el PDF declara más hojas de las que se pudieron leer.</p></div>
+  <div class="panel"><h2>Avisos de calidad de datos <span class="small muted" id="qCount"></span></h2>
+    <p class="small muted">Se conserva el dato como se capturó; lo dudoso se marca. Clic en una fila para abrir el expediente.</p>
+    <div id="qSum" class="stats"></div>
+    <div class="bar"><label>Tipo<select id="qTipo"></select></label><span class="sp"></span><button class="btn sm" id="btnQCsv">⬇ CSV</button></div>
+    <div class="tw" style="max-height:440px"><table id="qTable"></table></div></div>
+</section>
+<!-- ============ 7 · DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de reportes">
+        <b>Actualizar base: arrastra una carpeta completa (o un .zip) con los reportes PDF de «Estado aparente», o archivos .pdf / .json sueltos</b><br>
+        <span class="muted">Soloaires (4128-11422-IT-001) y subestaciones (PO-002-6, mensual y semestral) · se agregan sin borrar lo anterior · los duplicados (mismo folio y activo, p. ej. copias «(1)») se omiten · se guardan en este navegador</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="btnDir">📁 Elegir carpeta</button><button class="btn" id="btnZip">🗜 Elegir ZIP</button><button class="btn" id="btnPick">📄 Elegir archivos PDF / JSON</button></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden><input type="file" id="dirIn" webkitdirectory directory multiple hidden><input type="file" id="zipIn" accept=".zip,application/zip" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <progress id="stProg" hidden style="width:100%"></progress>
+        <div class="tw" style="max-height:320px"><table id="stTable"></table></div><p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
+        <p class="small muted">Verifica que «Registros / total del PDF» coincida: el lector avisa cuando el PDF declara más hojas de las que pudo leer.</p></div>
+      <div class="panel" style="margin-top:12px"><h2>Captura manual de un soloaire</h2><div id="capForm"></div></div>
+      <div class="panel"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-estado/v1</code></h2><pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnExport2">⬇ Exportar base (.json)</button><button class="btn" id="btnSum2">⬇ Resumen (.csv)</button><button class="btn" id="btnHist2">⬇ Histórico (.csv)</button><button class="btn" id="btnFind2">⬇ Deficiencias (.csv)</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos incluidos</button><button class="btn" id="btnWipe">🗑 Vaciar base</button></div></div>
+      <div class="panel small"><h3>Trazabilidad</h3>Cada deficiencia conserva su folio, archivo fuente, fecha y GPS de captura, sección y número de punto, y los responsables firmantes. Los valores calculados (IC, estado, reincidencia) se derivan de lo capturado y de los pesos de la pestaña «Ponderación», que puedes revisar y cambiar.</div>
+      <div class="panel small"><h3>Seguridad y modularidad</h3>Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). Comparte núcleo con los demás módulos de la suite; cada módulo guarda su base por separado.</div>
+    </div>
+  </div>
+</section>
+</main>
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos o la carpeta para cargarlos</div>
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>

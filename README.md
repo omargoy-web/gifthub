@@ -292,6 +292,25 @@ Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anex
 
 **Cálculo:** % desbalance = desviación máxima respecto al promedio ÷ promedio (NEMA MG-1), recalculado en fase-neutro y en línea-línea y comparado con lo reportado. Estado por bus: ≤ 3 % satisfactoria, 3–5 % condicionada, > 5 % deficiente (límites editables; 3 % = ANSI C84.1 / IEEE 1159, 5 % = NEMA MG-1). Voltajes en cero = «sin medición» (no 0 %). Fase-neutro desbalanceada con línea-línea equilibrada se marca como condicionada (neutro, cargas monofásicas o medidor). Los criterios son una propuesta: el formato no trae criterio de aceptación.
 
+## Módulo Estado aparente (`app/sicm-estado.html`)
+
+Lee los reportes PDF de **inspección visual «Estado aparente»**: soloaires (`…-ELE-EAS-…`, 4128-11422-IT-001) y subestaciones (`…-ELE-SUB-…`, PO-002-6, mensual de 58 puntos C/NC/N/A y semestral de 121 puntos Sí/No). Cada punto se pondera para obtener un **índice de deficiencia (IC, 0–100)** por sección, subestación, soloaire, sector y refinería.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (✓ → opción más cercana) | `app/estado/parse.js` |
+| Ponderación, IC, estados, reincidencia, calidad | `app/estado/model.js` |
+| Ingesta (PDF/carpeta/ZIP/JSON), captura manual, exportaciones | `app/estado/ingest.js` |
+| Vistas y arranque | `app/estado/views.js`, `init.js`, `template.html` |
+| Datos incluidos (108 PDF, 640 inspecciones tras quitar 27 duplicados) | `data/estado/seed_real_eas.json` ← `node scripts/extract_estado.js <dir EAS> <dir SUB> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_estado.py` |
+
+**Gráficos:** mapa de calor subestación × 7 secciones, salud por sector, Pareto ponderado por categoría, mosaico de soloaires, radar por subestación, tendencias y reincidencia.
+
+**Ponderación (propuesta editable, pestaña 5):** peso 1–5 por concepto (reglas por tipo: protecciones, UPS/baterías, puertas de emergencia, contra incendio, tierras = altos; señalización/limpieza = bajos) y marca de **crítico**; IC de sección = Σ(peso·NC) ÷ Σ(peso aplicable); la subestación pondera secciones (interior 25, baterías 20, exterior/HVAC 15, tierras/LOTO 10, hermeticidad 5). IC ≥ 8 → condicionada, ≥ 20 → deficiente; un crítico en NC fuerza al menos condicionada y 3 fuerzan deficiente. Soloaire: sin guarda/motor (crítico), sin banda, no disponible, desbalance de V/I, sobrecorriente y observaciones de campo. El PDF no define pesos: son criterio del autor, a validar.
+
+**Límites:** en semestral el formato no distingue «No» de «No aplica» (se trata como N/A en conceptos condicionales); formatos en borrador (menos de la mitad respondido) se marcan «Sin evaluar»; un soloaire = un motor (TAG + TAG de motor).
+
 ## Módulo Motores (`app/sicm-motores.html`)
 
 Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.
