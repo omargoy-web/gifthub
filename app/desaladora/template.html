@@ -12,7 +12,7 @@
 body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
 .grid2e{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
 .hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.dgrp{margin-bottom:14px}.dgrp h3{margin:0 0 8px;font-size:14px;color:var(--dorado)}.dgrp .cards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.pgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr);gap:14px;align-items:start}@media(max-width:1100px){.pgrid{grid-template-columns:1fr}}#bitacora{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}.acc{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:6px 10px;margin-bottom:6px;background:var(--surface)}.acc .ah{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.acc .ab{margin-left:auto;display:flex;gap:4px}.acc button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px}.acc button:hover{color:var(--text)}.dgrp{margin-bottom:14px}.dgrp h3{margin:0 0 8px;font-size:14px;color:var(--dorado)}.dgrp .cards{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 .cvr{display:grid;gap:2px;align-items:center;font-size:10.5px}.cvr .cu{font-size:11px;white-space:nowrap}.cvr .cd{font-size:9px;color:var(--muted);white-space:nowrap;overflow:visible}
 .cc{display:block;height:15px;border-radius:2px;background:var(--surface2);cursor:pointer}.cc.l0{background:var(--ok)}.cc.l1{background:var(--warn-fill)}.cc.l2{background:var(--crit)}.cc.o{background:var(--oos)}.cc.n{background:transparent;border:1px dashed var(--line)}.cc:hover{outline:2px solid var(--text)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
@@ -35,23 +35,35 @@ table.kv{width:100%}table.kv td{word-break:break-word;padding:3px 6px;border-bot
   <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
   <button class="btn ghost" id="btnLoadDir" title="Carpeta completa o ZIP con reportes PDF">📁 Carpeta / ZIP</button>
   <button class="btn ghost" id="btnLoad">⬆ Reportes PDF / JSON</button>
-  <button class="btn ghost" id="btnPlanCsv">⬇ Plan de acción (.csv)</button>
 </header>
 <nav class="tabs" role="tablist" aria-label="Módulos">
   <button role="tab" data-view="pan" aria-selected="true">1 · Panorama</button>
   <button role="tab" data-view="uni" aria-selected="false">2 · Expediente por unidad</button>
   <button role="tab" data-view="cmp" aria-selected="false">3 · Comparativo</button>
   <button role="tab" data-view="tend" aria-selected="false">4 · Tendencias y proceso</button>
-  <button role="tab" data-view="plan" aria-selected="false">5 · Plan de acción</button>
-  <button role="tab" data-view="cfg" aria-selected="false">6 · Criterios</button>
-  <button role="tab" data-view="cal" aria-selected="false">7 · Calidad y trazabilidad</button>
-  <button role="tab" data-view="data" aria-selected="false">8 · Datos y carga</button>
+  <button role="tab" data-view="cfg" aria-selected="false">5 · Criterios</button>
+  <button role="tab" data-view="cal" aria-selected="false">6 · Calidad y trazabilidad</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos y carga</button>
 </nav>
 <main>
 <section id="v-pan" class="view">
   <div class="kpis" id="kpis"></div>
   <div class="infobox"><b>Cómo se lee.</b> Cada tarjeta es una unidad de potencia (PU). El estado compara cada lectura contra <b>el comportamiento habitual de esa misma unidad</b> (por paso SLATE), no contra un límite fijo: <span class="chip c0">● NORMAL</span> dentro de lo habitual · <span class="chip c1">▲ OBSERVAR</span> señal puntual o tendencia · <span class="chip c2">■ ATENDER</span> señal persistente o varias a la vez · <span class="chip c3">◆ SIN CARGA</span> lecturas en cero. <span class="small muted" id="panNote"></span></div>
-  <div id="cards"></div>
+  <div class="pgrid"><div id="cards"></div>
+  <aside class="panel" id="bitacora"><h2>Bitácora de intervenciones</h2>
+    <p class="small muted" style="margin:0 0 8px">Historial de cambio de aceite dieléctrico, reparación de electrodos y demás intervenciones. Se marcan en las gráficas y se mide su efecto (30 días antes vs después).</p>
+    <div class="capgrid" id="accForm">
+      <label>Fecha<input type="date" id="a_fecha"></label><label>Unidad<select id="a_unidad"></select></label>
+      <label style="grid-column:1/-1">Tipo de intervención<select id="a_tipo"></select></label>
+      <label style="grid-column:1/-1">Descripción<input id="a_desc" placeholder="Qué se hizo, materiales, alcance…"></label>
+      <label>Responsable / contratista<input id="a_resp"></label><label>Orden SAP / aviso<input id="a_orden"></label>
+      <label style="grid-column:1/-1">Resultado / observaciones<input id="a_res" placeholder="p. ej. rigidez dieléctrica 38 kV, corriente normalizada"></label></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><button class="btn pri sm" id="a_save">Agregar intervención</button><button class="btn sm" id="a_cancel" hidden>Cancelar edición</button>
+      <button class="btn sm" id="a_import">⬆ Importar CSV / JSON</button><button class="btn sm" id="a_tpl">Plantilla CSV</button><button class="btn sm" id="a_export">⬇ Exportar</button></div>
+    <input type="file" id="a_file" accept=".csv,.json,text/csv,application/json" hidden>
+    <div class="bar" style="margin:6px 0"><label>Unidad<select id="a_fu"></select></label><label>Tipo<select id="a_ft"></select></label></div>
+    <div id="accLast" class="small" style="margin-bottom:8px"></div>
+    <div id="accList"></div></aside></div>
   <div class="grid2">
     <div class="panel"><h2>Condición por día y unidad <span class="small muted">(últimos 60 días · clic abre el expediente)</span></h2>
       <div class="legend"><span><i style="background:var(--ok)"></i>Normal</span><span><i style="background:var(--warn-fill)"></i>Observar</span><span><i style="background:var(--crit)"></i>Atender</span><span><i style="background:var(--oos)"></i>Sin carga</span><span><i style="border:1px dashed var(--line)"></i>Sin lectura</span></div><div id="cover"></div></div>
@@ -73,10 +85,6 @@ table.kv{width:100%}table.kv td{word-break:break-word;padding:3px 6px;border-bot
   <div class="chartbox"><div class="ttl">Flujo total</div><canvas id="cP2"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl">Carga total (tal como se captura, miles de BPD)</div><canvas id="cP3"></canvas><div class="tip"></div></div>
   <div class="panel"><h2>Correlación de la corriente de bus con el proceso (r de Pearson por hoja)</h2><div class="tw"><table id="corrTable"></table></div></div>
-</section>
-<section id="v-plan" class="view" hidden>
-  <div class="infobox">Acciones consolidadas de todas las unidades, ordenadas por prioridad. Cada una trae <b>evidencia</b> (datos del reporte), <b>causa probable</b> (con su nivel de confianza) y <b>acción</b> con respaldo normativo. Son recomendaciones de ingeniería generadas por reglas: confírmalas contra el manual del fabricante y las condiciones de operación.</div>
-  <div id="planBody"></div>
 </section>
 <section id="v-cfg" class="view" hidden>
   <div class="infobox"><b>Criterios.</b> No provienen del manual del fabricante: están calibrados para que el estado dependa del comportamiento de cada unidad. Aumenta la sensibilidad para ser más estricto; reduce para ser más holgado. «Atender» exige persistencia (k de las últimas n lecturas) o dos señales distintas a la vez.</div>

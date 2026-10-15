@@ -39,6 +39,7 @@ function renderPan(){
   $('#cover').innerHTML=`<div class="cvr" style="grid-template-columns:96px repeat(${days.length},minmax(5px,1fr))"><span></span>${days.map((d,i)=>`<span class="cd">${i%7===0?dayLbl(d).slice(0,6):''}</span>`).join('')}${us.map(u=>`<b class="cu">${esc(u.key)}</b>${days.map(d=>{const c=by.get(u.key+'|'+d);const cl=!c?'n':c.off===c.n?'o':'l'+c.lvl;return`<i class="cc ${cl}" data-u="${esc(u.key)}" title="${esc(u.key)} · ${dayLbl(d)} · ${c?c.n+' lectura(s)'+(c.off?' ('+c.off+' sin carga)':''):'sin lectura'}"></i>`}).join('')}`).join('')}</div>`;
   $$('#cover .cc').forEach(c=>c.addEventListener('click',()=>{S.unit=c.dataset.u;fillUnitSel();switchView('uni')}));
   // hallazgos abiertos (todas las unidades)
+  renderBitacora();
   const al=us.flatMap(u=>u.rec.filter(r=>r.lvl>=1).map(r=>({u,r}))).sort((a,b)=>b.r.lvl-a.r.lvl);
   $('#alerts').innerHTML=al.map(({u,r})=>`<li class="al" data-u="${esc(u.key)}"><span class="chip ${r.lvl>=2?'c2':'c1'}">${r.lvl>=2?'ATENDER':'OBSERVAR'}</span> <b>${esc(u.key)}</b> — ${esc(r.titulo)}<div class="muted small">${esc(r.evid)}</div></li>`).join('')||'<li class="muted">Sin hallazgos que requieran seguimiento.</li>';
   $$('#alerts li.al').forEach(li=>li.addEventListener('click',()=>{S.unit=li.dataset.u;fillUnitSel();switchView('uni')}))}
@@ -53,6 +54,7 @@ function renderUnit(reset){
   const u=IX.units.get(S.unit)||unitsMain()[0];const body=$('#uniBody');if(!u){body.innerHTML='<div class="muted">Sin datos</div>';return}S.unit=u.key;
   const l=u.last,on=u.reads.filter(o=>!o.off),tip=ts=>{const o=u.reads.find(x=>x.ts===ts);return o?`<span class="muted">SLATE ${o.slate??'—'} · ${esc(fshort(o.folio))}</span>`:''};
   const bI=baselineOf(u,{ts:Infinity,slate:l&&l.slate},'bi',gI);
+  const accU=(DB.acciones||[]).filter(a=>accScope(a,u)).sort((x,y)=>y.ts-x.ts);
   const pc=procCorr(u),tr=u.tend;
   const recHtml=u.rec.map(r=>`<div class="rec l${r.lvl}"><div class="rh"><span class="chip ${r.lvl>=2?'c2':r.lvl===1?'c1':'c0'}">${['INFORMATIVA','SEGUIMIENTO','ATENDER'][r.lvl]}</span> <b>${esc(r.titulo)}</b></div><div class="small"><b>Evidencia:</b> ${esc(r.evid)}</div><div class="small"><b>Causa probable:</b> ${esc(r.causas)}</div><div class="small"><b>Acción:</b> ${esc(r.accion)}</div><div class="small muted">Respaldo: ${esc(r.ref)}</div></div>`).join('');
   const ev=u.reads.filter(o=>o.lvlP>=1||o.off).slice(-40).reverse();
@@ -63,19 +65,20 @@ function renderUnit(reset){
    <div class="chartbox"><div class="ttl">Bus voltaje (V)</div><canvas id="cV"></canvas><div class="tip"></div></div>
    <div class="chartbox"><div class="ttl">Voltaje positivo (verde) y negativo (rosa), mín–máx–promedio</div><canvas id="cF"></canvas><div class="tip"></div></div>
    <div class="chartbox"><div class="ttl">Potencia aparente en bus (kVA = I × V) y relación V campo / V bus</div><canvas id="cK"></canvas><div class="tip"></div></div>
-   <div class="grid2e"><div><div class="panel"><h2>Recomendaciones para esta unidad</h2>${recHtml||'<span class="muted">Sin recomendaciones.</span>'}</div>
+   <div class="grid2e"><div>${accU.length?`<div class="panel"><h2>Intervenciones registradas (marcadas en las gráficas)</h2>${accU.map(a=>{const e=accEffect(u,a),t=ACC_N[a.tipo]||ACC_N.otro;return`<div class="acc" style="border-left-color:${t.c}"><div class="ah"><b>${fDate(a.ts)}</b><span class="badge">${esc(t.n)}</span></div>${a.desc?`<div class="small">${esc(a.desc)}</div>`:''}${e?`<div class="muted small">↳ Bus I ${e.bi?`${fv(e.bi.b,0)}→${fv(e.bi.a,0)} A`:'—'} · asimetría ${e.asym?`${fv(e.asym.b,0)}→${fv(e.asym.a,0)} %`:'—'} (30 d antes vs después)</div>`:'<div class="muted small">Efecto: sin suficientes lecturas posteriores</div>'}</div>`}).join('')}</div>`:''}<div class="panel"><h2>Recomendaciones para esta unidad</h2>${recHtml||'<span class="muted">Sin recomendaciones.</span>'}</div>
      <div class="panel"><h2>Eventos recientes (lecturas fuera de lo habitual o sin carga)</h2><div class="tw" style="max-height:340px"><table><tr><th>Fecha</th><th>SLATE</th><th>Nivel</th><th>Señales</th><th>Folio</th></tr>${ev.map(o=>`<tr><td>${fDT(o.ts)}</td><td>${o.slate??'—'}</td><td>${o.off?chip(3):chip(o.lvlP)}</td><td class="small">${o.off?'Todas las variables en cero':o.sig.map(s=>esc(s.t)).join('<br>')}</td><td class="small">${esc(fshort(o.folio))}</td></tr>`).join('')||'<tr><td class="muted">Sin eventos</td></tr>'}</table></div></div></div>
    <div><div class="panel"><h2>Tendencia reciente (≈ ${CFG.trend.win} días)</h2><table class="kv">${tr.map(t=>`<tr><td>${esc(t.n)}</td><td class="n">${t.pm!=null?`<b${t.warn?' style="color:var(--warn)"':''}>${slopeTxt(t)}</b> <span class="muted small">R² ${t.r2.toFixed(2)} · n ${t.n_}</span>`:'<span class="muted small">pocas lecturas</span>'}</td></tr>`).join('')}</table><p class="small muted">Se compara dentro del mismo paso SLATE para no confundir un cambio de ajuste con una deriva.</p></div>
      <div class="panel"><h2>Correlación con el proceso</h2><table class="kv">${pc.map(c=>`<tr><td>${esc(c.pn)}</td><td class="n">${c.r!=null?`r = <b>${c.r.toFixed(2)}</b> <span class="muted small">(${c.n} hojas)</span>`:`<span class="muted small">${c.n} hojas: insuficiente</span>`}</td></tr>`).join('')}</table><p class="small muted">Correlación de la corriente promedio de la hoja con lo anotado en observaciones; |r| &lt; 0.3 = sin relación apreciable.</p></div>
      <div class="panel"><h2>Última hoja</h2><table class="kv">${(()=>{const r=DB.recs.filter(x=>x.id===l.rid)[0]||{};return[['Folio',l.folio],['Archivo',l.archivo],['Formato',l.layout==='AB'?'Power Unit A y B (dos canales)':'Una unidad (mín/máx)'],['TAG en la hoja',l.sheetTag],['N° SAP',r.sap],['Operario',r.operario],['Ing. sector',r.ing_sector],['Resp. operativo',r.resp_operativo],['Capturado',r.capturado?fDT(parseTs(r.capturado)):'—'],['GPS',r.gps?r.gps.join(', ')+(r.gps_prec_m?` (±${r.gps_prec_m} m)`:''):'—'],['Observaciones',r.obs]].map(([a,b])=>`<tr><td class="muted">${a}</td><td><b>${esc(b==null||b===''?'—':b)}</b></td></tr>`).join('')})()}</table></div></div></div>`;
   for(const [k,id] of [['I','cI'],['V','cV'],['F','cF'],['K','cK']]){CH[k]=new Chart($('#'+id));}
-  S._uniDraw=true;renderUnit2(u,bI,on,tip,reset)}
-function renderUnit2(u,bI,on,tip,reset){ // las gráficas se crean después de pintar el HTML
+  S._uniDraw=true;renderUnit2(u,bI,on,tip,reset,accU)}
+function renderUnit2(u,bI,on,tip,reset,accU){
+  const vl=(accU||[]).map(a=>({x:a.ts,color:(ACC_N[a.tipo]||ACC_N.otro).c,label:ACC_SHORT[a.tipo]||'Intervención'})); // las gráficas se crean después de pintar el HTML
   const l=u.last,opt={xType:'time',xFmt:fDT,yMin0:false,hInclude:false,tipExtra:tip},ne='Sin lecturas con carga',nd=on.length?null:ne;
-  CH.I.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'A',series:[...unitSeries(u,'bi','#E07A45','Bus I'),{name:'SLATE (der.)',color:'#8FA9B8',axis:'r',kind:'line',dash:[5,3],pts:on.filter(o=>o.slate!=null).map(o=>[o.ts,o.slate])}],hlines:bI?[{y:bI.p95,color:cssv('--warn-fill'),label:'P95 habitual'}]:[],noData:nd},true);
-  CH.V.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:unitSeries(u,'bv','#4C8BD6','Bus V'),noData:nd},true);
-  CH.F.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:[...unitSeries(u,'pv','#2F9E8F','Pos V'),...unitSeries(u,'nv','#C9557C','Neg V')],noData:nd},true);
-  CH.K.setData({...opt,yFmt:v=>fv(v,1),y2Fmt:v=>fv(v,1),yLabel:'kVA',series:[{name:'Potencia aparente (kVA)',color:'#BC955C',kind:'line',pts:on.filter(o=>o.kva!=null).map(o=>[o.ts,o.kva])},{name:'V campo / V bus (der.)',color:'#9A6BC4',axis:'r',kind:'line',pts:on.filter(o=>o.ratio!=null).map(o=>[o.ts,o.ratio])}],noData:nd},true);
+  CH.I.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'A',series:[...unitSeries(u,'bi','#E07A45','Bus I'),{name:'SLATE (der.)',color:'#8FA9B8',axis:'r',kind:'line',dash:[5,3],pts:on.filter(o=>o.slate!=null).map(o=>[o.ts,o.slate])}],hlines:bI?[{y:bI.p95,color:cssv('--warn-fill'),label:'P95 habitual'}]:[],noData:nd,vlines:vl},true);
+  CH.V.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:unitSeries(u,'bv','#4C8BD6','Bus V'),noData:nd,vlines:vl},true);
+  CH.F.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:[...unitSeries(u,'pv','#2F9E8F','Pos V'),...unitSeries(u,'nv','#C9557C','Neg V')],noData:nd,vlines:vl},true);
+  CH.K.setData({...opt,yFmt:v=>fv(v,1),y2Fmt:v=>fv(v,1),yLabel:'kVA',series:[{name:'Potencia aparente (kVA)',color:'#BC955C',kind:'line',pts:on.filter(o=>o.kva!=null).map(o=>[o.ts,o.kva])},{name:'V campo / V bus (der.)',color:'#9A6BC4',axis:'r',kind:'line',pts:on.filter(o=>o.ratio!=null).map(o=>[o.ts,o.ratio])}],noData:nd,vlines:vl},true);
   CH.I.group=CH.V.group=CH.F.group=CH.K.group=[CH.I,CH.V,CH.F,CH.K]}
 
 /* ---------------------------------------------------------------- 3 · COMPARATIVO */
@@ -106,14 +109,46 @@ function renderTrend(reset){
   CH.P1.group=CH.P2.group=CH.P3.group=[CH.P1,CH.P2,CH.P3];
   $('#corrTable').innerHTML=`<tr><th>Unidad</th>${['Temperatura del crudo','Flujo total','Carga total'].map(n=>`<th class="n">${n}<br><small>r con Bus I</small></th>`).join('')}</tr>`+us.map(u=>`<tr><td><b>${esc(u.key)}</b></td>${procCorr(u).map(c=>`<td class="n">${c.r!=null?`<b${Math.abs(c.r)>=.5?' style="color:var(--warn)"':''}>${c.r.toFixed(2)}</b> <span class="muted small">n ${c.n}</span>`:`<span class="muted small">n ${c.n}</span>`}</td>`).join('')}</tr>`).join('')}
 
-/* ---------------------------------------------------------------- 5 · PLAN DE ACCIÓN */
-function renderPlan(){
-  const items=unitList().filter(u=>u.reads.length>=5).flatMap(u=>u.rec.filter(r=>r.lvl>=1||r.id==='cov'||r.id==='q').map(r=>({u,r}))).sort((a,b)=>b.r.lvl-a.r.lvl||a.u.key.localeCompare(b.u.key,'es',{numeric:true}));
-  // agrupar por hallazgo común a varias unidades
-  const g=new Map();for(const it of items){const k=it.r.id+'|'+it.r.lvl;(g.get(k)||g.set(k,[]).get(k)).push(it)}
-  $('#planBody').innerHTML=[...g.values()].map(arr=>{const r=arr[0].r;return`<div class="rec l${r.lvl}"><div class="rh"><span class="chip ${r.lvl>=2?'c2':r.lvl===1?'c1':'c0'}">${['INFORMATIVA','SEGUIMIENTO','ATENDER'][r.lvl]}</span> <b>${esc(r.titulo)}</b> <span class="muted small">· ${arr.map(a=>`<a href="#" class="ulink" data-u="${esc(a.u.key)}">${esc(a.u.key)}</a>`).join(', ')}</span></div>
-    ${arr.map(a=>`<div class="small"><b>${esc(a.u.key)}:</b> ${esc(a.r.evid)}</div>`).join('')}<div class="small"><b>Causa probable:</b> ${esc(r.causas)}</div><div class="small"><b>Acción:</b> ${esc(r.accion)}</div><div class="small muted">Respaldo: ${esc(r.ref)}</div></div>`}).join('')||'<div class="muted">Sin acciones pendientes.</div>';
-  $$('#planBody .ulink').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();S.unit=a.dataset.u;fillUnitSel();switchView('uni')}))}
+/* ---------------------------------------------------------------- BITÁCORA DE INTERVENCIONES (panorama) */
+let EDIT_ACC=null;
+const ACC_SHORT={aceite_cambio:'Cambio aceite',aceite_filtrado:'Filtrado aceite',aceite_analisis:'Análisis aceite',electrodo:'Electrodo',bushing:'Bushing',rectificador:'Rectificador',transformador:'Transformador',pruebas:'Pruebas',inspeccion:'Inspección',ajuste:'Ajuste',libranza:'Libranza',otro:'Intervención'};
+function accUnitOpts(){const us=unitsMain().map(u=>u.key),fs=Object.keys(DESAL);return[['TODAS','Todas las unidades'],...fs.map(f=>[f,`${f} (ambas unidades)`]),...us.map(u=>[u,u])]}
+function renderBitacora(){
+  const keep=id=>$('#'+id)?$('#'+id).value:null,k={u:keep('a_unidad'),t:keep('a_tipo'),fu:keep('a_fu'),ft:keep('a_ft')};
+  opts($('#a_unidad'),accUnitOpts(),k.u&&accUnitOpts().some(x=>x[0]===k.u)?k.u:'TODAS');
+  opts($('#a_tipo'),ACC_TIPOS.map(([c,n])=>[c,n]),k.t&&ACC_N[k.t]?k.t:'aceite_cambio');
+  opts($('#a_fu'),[['','Todas'],...accUnitOpts().slice(1)],k.fu||'');opts($('#a_ft'),[['','Todos'],...ACC_TIPOS.map(([c,n])=>[c,n])],k.ft||'');
+  if(!$('#a_fecha').value)$('#a_fecha').value=toInput(Date.now()).slice(0,10);
+  const all=(DB.acciones||[]).slice().sort((a,b)=>b.ts-a.ts),fu=$('#a_fu').value,ft=$('#a_ft').value;
+  const us=unitsMain();
+  const rows=all.filter(a=>(!ft||a.tipo===ft)&&(!fu||a.unidad===fu||(us.find(u=>u.key===fu)&&accScope(a,us.find(u=>u.key===fu)))||(fu==='TODAS'&&a.unidad==='TODAS')));
+  // última intervención por tipo clave y unidad
+  const lastBy=(tipos)=>{const r=us.map(u=>{const a=all.find(x=>tipos.includes(x.tipo)&&accScope(x,u));return a?`${u.key} <b>${Math.floor((Date.now()-a.ts)/864e5)} d</b>`:null}).filter(Boolean);return r.length?r.join(' · '):'<span class="muted">sin registro</span>'};
+  $('#accLast').innerHTML=all.length?`<b>Días desde el último cambio de aceite:</b> ${lastBy(['aceite_cambio'])}<br><b>Desde la última reparación de electrodo:</b> ${lastBy(['electrodo'])}`:'<span class="muted">Aún no hay intervenciones registradas. Captúralas arriba o impórtalas desde CSV/JSON.</span>';
+  $('#accList').innerHTML=rows.slice(0,60).map(a=>{const t=ACC_N[a.tipo]||ACC_N.otro;
+    const efs=us.filter(u=>accScope(a,u)).map(u=>({u,e:accEffect(u,a)})).filter(x=>x.e);
+    const ef=efs.map(({u,e})=>{const p=k=>e[k]&&e[k].d!=null?`${e[k].d>0?'+':''}${e[k].d.toFixed(0)} %`:'—';return`<div class="muted small">↳ ${esc(u.key)}: Bus I ${e.bi?`${fv(e.bi.b,0)}→${fv(e.bi.a,0)} A (${p('bi')})`:'—'} · asimetría ${e.asym?`${fv(e.asym.b,0)}→${fv(e.asym.a,0)} %`:'—'} · V campo/V bus ${p('ratio')}</div>`}).join('');
+    return`<div class="acc" style="border-left-color:${t.c}"><div class="ah"><b>${fDate(a.ts)}</b><span class="badge">${esc(t.n)}</span><span class="small">${esc(a.unidad==='TODAS'?'Todas':a.unidad)}</span><span class="ab"><button title="Editar" data-ed="${esc(a.id)}">✎</button><button title="Eliminar" data-del="${esc(a.id)}">✕</button></span></div>
+      ${a.desc?`<div class="small">${esc(a.desc)}</div>`:''}<div class="muted small">${[a.resp,a.orden,a.resultado].filter(Boolean).map(esc).join(' · ')}</div>${ef}</div>`}).join('')+(rows.length>60?`<div class="muted small">…y ${rows.length-60} más (usa los filtros o exporta).</div>`:'')||(all.length?'<span class="muted small">Sin resultados con esos filtros.</span>':'');
+  $$('#accList [data-del]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('¿Eliminar esta intervención?'))return;DB.acciones=DB.acciones.filter(x=>x.id!==b.dataset.del);save();renderBitacora();if(S.view==='uni')renderUnit(true)}));
+  $$('#accList [data-ed]').forEach(b=>b.addEventListener('click',()=>{const a=DB.acciones.find(x=>x.id===b.dataset.ed);if(!a)return;EDIT_ACC=a.id;
+    $('#a_fecha').value=toInput(a.ts).slice(0,10);$('#a_unidad').value=a.unidad;$('#a_tipo').value=a.tipo;$('#a_desc').value=a.desc;$('#a_resp').value=a.resp;$('#a_orden').value=a.orden;$('#a_res').value=a.resultado;
+    $('#a_save').textContent='Guardar cambios';$('#a_cancel').hidden=false;$('#accForm').scrollIntoView({behavior:'smooth',block:'nearest'})}))}
+function accReset(){EDIT_ACC=null;['a_desc','a_resp','a_orden','a_res'].forEach(i=>$('#'+i).value='');$('#a_save').textContent='Agregar intervención';$('#a_cancel').hidden=true}
+function accSave(){
+  const ts=parseTs($('#a_fecha').value);if(!Number.isFinite(ts)){toast('Captura la fecha');return}
+  const a=normAccion({ts,unidad:$('#a_unidad').value,tipo:$('#a_tipo').value,desc:$('#a_desc').value,resp:$('#a_resp').value,orden:$('#a_orden').value,resultado:$('#a_res').value});
+  if(!a.desc&&a.tipo==='otro'){toast('Describe la intervención');return}
+  DB.acciones=DB.acciones||[];
+  if(EDIT_ACC){const i=DB.acciones.findIndex(x=>x.id===EDIT_ACC);a.id=EDIT_ACC;if(i>=0)DB.acciones[i]=a}
+  else{if(DB.acciones.some(x=>x.id===a.id)){toast('Esa intervención ya está registrada');return}DB.acciones.push(a)}
+  save();accReset();renderBitacora();if(S.view==='uni')renderUnit(true);toast('Intervención guardada')}
+async function accImport(files){
+  let n=0,d=0;
+  for(const f of files){const txt=await f.text();let list=[];
+    try{if(/\.json$/i.test(f.name)){const o=JSON.parse(txt);list=(Array.isArray(o)?o:(o.acciones||[])).map(normAccion).filter(Boolean)}else list=accionesFromCsv(txt)}catch(e){toast('No se pudo leer '+f.name);continue}
+    DB.acciones=DB.acciones||[];const seen=new Set(DB.acciones.map(a=>a.id));for(const a of list){if(seen.has(a.id)){d++;continue}seen.add(a.id);DB.acciones.push(a);n++}}
+  save();renderBitacora();if(S.view==='uni')renderUnit(true);toast(`${n} intervención(es) importadas${d?`, ${d} ya existían`:''}`)}
 
 /* ---------------------------------------------------------------- 6 · CRITERIOS */
 function renderCfg(){
@@ -166,9 +201,9 @@ async function unitReport(key){
 function refreshAll(){
   if(!S.unit||!IX.units.has(S.unit)){const w=unitsMain().sort((a,b)=>(b.est<=2?b.est:-1)-(a.est<=2?a.est:-1))[0];S.unit=w?w.key:null}
   fillUnitSel();renderPan();
-  if(S.view==='uni')renderUnit(true);if(S.view==='cmp')renderCmp(true);if(S.view==='tend')renderTrend(true);if(S.view==='plan')renderPlan();if(S.view==='cfg')renderCfg();if(S.view==='cal')renderQuality();if(S.view==='data')renderData();
+  if(S.view==='uni')renderUnit(true);if(S.view==='cmp')renderCmp(true);if(S.view==='tend')renderTrend(true);if(S.view==='cfg')renderCfg();if(S.view==='cal')renderQuality();if(S.view==='data')renderData();
   const t=IX.reads.length?IX.reads[IX.reads.length-1].ts:null;
   $('#statusbar').innerHTML=`<span>${unitsMain().length} unidades · ${IX.reads.length.toLocaleString('es-MX')} lecturas · ${IX.docs.size} folios</span><span>Última lectura: ${t?fDT(t):'—'} (hora de Tabasco)</span><span>Almacenamiento: ${esc(Store.mode())}</span>`}
 function switchView(v){
   S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
-  requestAnimationFrame(()=>{if(v==='pan')renderPan();if(v==='uni')renderUnit(true);if(v==='cmp')renderCmp(true);if(v==='tend')renderTrend(true);if(v==='plan')renderPlan();if(v==='cfg')renderCfg();if(v==='cal')renderQuality();if(v==='data')renderData();window.scrollTo(0,0)})}
+  requestAnimationFrame(()=>{if(v==='pan')renderPan();if(v==='uni')renderUnit(true);if(v==='cmp')renderCmp(true);if(v==='tend')renderTrend(true);if(v==='cfg')renderCfg();if(v==='cal')renderQuality();if(v==='data')renderData();window.scrollTo(0,0)})}

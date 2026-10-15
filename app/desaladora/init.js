@@ -17,7 +17,7 @@ async function init(){
   const pickBulk=async e=>{const col=await bulkCollect(null,e.target.files);e.target.value='';handleBulk(col)};
   $('#btnLoadDir').addEventListener('click',()=>{switchView('data');$('#dirIn').click()});$('#btnDir').addEventListener('click',()=>$('#dirIn').click());$('#btnZip').addEventListener('click',()=>$('#zipIn').click());$('#btnPick').addEventListener('click',()=>$('#fileIn').click());$('#btnLoad').addEventListener('click',()=>$('#fileIn').click());
   $('#dirIn').addEventListener('change',pickBulk);$('#zipIn').addEventListener('change',pickBulk);$('#fileIn').addEventListener('change',pickBulk);
-  $('#btnPlanCsv').addEventListener('click',exportRecs);$('#btnPlan2').addEventListener('click',exportRecs);$('#btnReads').addEventListener('click',exportReads);$('#btnReads2').addEventListener('click',exportReads);$('#btnExport2').addEventListener('click',exportDB);
+  $('#btnPlan2').addEventListener('click',exportRecs);$('#btnReads').addEventListener('click',exportReads);$('#btnReads2').addEventListener('click',exportReads);$('#btnExport2').addEventListener('click',exportDB);
   $('#btnReseed').addEventListener('click',async()=>{if(!confirm('¿Reemplazar la base por los datos incluidos (reportes jul–oct 2026)? Se pierden las capturas manuales y cargas posteriores.'))return;await Store.clear();DB=emptyDB();await loadSeed();CFG=structuredClone(CFG0);rebuild();save();S.unit=null;refreshAll();toast('Base restablecida')});
   $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar toda la base local?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.unit=null;refreshAll()});
   const drop=$('#drop');drop.addEventListener('click',()=>$('#dirIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#dirIn').click()});
@@ -34,6 +34,7 @@ async function init(){
   $('#btnApplyCfg').addEventListener('click',applyCfg);$('#btnResetCfg').addEventListener('click',()=>{CFG=structuredClone(CFG0);rebuild();saveCfg();refreshAll();renderCfg();toast('Criterios iniciales restablecidos')});
   $('#qTipo').addEventListener('change',e=>{S.q.tipo=e.target.value;renderQuality()});$('#btnQCsv').addEventListener('click',exportQuality);
   $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{if(STAGE_BUSY){STAGE_ABORT=true;return}STAGE=[];renderStage()});
+  $('#a_save').addEventListener('click',accSave);$('#a_cancel').addEventListener('click',accReset);$('#a_import').addEventListener('click',()=>$('#a_file').click());$('#a_file').addEventListener('change',e=>{accImport(e.target.files);e.target.value=''});$('#a_tpl').addEventListener('click',accTemplateCsv);$('#a_export').addEventListener('click',exportAcciones);$('#a_fu').addEventListener('change',renderBitacora);$('#a_ft').addEventListener('change',renderBitacora);
   refreshAll();
   window.__ready=true;
 }

@@ -326,6 +326,8 @@ Monitoreo de las 8 unidades de potencia (transformadores) de las desaladoras FA-
 
 **Estado suave:** cada lectura se compara con la mediana y MAD de la propia unidad (por paso SLATE); NORMAL / OBSERVAR / ATENDER, y «Atender» solo con persistencia (k de n lecturas) o dos señales a la vez. Señales: corriente de bus alta, relación V campo / V bus baja, asimetría positivo/negativo, variación dentro de la lectura, lectura congelada y tendencia. Si ambas unidades de una desaladora muestran lo mismo se avisa como causa común (proceso). Los umbrales no vienen del manual del fabricante; son editables en «Criterios».
 
+**Bitácora de intervenciones** (panorama, panel derecho): captura o importa (CSV/JSON, con plantilla) cambios de aceite dieléctrico, reparación de electrodos, bushings, pruebas, libranzas, etc. por unidad, desaladora o todas; se marcan en las gráficas del expediente y se mide el efecto (mediana de Bus I, asimetría y V campo/V bus 30 días antes vs después).
+
 ## Módulo Motores (`app/sicm-motores.html`)
 
 Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.

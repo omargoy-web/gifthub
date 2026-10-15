@@ -187,6 +187,20 @@ function commonCause(us){
     if(m.every(v=>v>0)){const hi=Math.max(...m),lo=Math.min(...m);
       if(hi/lo>1.6)arr.forEach(u=>u.rec.push({lvl:0,id:'peer',titulo:`Carga desigual entre las unidades de ${f}`,evid:`Mediana de Bus I (30 d): ${arr.map((x,i)=>`${x.key} ${m[i].toFixed(0)} A`).join(' vs ')} (relación ${(hi/lo).toFixed(1)}×).`,causas:'[Suposición] ajuste de SLATE distinto entre unidades, reparto de carga por diseño o diferencia en el estado de rejillas/electrodos de cada celda.',accion:'Confirmar con diseño/manual si el reparto desigual es normal; comparar SLATE y estado de electrodos entre ambas unidades.',ref:'Manual del fabricante / planos y DTI de la desaladora'}))}}}
 
+/* ---------- Bitácora de intervenciones ---------- */
+const ACC_TIPOS=[['aceite_cambio','Cambio de aceite dieléctrico','#2F9E8F'],['aceite_filtrado','Filtrado / regeneración de aceite','#58B6D8'],['aceite_analisis','Análisis de aceite (fisicoquímico / DGA)','#4C8BD6'],['electrodo','Reparación / cambio de electrodo (rejilla)','#E07A45'],['bushing','Reparación / cambio de bushing o aislador','#C9557C'],['rectificador','Rectificador, diodos o control','#9A6BC4'],['transformador','Reparación / reemplazo de transformador','#C62828'],['pruebas','Pruebas eléctricas (aislamiento, relación, resistencia)','#7DB544'],['inspeccion','Termografía / ultrasonido / inspección','#D4C04A'],['ajuste','Ajuste de SLATE / operación','#BC955C'],['libranza','Libranza / paro programado','#8FA9B8'],['otro','Otra intervención','#8C9399']];
+const ACC_N=Object.fromEntries(ACC_TIPOS.map(([k,n,c])=>[k,{n,c}]));
+const accScope=(a,u)=>a.unidad==='TODAS'||a.unidad===u.key||(u.desal&&a.unidad===u.desal);
+const accId=a=>'a'+hash([a.ts,a.unidad,a.tipo,a.desc,a.orden||''].join('|'));
+// efecto: mediana 30 d antes vs 30 d después (solo lecturas con carga)
+function accEffect(u,a){
+  const on=u.reads.filter(o=>!o.off),W=30*864e5,end=on.length?on[on.length-1].ts:0;
+  const bef=on.filter(o=>o.ts<a.ts&&o.ts>=a.ts-W),aft=on.filter(o=>o.ts>a.ts+864e5&&o.ts<=a.ts+W+864e5);
+  if(a.ts+3*864e5>end||bef.length<5||aft.length<5)return null;
+  const f=(g,k)=>median(g.map(o=>k==='bi'?o.bi&&o.bi.av:k==='asym'?o.asym:o.ratio).filter(v=>v!=null));
+  const r={n:[bef.length,aft.length]};for(const k of ['bi','ratio','asym']){const x=f(bef,k),y=f(aft,k);r[k]=x!=null&&y!=null?{b:x,a:y,d:x?100*(y-x)/Math.abs(x):null}:null}
+  return r}
+
 /* ---------- Calidad de datos ---------- */
 function qualityRows(){
   const R=[];

@@ -148,7 +148,7 @@ dialog h2{margin:0 0 10px;font-size:16px}
 body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
 .grid2e{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
 .hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.dgrp{margin-bottom:14px}.dgrp h3{margin:0 0 8px;font-size:14px;color:var(--dorado)}.dgrp .cards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.pgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,1fr);gap:14px;align-items:start}@media(max-width:1100px){.pgrid{grid-template-columns:1fr}}#bitacora{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto}.acc{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:6px 10px;margin-bottom:6px;background:var(--surface)}.acc .ah{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.acc .ab{margin-left:auto;display:flex;gap:4px}.acc button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px}.acc button:hover{color:var(--text)}.dgrp{margin-bottom:14px}.dgrp h3{margin:0 0 8px;font-size:14px;color:var(--dorado)}.dgrp .cards{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 .cvr{display:grid;gap:2px;align-items:center;font-size:10.5px}.cvr .cu{font-size:11px;white-space:nowrap}.cvr .cd{font-size:9px;color:var(--muted);white-space:nowrap;overflow:visible}
 .cc{display:block;height:15px;border-radius:2px;background:var(--surface2);cursor:pointer}.cc.l0{background:var(--ok)}.cc.l1{background:var(--warn-fill)}.cc.l2{background:var(--crit)}.cc.o{background:var(--oos)}.cc.n{background:transparent;border:1px dashed var(--line)}.cc:hover{outline:2px solid var(--text)}
 .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
@@ -171,23 +171,35 @@ table.kv{width:100%}table.kv td{word-break:break-word;padding:3px 6px;border-bot
   <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
   <button class="btn ghost" id="btnLoadDir" title="Carpeta completa o ZIP con reportes PDF">📁 Carpeta / ZIP</button>
   <button class="btn ghost" id="btnLoad">⬆ Reportes PDF / JSON</button>
-  <button class="btn ghost" id="btnPlanCsv">⬇ Plan de acción (.csv)</button>
 </header>
 <nav class="tabs" role="tablist" aria-label="Módulos">
   <button role="tab" data-view="pan" aria-selected="true">1 · Panorama</button>
   <button role="tab" data-view="uni" aria-selected="false">2 · Expediente por unidad</button>
   <button role="tab" data-view="cmp" aria-selected="false">3 · Comparativo</button>
   <button role="tab" data-view="tend" aria-selected="false">4 · Tendencias y proceso</button>
-  <button role="tab" data-view="plan" aria-selected="false">5 · Plan de acción</button>
-  <button role="tab" data-view="cfg" aria-selected="false">6 · Criterios</button>
-  <button role="tab" data-view="cal" aria-selected="false">7 · Calidad y trazabilidad</button>
-  <button role="tab" data-view="data" aria-selected="false">8 · Datos y carga</button>
+  <button role="tab" data-view="cfg" aria-selected="false">5 · Criterios</button>
+  <button role="tab" data-view="cal" aria-selected="false">6 · Calidad y trazabilidad</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos y carga</button>
 </nav>
 <main>
 <section id="v-pan" class="view">
   <div class="kpis" id="kpis"></div>
   <div class="infobox"><b>Cómo se lee.</b> Cada tarjeta es una unidad de potencia (PU). El estado compara cada lectura contra <b>el comportamiento habitual de esa misma unidad</b> (por paso SLATE), no contra un límite fijo: <span class="chip c0">● NORMAL</span> dentro de lo habitual · <span class="chip c1">▲ OBSERVAR</span> señal puntual o tendencia · <span class="chip c2">■ ATENDER</span> señal persistente o varias a la vez · <span class="chip c3">◆ SIN CARGA</span> lecturas en cero. <span class="small muted" id="panNote"></span></div>
-  <div id="cards"></div>
+  <div class="pgrid"><div id="cards"></div>
+  <aside class="panel" id="bitacora"><h2>Bitácora de intervenciones</h2>
+    <p class="small muted" style="margin:0 0 8px">Historial de cambio de aceite dieléctrico, reparación de electrodos y demás intervenciones. Se marcan en las gráficas y se mide su efecto (30 días antes vs después).</p>
+    <div class="capgrid" id="accForm">
+      <label>Fecha<input type="date" id="a_fecha"></label><label>Unidad<select id="a_unidad"></select></label>
+      <label style="grid-column:1/-1">Tipo de intervención<select id="a_tipo"></select></label>
+      <label style="grid-column:1/-1">Descripción<input id="a_desc" placeholder="Qué se hizo, materiales, alcance…"></label>
+      <label>Responsable / contratista<input id="a_resp"></label><label>Orden SAP / aviso<input id="a_orden"></label>
+      <label style="grid-column:1/-1">Resultado / observaciones<input id="a_res" placeholder="p. ej. rigidez dieléctrica 38 kV, corriente normalizada"></label></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><button class="btn pri sm" id="a_save">Agregar intervención</button><button class="btn sm" id="a_cancel" hidden>Cancelar edición</button>
+      <button class="btn sm" id="a_import">⬆ Importar CSV / JSON</button><button class="btn sm" id="a_tpl">Plantilla CSV</button><button class="btn sm" id="a_export">⬇ Exportar</button></div>
+    <input type="file" id="a_file" accept=".csv,.json,text/csv,application/json" hidden>
+    <div class="bar" style="margin:6px 0"><label>Unidad<select id="a_fu"></select></label><label>Tipo<select id="a_ft"></select></label></div>
+    <div id="accLast" class="small" style="margin-bottom:8px"></div>
+    <div id="accList"></div></aside></div>
   <div class="grid2">
     <div class="panel"><h2>Condición por día y unidad <span class="small muted">(últimos 60 días · clic abre el expediente)</span></h2>
       <div class="legend"><span><i style="background:var(--ok)"></i>Normal</span><span><i style="background:var(--warn-fill)"></i>Observar</span><span><i style="background:var(--crit)"></i>Atender</span><span><i style="background:var(--oos)"></i>Sin carga</span><span><i style="border:1px dashed var(--line)"></i>Sin lectura</span></div><div id="cover"></div></div>
@@ -209,10 +221,6 @@ table.kv{width:100%}table.kv td{word-break:break-word;padding:3px 6px;border-bot
   <div class="chartbox"><div class="ttl">Flujo total</div><canvas id="cP2"></canvas><div class="tip"></div></div>
   <div class="chartbox"><div class="ttl">Carga total (tal como se captura, miles de BPD)</div><canvas id="cP3"></canvas><div class="tip"></div></div>
   <div class="panel"><h2>Correlación de la corriente de bus con el proceso (r de Pearson por hoja)</h2><div class="tw"><table id="corrTable"></table></div></div>
-</section>
-<section id="v-plan" class="view" hidden>
-  <div class="infobox">Acciones consolidadas de todas las unidades, ordenadas por prioridad. Cada una trae <b>evidencia</b> (datos del reporte), <b>causa probable</b> (con su nivel de confianza) y <b>acción</b> con respaldo normativo. Son recomendaciones de ingeniería generadas por reglas: confírmalas contra el manual del fabricante y las condiciones de operación.</div>
-  <div id="planBody"></div>
 </section>
 <section id="v-cfg" class="view" hidden>
   <div class="infobox"><b>Criterios.</b> No provienen del manual del fabricante: están calibrados para que el estado dependa del comportamiento de cada unidad. Aumenta la sensibilidad para ser más estricto; reduce para ser más holgado. «Atender» exige persistencia (k de las últimas n lecturas) o dos señales distintas a la vez.</div>
@@ -887,6 +895,20 @@ function commonCause(us){
     if(m.every(v=>v>0)){const hi=Math.max(...m),lo=Math.min(...m);
       if(hi/lo>1.6)arr.forEach(u=>u.rec.push({lvl:0,id:'peer',titulo:`Carga desigual entre las unidades de ${f}`,evid:`Mediana de Bus I (30 d): ${arr.map((x,i)=>`${x.key} ${m[i].toFixed(0)} A`).join(' vs ')} (relación ${(hi/lo).toFixed(1)}×).`,causas:'[Suposición] ajuste de SLATE distinto entre unidades, reparto de carga por diseño o diferencia en el estado de rejillas/electrodos de cada celda.',accion:'Confirmar con diseño/manual si el reparto desigual es normal; comparar SLATE y estado de electrodos entre ambas unidades.',ref:'Manual del fabricante / planos y DTI de la desaladora'}))}}}
 
+/* ---------- Bitácora de intervenciones ---------- */
+const ACC_TIPOS=[['aceite_cambio','Cambio de aceite dieléctrico','#2F9E8F'],['aceite_filtrado','Filtrado / regeneración de aceite','#58B6D8'],['aceite_analisis','Análisis de aceite (fisicoquímico / DGA)','#4C8BD6'],['electrodo','Reparación / cambio de electrodo (rejilla)','#E07A45'],['bushing','Reparación / cambio de bushing o aislador','#C9557C'],['rectificador','Rectificador, diodos o control','#9A6BC4'],['transformador','Reparación / reemplazo de transformador','#C62828'],['pruebas','Pruebas eléctricas (aislamiento, relación, resistencia)','#7DB544'],['inspeccion','Termografía / ultrasonido / inspección','#D4C04A'],['ajuste','Ajuste de SLATE / operación','#BC955C'],['libranza','Libranza / paro programado','#8FA9B8'],['otro','Otra intervención','#8C9399']];
+const ACC_N=Object.fromEntries(ACC_TIPOS.map(([k,n,c])=>[k,{n,c}]));
+const accScope=(a,u)=>a.unidad==='TODAS'||a.unidad===u.key||(u.desal&&a.unidad===u.desal);
+const accId=a=>'a'+hash([a.ts,a.unidad,a.tipo,a.desc,a.orden||''].join('|'));
+// efecto: mediana 30 d antes vs 30 d después (solo lecturas con carga)
+function accEffect(u,a){
+  const on=u.reads.filter(o=>!o.off),W=30*864e5,end=on.length?on[on.length-1].ts:0;
+  const bef=on.filter(o=>o.ts<a.ts&&o.ts>=a.ts-W),aft=on.filter(o=>o.ts>a.ts+864e5&&o.ts<=a.ts+W+864e5);
+  if(a.ts+3*864e5>end||bef.length<5||aft.length<5)return null;
+  const f=(g,k)=>median(g.map(o=>k==='bi'?o.bi&&o.bi.av:k==='asym'?o.asym:o.ratio).filter(v=>v!=null));
+  const r={n:[bef.length,aft.length]};for(const k of ['bi','ratio','asym']){const x=f(bef,k),y=f(aft,k);r[k]=x!=null&&y!=null?{b:x,a:y,d:x?100*(y-x)/Math.abs(x):null}:null}
+  return r}
+
 /* ---------- Calidad de datos ---------- */
 function qualityRows(){
   const R=[];
@@ -904,7 +926,7 @@ function qualityRows(){
 /* =====================================================================
    SICM-DESALADORA · BASE LOCAL, INGESTA (PDF / carpeta / ZIP / JSON), CAPTURA MANUAL Y EXPORTACIONES
    ===================================================================== */
-const emptyDB=()=>({schema:'sicm-desaladora/v1',docs:{},recs:[],archivos:[]});
+const emptyDB=()=>({schema:'sicm-desaladora/v1',docs:{},recs:[],archivos:[],acciones:[]});
 let DB=emptyDB(),saveT=0;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),200)}
 function saveCfg(){Store.put('kv','cfg',CFG).catch(()=>{})}
@@ -912,7 +934,9 @@ function ingest(obj,fname){
   const rep={file:fname,warn:[],recs:0,lect:0,dup:0,skip:0,docs:0,ts:Date.now()};
   const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,recs:rep.recs,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,80)};
   if(!obj||typeof obj!=='object'){rep.warn.push('El archivo no contiene un objeto JSON válido.');pushLog();return rep}
-  const recs=Array.isArray(obj.recorridos)?obj.recorridos:null;
+  if(Array.isArray(obj.acciones)){DB.acciones=DB.acciones||[];const seen=new Set(DB.acciones.map(a=>a.id));
+    for(const a0 of obj.acciones){const a=normAccion(a0);if(!a){rep.skip++;continue}if(seen.has(a.id)){rep.dup++;continue}seen.add(a.id);DB.acciones.push(a);rep.acc=(rep.acc||0)+1}}
+  const recs=Array.isArray(obj.recorridos)?obj.recorridos:(Array.isArray(obj.acciones)?[]:null);
   if(!recs){rep.warn.push('Sin "recorridos": estructura no reconocida (ver esquema en la pestaña de datos).');pushLog();return rep}
   for(const d of (obj.docs||[])){if(d&&d.folio&&!DB.docs[d.folio]){DB.docs[d.folio]={...d};delete DB.docs[d.folio].hall_tbl;rep.docs++}}
   const seen=new Set(DB.recs.map(r=>r.id));
@@ -965,6 +989,32 @@ async function commitStage(){
   let n=0;for(const s of STAGE)if(s.obj){const r=ingest(s.obj,s.name);n+=r.recs}
   STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} registro(s) agregado(s)`)}
 
+/* ---------- Bitácora de intervenciones: normalización e importación CSV ---------- */
+const _na=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function accTipoOf(t){const k=_na(t);const ex=ACC_TIPOS.find(x=>_na(x[1])===k);if(ex)return ex[0];
+  const R=[[/aceite.*(cambi|reempl|sustit)|(cambi|reempl|sustit).*aceite/,'aceite_cambio'],[/filtrad|regener|termovac|deshidrat/,'aceite_filtrado'],[/anali.*aceite|dga|cromatog|fisicoquim|rigidez/,'aceite_analisis'],[/electrodo|rejilla|reja\b/,'electrodo'],[/bushing|boquilla|aislador/,'bushing'],[/rectificador|diodo|control|tarjeta|scr/,'rectificador'],[/transformador|devanado|reemplazo de unidad/,'transformador'],[/prueba|megger|aislamiento|relacion|resistencia/,'pruebas'],[/termograf|ultrason|inspecc/,'inspeccion'],[/slate|ajuste|operaci/,'ajuste'],[/libranza|paro/,'libranza']];
+  for(const [re,c] of R)if(re.test(k))return c;return 'otro'}
+function normAccion(a){
+  if(!a||typeof a!=='object')return null;
+  let ts=Number.isFinite(a.ts)?a.ts:parseTs(a.fecha);if(!Number.isFinite(ts))return null;
+  const t=String(a.tipo||'otro').trim(),tipo=ACC_N[t]?t:accTipoOf(t);
+  let un=String(a.unidad||'TODAS').trim().toUpperCase().replace(/\s+/g,' ');
+  if(/^TODAS?$|^AMBAS$|^TODO/.test(un))un='TODAS';
+  const m=un.match(/^(PU-?\s*\d{5})\s*([AB])?/);if(m)un=m[1].replace(/PU-?\s*/,'PU-')+(m[2]?' '+m[2]:'');
+  const f=un.match(/^FA-?\s*(\d{5})/);if(f)un='FA-'+f[1];
+  const o={ts,unidad:un,tipo,desc:String(a.desc||a.descripcion||'').trim(),resp:String(a.resp||a.responsable||'').trim(),orden:String(a.orden||'').trim(),resultado:String(a.resultado||'').trim(),creado:a.creado||Date.now()};
+  o.id=a.id||accId(o);return o}
+function parseCsv(txt){const rows=[];let row=[],f='',q=false;txt=txt.replace(/^\ufeff/,'');
+  for(let i=0;i<txt.length;i++){const c=txt[i];
+    if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','||c===';'){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&txt[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}else f+=c}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows}
+function accionesFromCsv(txt){
+  const rows=parseCsv(txt);if(rows.length<2)return[];const h=rows[0].map(x=>x.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  const ix=n=>h.findIndex(x=>x.startsWith(n));const c={fecha:ix('fecha'),unidad:ix('unidad'),tipo:ix('tipo'),desc:ix('desc'),resp:ix('resp'),orden:ix('orden'),resultado:ix('result')};
+  return rows.slice(1).map(r=>normAccion({fecha:r[c.fecha],unidad:r[c.unidad],tipo:r[c.tipo],desc:r[c.desc],resp:r[c.resp],orden:r[c.orden],resultado:r[c.resultado]})).filter(Boolean)}
+function accTemplateCsv(){return csvOut('plantilla-intervenciones-desaladora.csv',[['fecha','unidad','tipo','descripcion','responsable','orden','resultado'],['15/03/2026','PU-11501 A','Cambio de aceite dieléctrico','Cambio total de aceite y filtrado, pruebas posteriores','Contratista X · ficha 123','OT 4000123','Rigidez 38 kV'],['02/05/2026','FA-11102','Reparación / cambio de electrodo (rejilla)','Cambio de rejilla dañada en celda','','','']])}
+
 /* ---------- Captura manual de una lectura ---------- */
 function renderCapture(){
   const el=$('#capForm');if(!el)return;const cur=k=>$('#'+k)?$('#'+k).value:'';
@@ -995,6 +1045,7 @@ const dl=(name,txt,mime)=>download(name,txt,mime||'application/json');
 const stamp=()=>new Date().toISOString().slice(0,10);
 const csvq=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
 const csvOut=(name,rows)=>download(name,'\ufeff'+rows.map(r=>r.map(csvq).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+function exportAcciones(){csvOut(`desaladora-intervenciones-${stamp()}.csv`,[['fecha','unidad','tipo','descripcion','responsable','orden','resultado'],...(DB.acciones||[]).slice().sort((a,b)=>a.ts-b.ts).map(a=>[toInput(a.ts).slice(0,10).split('-').reverse().join('/'),a.unidad,ACC_N[a.tipo].n,a.desc,a.resp,a.orden,a.resultado])])}
 function exportDB(){dl(`sicm-desaladora-base-${stamp()}.json`,JSON.stringify({...DB,generado:new Date().toISOString()}))}
 const r2=v=>v==null||!Number.isFinite(v)?'':+v.toFixed(2);
 function exportReads(){
@@ -1047,6 +1098,7 @@ function renderPan(){
   $('#cover').innerHTML=`<div class="cvr" style="grid-template-columns:96px repeat(${days.length},minmax(5px,1fr))"><span></span>${days.map((d,i)=>`<span class="cd">${i%7===0?dayLbl(d).slice(0,6):''}</span>`).join('')}${us.map(u=>`<b class="cu">${esc(u.key)}</b>${days.map(d=>{const c=by.get(u.key+'|'+d);const cl=!c?'n':c.off===c.n?'o':'l'+c.lvl;return`<i class="cc ${cl}" data-u="${esc(u.key)}" title="${esc(u.key)} · ${dayLbl(d)} · ${c?c.n+' lectura(s)'+(c.off?' ('+c.off+' sin carga)':''):'sin lectura'}"></i>`}).join('')}`).join('')}</div>`;
   $$('#cover .cc').forEach(c=>c.addEventListener('click',()=>{S.unit=c.dataset.u;fillUnitSel();switchView('uni')}));
   // hallazgos abiertos (todas las unidades)
+  renderBitacora();
   const al=us.flatMap(u=>u.rec.filter(r=>r.lvl>=1).map(r=>({u,r}))).sort((a,b)=>b.r.lvl-a.r.lvl);
   $('#alerts').innerHTML=al.map(({u,r})=>`<li class="al" data-u="${esc(u.key)}"><span class="chip ${r.lvl>=2?'c2':'c1'}">${r.lvl>=2?'ATENDER':'OBSERVAR'}</span> <b>${esc(u.key)}</b> — ${esc(r.titulo)}<div class="muted small">${esc(r.evid)}</div></li>`).join('')||'<li class="muted">Sin hallazgos que requieran seguimiento.</li>';
   $$('#alerts li.al').forEach(li=>li.addEventListener('click',()=>{S.unit=li.dataset.u;fillUnitSel();switchView('uni')}))}
@@ -1061,6 +1113,7 @@ function renderUnit(reset){
   const u=IX.units.get(S.unit)||unitsMain()[0];const body=$('#uniBody');if(!u){body.innerHTML='<div class="muted">Sin datos</div>';return}S.unit=u.key;
   const l=u.last,on=u.reads.filter(o=>!o.off),tip=ts=>{const o=u.reads.find(x=>x.ts===ts);return o?`<span class="muted">SLATE ${o.slate??'—'} · ${esc(fshort(o.folio))}</span>`:''};
   const bI=baselineOf(u,{ts:Infinity,slate:l&&l.slate},'bi',gI);
+  const accU=(DB.acciones||[]).filter(a=>accScope(a,u)).sort((x,y)=>y.ts-x.ts);
   const pc=procCorr(u),tr=u.tend;
   const recHtml=u.rec.map(r=>`<div class="rec l${r.lvl}"><div class="rh"><span class="chip ${r.lvl>=2?'c2':r.lvl===1?'c1':'c0'}">${['INFORMATIVA','SEGUIMIENTO','ATENDER'][r.lvl]}</span> <b>${esc(r.titulo)}</b></div><div class="small"><b>Evidencia:</b> ${esc(r.evid)}</div><div class="small"><b>Causa probable:</b> ${esc(r.causas)}</div><div class="small"><b>Acción:</b> ${esc(r.accion)}</div><div class="small muted">Respaldo: ${esc(r.ref)}</div></div>`).join('');
   const ev=u.reads.filter(o=>o.lvlP>=1||o.off).slice(-40).reverse();
@@ -1071,19 +1124,20 @@ function renderUnit(reset){
    <div class="chartbox"><div class="ttl">Bus voltaje (V)</div><canvas id="cV"></canvas><div class="tip"></div></div>
    <div class="chartbox"><div class="ttl">Voltaje positivo (verde) y negativo (rosa), mín–máx–promedio</div><canvas id="cF"></canvas><div class="tip"></div></div>
    <div class="chartbox"><div class="ttl">Potencia aparente en bus (kVA = I × V) y relación V campo / V bus</div><canvas id="cK"></canvas><div class="tip"></div></div>
-   <div class="grid2e"><div><div class="panel"><h2>Recomendaciones para esta unidad</h2>${recHtml||'<span class="muted">Sin recomendaciones.</span>'}</div>
+   <div class="grid2e"><div>${accU.length?`<div class="panel"><h2>Intervenciones registradas (marcadas en las gráficas)</h2>${accU.map(a=>{const e=accEffect(u,a),t=ACC_N[a.tipo]||ACC_N.otro;return`<div class="acc" style="border-left-color:${t.c}"><div class="ah"><b>${fDate(a.ts)}</b><span class="badge">${esc(t.n)}</span></div>${a.desc?`<div class="small">${esc(a.desc)}</div>`:''}${e?`<div class="muted small">↳ Bus I ${e.bi?`${fv(e.bi.b,0)}→${fv(e.bi.a,0)} A`:'—'} · asimetría ${e.asym?`${fv(e.asym.b,0)}→${fv(e.asym.a,0)} %`:'—'} (30 d antes vs después)</div>`:'<div class="muted small">Efecto: sin suficientes lecturas posteriores</div>'}</div>`}).join('')}</div>`:''}<div class="panel"><h2>Recomendaciones para esta unidad</h2>${recHtml||'<span class="muted">Sin recomendaciones.</span>'}</div>
      <div class="panel"><h2>Eventos recientes (lecturas fuera de lo habitual o sin carga)</h2><div class="tw" style="max-height:340px"><table><tr><th>Fecha</th><th>SLATE</th><th>Nivel</th><th>Señales</th><th>Folio</th></tr>${ev.map(o=>`<tr><td>${fDT(o.ts)}</td><td>${o.slate??'—'}</td><td>${o.off?chip(3):chip(o.lvlP)}</td><td class="small">${o.off?'Todas las variables en cero':o.sig.map(s=>esc(s.t)).join('<br>')}</td><td class="small">${esc(fshort(o.folio))}</td></tr>`).join('')||'<tr><td class="muted">Sin eventos</td></tr>'}</table></div></div></div>
    <div><div class="panel"><h2>Tendencia reciente (≈ ${CFG.trend.win} días)</h2><table class="kv">${tr.map(t=>`<tr><td>${esc(t.n)}</td><td class="n">${t.pm!=null?`<b${t.warn?' style="color:var(--warn)"':''}>${slopeTxt(t)}</b> <span class="muted small">R² ${t.r2.toFixed(2)} · n ${t.n_}</span>`:'<span class="muted small">pocas lecturas</span>'}</td></tr>`).join('')}</table><p class="small muted">Se compara dentro del mismo paso SLATE para no confundir un cambio de ajuste con una deriva.</p></div>
      <div class="panel"><h2>Correlación con el proceso</h2><table class="kv">${pc.map(c=>`<tr><td>${esc(c.pn)}</td><td class="n">${c.r!=null?`r = <b>${c.r.toFixed(2)}</b> <span class="muted small">(${c.n} hojas)</span>`:`<span class="muted small">${c.n} hojas: insuficiente</span>`}</td></tr>`).join('')}</table><p class="small muted">Correlación de la corriente promedio de la hoja con lo anotado en observaciones; |r| &lt; 0.3 = sin relación apreciable.</p></div>
      <div class="panel"><h2>Última hoja</h2><table class="kv">${(()=>{const r=DB.recs.filter(x=>x.id===l.rid)[0]||{};return[['Folio',l.folio],['Archivo',l.archivo],['Formato',l.layout==='AB'?'Power Unit A y B (dos canales)':'Una unidad (mín/máx)'],['TAG en la hoja',l.sheetTag],['N° SAP',r.sap],['Operario',r.operario],['Ing. sector',r.ing_sector],['Resp. operativo',r.resp_operativo],['Capturado',r.capturado?fDT(parseTs(r.capturado)):'—'],['GPS',r.gps?r.gps.join(', ')+(r.gps_prec_m?` (±${r.gps_prec_m} m)`:''):'—'],['Observaciones',r.obs]].map(([a,b])=>`<tr><td class="muted">${a}</td><td><b>${esc(b==null||b===''?'—':b)}</b></td></tr>`).join('')})()}</table></div></div></div>`;
   for(const [k,id] of [['I','cI'],['V','cV'],['F','cF'],['K','cK']]){CH[k]=new Chart($('#'+id));}
-  S._uniDraw=true;renderUnit2(u,bI,on,tip,reset)}
-function renderUnit2(u,bI,on,tip,reset){ // las gráficas se crean después de pintar el HTML
+  S._uniDraw=true;renderUnit2(u,bI,on,tip,reset,accU)}
+function renderUnit2(u,bI,on,tip,reset,accU){
+  const vl=(accU||[]).map(a=>({x:a.ts,color:(ACC_N[a.tipo]||ACC_N.otro).c,label:ACC_SHORT[a.tipo]||'Intervención'})); // las gráficas se crean después de pintar el HTML
   const l=u.last,opt={xType:'time',xFmt:fDT,yMin0:false,hInclude:false,tipExtra:tip},ne='Sin lecturas con carga',nd=on.length?null:ne;
-  CH.I.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'A',series:[...unitSeries(u,'bi','#E07A45','Bus I'),{name:'SLATE (der.)',color:'#8FA9B8',axis:'r',kind:'line',dash:[5,3],pts:on.filter(o=>o.slate!=null).map(o=>[o.ts,o.slate])}],hlines:bI?[{y:bI.p95,color:cssv('--warn-fill'),label:'P95 habitual'}]:[],noData:nd},true);
-  CH.V.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:unitSeries(u,'bv','#4C8BD6','Bus V'),noData:nd},true);
-  CH.F.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:[...unitSeries(u,'pv','#2F9E8F','Pos V'),...unitSeries(u,'nv','#C9557C','Neg V')],noData:nd},true);
-  CH.K.setData({...opt,yFmt:v=>fv(v,1),y2Fmt:v=>fv(v,1),yLabel:'kVA',series:[{name:'Potencia aparente (kVA)',color:'#BC955C',kind:'line',pts:on.filter(o=>o.kva!=null).map(o=>[o.ts,o.kva])},{name:'V campo / V bus (der.)',color:'#9A6BC4',axis:'r',kind:'line',pts:on.filter(o=>o.ratio!=null).map(o=>[o.ts,o.ratio])}],noData:nd},true);
+  CH.I.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'A',series:[...unitSeries(u,'bi','#E07A45','Bus I'),{name:'SLATE (der.)',color:'#8FA9B8',axis:'r',kind:'line',dash:[5,3],pts:on.filter(o=>o.slate!=null).map(o=>[o.ts,o.slate])}],hlines:bI?[{y:bI.p95,color:cssv('--warn-fill'),label:'P95 habitual'}]:[],noData:nd,vlines:vl},true);
+  CH.V.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:unitSeries(u,'bv','#4C8BD6','Bus V'),noData:nd,vlines:vl},true);
+  CH.F.setData({...opt,yFmt:v=>fv(v,0),y2Fmt:v=>fv(v,0),yLabel:'V',series:[...unitSeries(u,'pv','#2F9E8F','Pos V'),...unitSeries(u,'nv','#C9557C','Neg V')],noData:nd,vlines:vl},true);
+  CH.K.setData({...opt,yFmt:v=>fv(v,1),y2Fmt:v=>fv(v,1),yLabel:'kVA',series:[{name:'Potencia aparente (kVA)',color:'#BC955C',kind:'line',pts:on.filter(o=>o.kva!=null).map(o=>[o.ts,o.kva])},{name:'V campo / V bus (der.)',color:'#9A6BC4',axis:'r',kind:'line',pts:on.filter(o=>o.ratio!=null).map(o=>[o.ts,o.ratio])}],noData:nd,vlines:vl},true);
   CH.I.group=CH.V.group=CH.F.group=CH.K.group=[CH.I,CH.V,CH.F,CH.K]}
 
 /* ---------------------------------------------------------------- 3 · COMPARATIVO */
@@ -1114,14 +1168,46 @@ function renderTrend(reset){
   CH.P1.group=CH.P2.group=CH.P3.group=[CH.P1,CH.P2,CH.P3];
   $('#corrTable').innerHTML=`<tr><th>Unidad</th>${['Temperatura del crudo','Flujo total','Carga total'].map(n=>`<th class="n">${n}<br><small>r con Bus I</small></th>`).join('')}</tr>`+us.map(u=>`<tr><td><b>${esc(u.key)}</b></td>${procCorr(u).map(c=>`<td class="n">${c.r!=null?`<b${Math.abs(c.r)>=.5?' style="color:var(--warn)"':''}>${c.r.toFixed(2)}</b> <span class="muted small">n ${c.n}</span>`:`<span class="muted small">n ${c.n}</span>`}</td>`).join('')}</tr>`).join('')}
 
-/* ---------------------------------------------------------------- 5 · PLAN DE ACCIÓN */
-function renderPlan(){
-  const items=unitList().filter(u=>u.reads.length>=5).flatMap(u=>u.rec.filter(r=>r.lvl>=1||r.id==='cov'||r.id==='q').map(r=>({u,r}))).sort((a,b)=>b.r.lvl-a.r.lvl||a.u.key.localeCompare(b.u.key,'es',{numeric:true}));
-  // agrupar por hallazgo común a varias unidades
-  const g=new Map();for(const it of items){const k=it.r.id+'|'+it.r.lvl;(g.get(k)||g.set(k,[]).get(k)).push(it)}
-  $('#planBody').innerHTML=[...g.values()].map(arr=>{const r=arr[0].r;return`<div class="rec l${r.lvl}"><div class="rh"><span class="chip ${r.lvl>=2?'c2':r.lvl===1?'c1':'c0'}">${['INFORMATIVA','SEGUIMIENTO','ATENDER'][r.lvl]}</span> <b>${esc(r.titulo)}</b> <span class="muted small">· ${arr.map(a=>`<a href="#" class="ulink" data-u="${esc(a.u.key)}">${esc(a.u.key)}</a>`).join(', ')}</span></div>
-    ${arr.map(a=>`<div class="small"><b>${esc(a.u.key)}:</b> ${esc(a.r.evid)}</div>`).join('')}<div class="small"><b>Causa probable:</b> ${esc(r.causas)}</div><div class="small"><b>Acción:</b> ${esc(r.accion)}</div><div class="small muted">Respaldo: ${esc(r.ref)}</div></div>`}).join('')||'<div class="muted">Sin acciones pendientes.</div>';
-  $$('#planBody .ulink').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();S.unit=a.dataset.u;fillUnitSel();switchView('uni')}))}
+/* ---------------------------------------------------------------- BITÁCORA DE INTERVENCIONES (panorama) */
+let EDIT_ACC=null;
+const ACC_SHORT={aceite_cambio:'Cambio aceite',aceite_filtrado:'Filtrado aceite',aceite_analisis:'Análisis aceite',electrodo:'Electrodo',bushing:'Bushing',rectificador:'Rectificador',transformador:'Transformador',pruebas:'Pruebas',inspeccion:'Inspección',ajuste:'Ajuste',libranza:'Libranza',otro:'Intervención'};
+function accUnitOpts(){const us=unitsMain().map(u=>u.key),fs=Object.keys(DESAL);return[['TODAS','Todas las unidades'],...fs.map(f=>[f,`${f} (ambas unidades)`]),...us.map(u=>[u,u])]}
+function renderBitacora(){
+  const keep=id=>$('#'+id)?$('#'+id).value:null,k={u:keep('a_unidad'),t:keep('a_tipo'),fu:keep('a_fu'),ft:keep('a_ft')};
+  opts($('#a_unidad'),accUnitOpts(),k.u&&accUnitOpts().some(x=>x[0]===k.u)?k.u:'TODAS');
+  opts($('#a_tipo'),ACC_TIPOS.map(([c,n])=>[c,n]),k.t&&ACC_N[k.t]?k.t:'aceite_cambio');
+  opts($('#a_fu'),[['','Todas'],...accUnitOpts().slice(1)],k.fu||'');opts($('#a_ft'),[['','Todos'],...ACC_TIPOS.map(([c,n])=>[c,n])],k.ft||'');
+  if(!$('#a_fecha').value)$('#a_fecha').value=toInput(Date.now()).slice(0,10);
+  const all=(DB.acciones||[]).slice().sort((a,b)=>b.ts-a.ts),fu=$('#a_fu').value,ft=$('#a_ft').value;
+  const us=unitsMain();
+  const rows=all.filter(a=>(!ft||a.tipo===ft)&&(!fu||a.unidad===fu||(us.find(u=>u.key===fu)&&accScope(a,us.find(u=>u.key===fu)))||(fu==='TODAS'&&a.unidad==='TODAS')));
+  // última intervención por tipo clave y unidad
+  const lastBy=(tipos)=>{const r=us.map(u=>{const a=all.find(x=>tipos.includes(x.tipo)&&accScope(x,u));return a?`${u.key} <b>${Math.floor((Date.now()-a.ts)/864e5)} d</b>`:null}).filter(Boolean);return r.length?r.join(' · '):'<span class="muted">sin registro</span>'};
+  $('#accLast').innerHTML=all.length?`<b>Días desde el último cambio de aceite:</b> ${lastBy(['aceite_cambio'])}<br><b>Desde la última reparación de electrodo:</b> ${lastBy(['electrodo'])}`:'<span class="muted">Aún no hay intervenciones registradas. Captúralas arriba o impórtalas desde CSV/JSON.</span>';
+  $('#accList').innerHTML=rows.slice(0,60).map(a=>{const t=ACC_N[a.tipo]||ACC_N.otro;
+    const efs=us.filter(u=>accScope(a,u)).map(u=>({u,e:accEffect(u,a)})).filter(x=>x.e);
+    const ef=efs.map(({u,e})=>{const p=k=>e[k]&&e[k].d!=null?`${e[k].d>0?'+':''}${e[k].d.toFixed(0)} %`:'—';return`<div class="muted small">↳ ${esc(u.key)}: Bus I ${e.bi?`${fv(e.bi.b,0)}→${fv(e.bi.a,0)} A (${p('bi')})`:'—'} · asimetría ${e.asym?`${fv(e.asym.b,0)}→${fv(e.asym.a,0)} %`:'—'} · V campo/V bus ${p('ratio')}</div>`}).join('');
+    return`<div class="acc" style="border-left-color:${t.c}"><div class="ah"><b>${fDate(a.ts)}</b><span class="badge">${esc(t.n)}</span><span class="small">${esc(a.unidad==='TODAS'?'Todas':a.unidad)}</span><span class="ab"><button title="Editar" data-ed="${esc(a.id)}">✎</button><button title="Eliminar" data-del="${esc(a.id)}">✕</button></span></div>
+      ${a.desc?`<div class="small">${esc(a.desc)}</div>`:''}<div class="muted small">${[a.resp,a.orden,a.resultado].filter(Boolean).map(esc).join(' · ')}</div>${ef}</div>`}).join('')+(rows.length>60?`<div class="muted small">…y ${rows.length-60} más (usa los filtros o exporta).</div>`:'')||(all.length?'<span class="muted small">Sin resultados con esos filtros.</span>':'');
+  $$('#accList [data-del]').forEach(b=>b.addEventListener('click',()=>{if(!confirm('¿Eliminar esta intervención?'))return;DB.acciones=DB.acciones.filter(x=>x.id!==b.dataset.del);save();renderBitacora();if(S.view==='uni')renderUnit(true)}));
+  $$('#accList [data-ed]').forEach(b=>b.addEventListener('click',()=>{const a=DB.acciones.find(x=>x.id===b.dataset.ed);if(!a)return;EDIT_ACC=a.id;
+    $('#a_fecha').value=toInput(a.ts).slice(0,10);$('#a_unidad').value=a.unidad;$('#a_tipo').value=a.tipo;$('#a_desc').value=a.desc;$('#a_resp').value=a.resp;$('#a_orden').value=a.orden;$('#a_res').value=a.resultado;
+    $('#a_save').textContent='Guardar cambios';$('#a_cancel').hidden=false;$('#accForm').scrollIntoView({behavior:'smooth',block:'nearest'})}))}
+function accReset(){EDIT_ACC=null;['a_desc','a_resp','a_orden','a_res'].forEach(i=>$('#'+i).value='');$('#a_save').textContent='Agregar intervención';$('#a_cancel').hidden=true}
+function accSave(){
+  const ts=parseTs($('#a_fecha').value);if(!Number.isFinite(ts)){toast('Captura la fecha');return}
+  const a=normAccion({ts,unidad:$('#a_unidad').value,tipo:$('#a_tipo').value,desc:$('#a_desc').value,resp:$('#a_resp').value,orden:$('#a_orden').value,resultado:$('#a_res').value});
+  if(!a.desc&&a.tipo==='otro'){toast('Describe la intervención');return}
+  DB.acciones=DB.acciones||[];
+  if(EDIT_ACC){const i=DB.acciones.findIndex(x=>x.id===EDIT_ACC);a.id=EDIT_ACC;if(i>=0)DB.acciones[i]=a}
+  else{if(DB.acciones.some(x=>x.id===a.id)){toast('Esa intervención ya está registrada');return}DB.acciones.push(a)}
+  save();accReset();renderBitacora();if(S.view==='uni')renderUnit(true);toast('Intervención guardada')}
+async function accImport(files){
+  let n=0,d=0;
+  for(const f of files){const txt=await f.text();let list=[];
+    try{if(/\.json$/i.test(f.name)){const o=JSON.parse(txt);list=(Array.isArray(o)?o:(o.acciones||[])).map(normAccion).filter(Boolean)}else list=accionesFromCsv(txt)}catch(e){toast('No se pudo leer '+f.name);continue}
+    DB.acciones=DB.acciones||[];const seen=new Set(DB.acciones.map(a=>a.id));for(const a of list){if(seen.has(a.id)){d++;continue}seen.add(a.id);DB.acciones.push(a);n++}}
+  save();renderBitacora();if(S.view==='uni')renderUnit(true);toast(`${n} intervención(es) importadas${d?`, ${d} ya existían`:''}`)}
 
 /* ---------------------------------------------------------------- 6 · CRITERIOS */
 function renderCfg(){
@@ -1174,12 +1260,12 @@ async function unitReport(key){
 function refreshAll(){
   if(!S.unit||!IX.units.has(S.unit)){const w=unitsMain().sort((a,b)=>(b.est<=2?b.est:-1)-(a.est<=2?a.est:-1))[0];S.unit=w?w.key:null}
   fillUnitSel();renderPan();
-  if(S.view==='uni')renderUnit(true);if(S.view==='cmp')renderCmp(true);if(S.view==='tend')renderTrend(true);if(S.view==='plan')renderPlan();if(S.view==='cfg')renderCfg();if(S.view==='cal')renderQuality();if(S.view==='data')renderData();
+  if(S.view==='uni')renderUnit(true);if(S.view==='cmp')renderCmp(true);if(S.view==='tend')renderTrend(true);if(S.view==='cfg')renderCfg();if(S.view==='cal')renderQuality();if(S.view==='data')renderData();
   const t=IX.reads.length?IX.reads[IX.reads.length-1].ts:null;
   $('#statusbar').innerHTML=`<span>${unitsMain().length} unidades · ${IX.reads.length.toLocaleString('es-MX')} lecturas · ${IX.docs.size} folios</span><span>Última lectura: ${t?fDT(t):'—'} (hora de Tabasco)</span><span>Almacenamiento: ${esc(Store.mode())}</span>`}
 function switchView(v){
   S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
-  requestAnimationFrame(()=>{if(v==='pan')renderPan();if(v==='uni')renderUnit(true);if(v==='cmp')renderCmp(true);if(v==='tend')renderTrend(true);if(v==='plan')renderPlan();if(v==='cfg')renderCfg();if(v==='cal')renderQuality();if(v==='data')renderData();window.scrollTo(0,0)})}
+  requestAnimationFrame(()=>{if(v==='pan')renderPan();if(v==='uni')renderUnit(true);if(v==='cmp')renderCmp(true);if(v==='tend')renderTrend(true);if(v==='cfg')renderCfg();if(v==='cal')renderQuality();if(v==='data')renderData();window.scrollTo(0,0)})}
 
 /* =====================================================================
    SICM-DESALADORA · ARRANQUE Y EVENTOS
@@ -1200,7 +1286,7 @@ async function init(){
   const pickBulk=async e=>{const col=await bulkCollect(null,e.target.files);e.target.value='';handleBulk(col)};
   $('#btnLoadDir').addEventListener('click',()=>{switchView('data');$('#dirIn').click()});$('#btnDir').addEventListener('click',()=>$('#dirIn').click());$('#btnZip').addEventListener('click',()=>$('#zipIn').click());$('#btnPick').addEventListener('click',()=>$('#fileIn').click());$('#btnLoad').addEventListener('click',()=>$('#fileIn').click());
   $('#dirIn').addEventListener('change',pickBulk);$('#zipIn').addEventListener('change',pickBulk);$('#fileIn').addEventListener('change',pickBulk);
-  $('#btnPlanCsv').addEventListener('click',exportRecs);$('#btnPlan2').addEventListener('click',exportRecs);$('#btnReads').addEventListener('click',exportReads);$('#btnReads2').addEventListener('click',exportReads);$('#btnExport2').addEventListener('click',exportDB);
+  $('#btnPlan2').addEventListener('click',exportRecs);$('#btnReads').addEventListener('click',exportReads);$('#btnReads2').addEventListener('click',exportReads);$('#btnExport2').addEventListener('click',exportDB);
   $('#btnReseed').addEventListener('click',async()=>{if(!confirm('¿Reemplazar la base por los datos incluidos (reportes jul–oct 2026)? Se pierden las capturas manuales y cargas posteriores.'))return;await Store.clear();DB=emptyDB();await loadSeed();CFG=structuredClone(CFG0);rebuild();save();S.unit=null;refreshAll();toast('Base restablecida')});
   $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar toda la base local?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.unit=null;refreshAll()});
   const drop=$('#drop');drop.addEventListener('click',()=>$('#dirIn').click());drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')$('#dirIn').click()});
@@ -1217,6 +1303,7 @@ async function init(){
   $('#btnApplyCfg').addEventListener('click',applyCfg);$('#btnResetCfg').addEventListener('click',()=>{CFG=structuredClone(CFG0);rebuild();saveCfg();refreshAll();renderCfg();toast('Criterios iniciales restablecidos')});
   $('#qTipo').addEventListener('change',e=>{S.q.tipo=e.target.value;renderQuality()});$('#btnQCsv').addEventListener('click',exportQuality);
   $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{if(STAGE_BUSY){STAGE_ABORT=true;return}STAGE=[];renderStage()});
+  $('#a_save').addEventListener('click',accSave);$('#a_cancel').addEventListener('click',accReset);$('#a_import').addEventListener('click',()=>$('#a_file').click());$('#a_file').addEventListener('change',e=>{accImport(e.target.files);e.target.value=''});$('#a_tpl').addEventListener('click',accTemplateCsv);$('#a_export').addEventListener('click',exportAcciones);$('#a_fu').addEventListener('change',renderBitacora);$('#a_ft').addEventListener('change',renderBitacora);
   refreshAll();
   window.__ready=true;
 }

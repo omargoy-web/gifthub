@@ -1,7 +1,7 @@
 /* =====================================================================
    SICM-DESALADORA · BASE LOCAL, INGESTA (PDF / carpeta / ZIP / JSON), CAPTURA MANUAL Y EXPORTACIONES
    ===================================================================== */
-const emptyDB=()=>({schema:'sicm-desaladora/v1',docs:{},recs:[],archivos:[]});
+const emptyDB=()=>({schema:'sicm-desaladora/v1',docs:{},recs:[],archivos:[],acciones:[]});
 let DB=emptyDB(),saveT=0;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),200)}
 function saveCfg(){Store.put('kv','cfg',CFG).catch(()=>{})}
@@ -9,7 +9,9 @@ function ingest(obj,fname){
   const rep={file:fname,warn:[],recs:0,lect:0,dup:0,skip:0,docs:0,ts:Date.now()};
   const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,recs:rep.recs,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,80)};
   if(!obj||typeof obj!=='object'){rep.warn.push('El archivo no contiene un objeto JSON válido.');pushLog();return rep}
-  const recs=Array.isArray(obj.recorridos)?obj.recorridos:null;
+  if(Array.isArray(obj.acciones)){DB.acciones=DB.acciones||[];const seen=new Set(DB.acciones.map(a=>a.id));
+    for(const a0 of obj.acciones){const a=normAccion(a0);if(!a){rep.skip++;continue}if(seen.has(a.id)){rep.dup++;continue}seen.add(a.id);DB.acciones.push(a);rep.acc=(rep.acc||0)+1}}
+  const recs=Array.isArray(obj.recorridos)?obj.recorridos:(Array.isArray(obj.acciones)?[]:null);
   if(!recs){rep.warn.push('Sin "recorridos": estructura no reconocida (ver esquema en la pestaña de datos).');pushLog();return rep}
   for(const d of (obj.docs||[])){if(d&&d.folio&&!DB.docs[d.folio]){DB.docs[d.folio]={...d};delete DB.docs[d.folio].hall_tbl;rep.docs++}}
   const seen=new Set(DB.recs.map(r=>r.id));
@@ -62,6 +64,32 @@ async function commitStage(){
   let n=0;for(const s of STAGE)if(s.obj){const r=ingest(s.obj,s.name);n+=r.recs}
   STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} registro(s) agregado(s)`)}
 
+/* ---------- Bitácora de intervenciones: normalización e importación CSV ---------- */
+const _na=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function accTipoOf(t){const k=_na(t);const ex=ACC_TIPOS.find(x=>_na(x[1])===k);if(ex)return ex[0];
+  const R=[[/aceite.*(cambi|reempl|sustit)|(cambi|reempl|sustit).*aceite/,'aceite_cambio'],[/filtrad|regener|termovac|deshidrat/,'aceite_filtrado'],[/anali.*aceite|dga|cromatog|fisicoquim|rigidez/,'aceite_analisis'],[/electrodo|rejilla|reja\b/,'electrodo'],[/bushing|boquilla|aislador/,'bushing'],[/rectificador|diodo|control|tarjeta|scr/,'rectificador'],[/transformador|devanado|reemplazo de unidad/,'transformador'],[/prueba|megger|aislamiento|relacion|resistencia/,'pruebas'],[/termograf|ultrason|inspecc/,'inspeccion'],[/slate|ajuste|operaci/,'ajuste'],[/libranza|paro/,'libranza']];
+  for(const [re,c] of R)if(re.test(k))return c;return 'otro'}
+function normAccion(a){
+  if(!a||typeof a!=='object')return null;
+  let ts=Number.isFinite(a.ts)?a.ts:parseTs(a.fecha);if(!Number.isFinite(ts))return null;
+  const t=String(a.tipo||'otro').trim(),tipo=ACC_N[t]?t:accTipoOf(t);
+  let un=String(a.unidad||'TODAS').trim().toUpperCase().replace(/\s+/g,' ');
+  if(/^TODAS?$|^AMBAS$|^TODO/.test(un))un='TODAS';
+  const m=un.match(/^(PU-?\s*\d{5})\s*([AB])?/);if(m)un=m[1].replace(/PU-?\s*/,'PU-')+(m[2]?' '+m[2]:'');
+  const f=un.match(/^FA-?\s*(\d{5})/);if(f)un='FA-'+f[1];
+  const o={ts,unidad:un,tipo,desc:String(a.desc||a.descripcion||'').trim(),resp:String(a.resp||a.responsable||'').trim(),orden:String(a.orden||'').trim(),resultado:String(a.resultado||'').trim(),creado:a.creado||Date.now()};
+  o.id=a.id||accId(o);return o}
+function parseCsv(txt){const rows=[];let row=[],f='',q=false;txt=txt.replace(/^\ufeff/,'');
+  for(let i=0;i<txt.length;i++){const c=txt[i];
+    if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','||c===';'){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&txt[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()))rows.push(row);row=[]}else f+=c}
+  row.push(f);if(row.some(x=>x.trim()))rows.push(row);return rows}
+function accionesFromCsv(txt){
+  const rows=parseCsv(txt);if(rows.length<2)return[];const h=rows[0].map(x=>x.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  const ix=n=>h.findIndex(x=>x.startsWith(n));const c={fecha:ix('fecha'),unidad:ix('unidad'),tipo:ix('tipo'),desc:ix('desc'),resp:ix('resp'),orden:ix('orden'),resultado:ix('result')};
+  return rows.slice(1).map(r=>normAccion({fecha:r[c.fecha],unidad:r[c.unidad],tipo:r[c.tipo],desc:r[c.desc],resp:r[c.resp],orden:r[c.orden],resultado:r[c.resultado]})).filter(Boolean)}
+function accTemplateCsv(){return csvOut('plantilla-intervenciones-desaladora.csv',[['fecha','unidad','tipo','descripcion','responsable','orden','resultado'],['15/03/2026','PU-11501 A','Cambio de aceite dieléctrico','Cambio total de aceite y filtrado, pruebas posteriores','Contratista X · ficha 123','OT 4000123','Rigidez 38 kV'],['02/05/2026','FA-11102','Reparación / cambio de electrodo (rejilla)','Cambio de rejilla dañada en celda','','','']])}
+
 /* ---------- Captura manual de una lectura ---------- */
 function renderCapture(){
   const el=$('#capForm');if(!el)return;const cur=k=>$('#'+k)?$('#'+k).value:'';
@@ -92,6 +120,7 @@ const dl=(name,txt,mime)=>download(name,txt,mime||'application/json');
 const stamp=()=>new Date().toISOString().slice(0,10);
 const csvq=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
 const csvOut=(name,rows)=>download(name,'\ufeff'+rows.map(r=>r.map(csvq).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+function exportAcciones(){csvOut(`desaladora-intervenciones-${stamp()}.csv`,[['fecha','unidad','tipo','descripcion','responsable','orden','resultado'],...(DB.acciones||[]).slice().sort((a,b)=>a.ts-b.ts).map(a=>[toInput(a.ts).slice(0,10).split('-').reverse().join('/'),a.unidad,ACC_N[a.tipo].n,a.desc,a.resp,a.orden,a.resultado])])}
 function exportDB(){dl(`sicm-desaladora-base-${stamp()}.json`,JSON.stringify({...DB,generado:new Date().toISOString()}))}
 const r2=v=>v==null||!Number.isFinite(v)?'':+v.toFixed(2);
 function exportReads(){
