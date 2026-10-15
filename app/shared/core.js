@@ -248,7 +248,8 @@ const SUITE=[
   {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'},
   {id:'motores',file:'sicm-motores.html',nombre:'Motores',desc:'Vibraciones, variador y espectros FFT'},
   {id:'desbalance',file:'sicm-desbalance.html',nombre:'Desbalance CCM',desc:'Desbalance de voltaje en tableros de baja tensión'},
-  {id:'estado',file:'sicm-estado.html',nombre:'Estado aparente',desc:'Inspección visual ponderada de subestaciones y soloaires'}
+  {id:'estado',file:'sicm-estado.html',nombre:'Estado aparente',desc:'Inspección visual ponderada de subestaciones y soloaires'},
+  {id:'desaladora',file:'sicm-desaladora.html',nombre:'Desaladora',desc:'Transformadores (unidades de potencia) de desaladoras'}
 ];
 function renderSuiteNav(cur){const el=document.getElementById('suiteNav');if(!el)return;
   el.innerHTML=SUITE.map(m=>m.id===cur?`<span class="cur" aria-current="page" title="${esc(m.desc)}">${esc(m.nombre)}</span>`:`<a href="${esc(m.file)}" title="${esc(m.desc)}">${esc(m.nombre)}</a>`).join('')}

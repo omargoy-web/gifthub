@@ -311,6 +311,21 @@ Lee los reportes PDF de **inspección visual «Estado aparente»**: soloaires (`
 
 **Límites:** en semestral el formato no distingue «No» de «No aplica» (se trata como N/A en conceptos condicionales); formatos en borrador (menos de la mitad respondido) se marcan «Sin evaluar»; un soloaire = un motor (TAG + TAG de motor).
 
+## Módulo Desaladora (`app/sicm-desaladora.html`)
+
+Monitoreo de las 8 unidades de potencia (transformadores) de las desaladoras FA-11101/11102 (UDC1) y FA-11201/11202 (UDC2) a partir de los reportes «Monitoreo de transformadores de desaladora»: Bus corriente, Bus voltaje, voltaje positivo y negativo (mín/máx) y SLATE, más proceso anotado en observaciones (temperatura de crudo, flujo, carga).
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (formato «Power Unit A y B» y formato de una unidad mín/máx) | `app/desaladora/parse.js` |
+| Limpieza, línea base propia, estado suave, tendencias, causa común, recomendaciones | `app/desaladora/model.js` |
+| Ingesta (PDF/carpeta/ZIP/JSON), captura manual, exportaciones | `app/desaladora/ingest.js` |
+| Vistas y arranque | `app/desaladora/views.js`, `init.js`, `template.html` |
+| Datos incluidos (232 PDF, 944 hojas, 2,645 lecturas por unidad) | `data/desaladora/seed_real_dsl.json` ← `node scripts/extract_desaladora.js <dir PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_desaladora.py` |
+
+**Estado suave:** cada lectura se compara con la mediana y MAD de la propia unidad (por paso SLATE); NORMAL / OBSERVAR / ATENDER, y «Atender» solo con persistencia (k de n lecturas) o dos señales a la vez. Señales: corriente de bus alta, relación V campo / V bus baja, asimetría positivo/negativo, variación dentro de la lectura, lectura congelada y tendencia. Si ambas unidades de una desaladora muestran lo mismo se avisa como causa común (proceso). Los umbrales no vienen del manual del fabricante; son editables en «Criterios».
+
 ## Módulo Motores (`app/sicm-motores.html`)
 
 Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.

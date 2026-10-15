@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Desaladora · Transformadores de desaladora</title>
+<style>
+/*__CORE_CSS__*/
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16)}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.grid2e{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(360px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
+.hd{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.dgrp{margin-bottom:14px}.dgrp h3{margin:0 0 8px;font-size:14px;color:var(--dorado)}.dgrp .cards{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.cvr{display:grid;gap:2px;align-items:center;font-size:10.5px}.cvr .cu{font-size:11px;white-space:nowrap}.cvr .cd{font-size:9px;color:var(--muted);white-space:nowrap;overflow:visible}
+.cc{display:block;height:15px;border-radius:2px;background:var(--surface2);cursor:pointer}.cc.l0{background:var(--ok)}.cc.l1{background:var(--warn-fill)}.cc.l2{background:var(--crit)}.cc.o{background:var(--oos)}.cc.n{background:transparent;border:1px dashed var(--line)}.cc:hover{outline:2px solid var(--text)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.rec{border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:8px;padding:8px 12px;margin-bottom:8px;background:var(--surface);display:flex;flex-direction:column;gap:3px}.rec.l1{border-left-color:var(--warn-fill)}.rec.l2{border-left-color:var(--crit)}.rec .rh{margin-bottom:2px}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}.capgrid label,.cfgg label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}.cfgg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.capgrid input,.capgrid select,.cfgg input,table input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+tr.hrow{cursor:pointer}tr.hrow:hover{background:var(--surface2)}td.warnc{color:var(--warn)}
+ul.alerts li.al{cursor:pointer;padding:4px 6px;border-radius:6px}ul.alerts li.al:hover{background:var(--surface2)}
+table.kv{width:100%}table.kv td{word-break:break-word;padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}td.bad{color:var(--crit);font-weight:700}
+@media print{header.top,.tabs,.bar,.statusbar,#btnPrint,.zb,.btn{display:none!important}.view{display:none!important}#v-uni{display:block!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Desaladora · Unidades de potencia de desaladoras</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · IT-001 · FA-11101/11102 (UDC1) · FA-11201/11202 (UDC2) · IEEE C57.152 · NFPA 70B</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoadDir" title="Carpeta completa o ZIP con reportes PDF">📁 Carpeta / ZIP</button>
+  <button class="btn ghost" id="btnLoad">⬆ Reportes PDF / JSON</button>
+  <button class="btn ghost" id="btnPlanCsv">⬇ Plan de acción (.csv)</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="pan" aria-selected="true">1 · Panorama</button>
+  <button role="tab" data-view="uni" aria-selected="false">2 · Expediente por unidad</button>
+  <button role="tab" data-view="cmp" aria-selected="false">3 · Comparativo</button>
+  <button role="tab" data-view="tend" aria-selected="false">4 · Tendencias y proceso</button>
+  <button role="tab" data-view="plan" aria-selected="false">5 · Plan de acción</button>
+  <button role="tab" data-view="cfg" aria-selected="false">6 · Criterios</button>
+  <button role="tab" data-view="cal" aria-selected="false">7 · Calidad y trazabilidad</button>
+  <button role="tab" data-view="data" aria-selected="false">8 · Datos y carga</button>
+</nav>
+<main>
+<section id="v-pan" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="infobox"><b>Cómo se lee.</b> Cada tarjeta es una unidad de potencia (PU). El estado compara cada lectura contra <b>el comportamiento habitual de esa misma unidad</b> (por paso SLATE), no contra un límite fijo: <span class="chip c0">● NORMAL</span> dentro de lo habitual · <span class="chip c1">▲ OBSERVAR</span> señal puntual o tendencia · <span class="chip c2">■ ATENDER</span> señal persistente o varias a la vez · <span class="chip c3">◆ SIN CARGA</span> lecturas en cero. <span class="small muted" id="panNote"></span></div>
+  <div id="cards"></div>
+  <div class="grid2">
+    <div class="panel"><h2>Condición por día y unidad <span class="small muted">(últimos 60 días · clic abre el expediente)</span></h2>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Normal</span><span><i style="background:var(--warn-fill)"></i>Observar</span><span><i style="background:var(--crit)"></i>Atender</span><span><i style="background:var(--oos)"></i>Sin carga</span><span><i style="border:1px dashed var(--line)"></i>Sin lectura</span></div><div id="cover"></div></div>
+    <div class="panel"><h2>Hallazgos abiertos</h2><ul class="alerts" id="alerts"></ul></div>
+  </div>
+</section>
+<section id="v-uni" class="view" hidden>
+  <div class="bar"><label>Unidad<select class="selUnit" id="unitSel"></select></label><span class="sp"></span><button class="btn sm" id="btnUnitHtml">⬇ Reporte (.html)</button><button class="btn sm" id="btnReads">⬇ Lecturas (.csv)</button><button class="btn sm" id="btnPrint">🖶 Imprimir</button></div>
+  <div id="uniBody"></div>
+</section>
+<section id="v-cmp" class="view" hidden>
+  <div class="bar"><label>Variable<select id="cmpVar"></select></label><label>Desaladora<select id="cmpDesal"></select></label></div>
+  <div class="chartbox tall"><div class="ttl">Comparativo de unidades · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cCmp"></canvas><div class="tip"></div></div>
+  <div class="grid3"><div class="panel"><h2>Distribución por unidad</h2><div class="tw"><table id="cmpTable"></table></div></div><div class="panel"><h2>Mediana por paso SLATE</h2><div class="tw"><table id="slateTable"></table></div><p class="small muted">Dos unidades con el mismo SLATE deberían comportarse parecido; una unidad que se aparta de sus pares es candidata a revisión.</p></div></div>
+</section>
+<section id="v-tend" class="view" hidden>
+  <div class="panel"><h2>Tendencia reciente por unidad y variable (%/mes · R²)</h2><div class="tw"><table id="trTable"></table></div><p class="small muted">Regresión lineal de la ventana configurada, dentro del paso SLATE dominante. En ámbar: tendencia sostenida que genera aviso de seguimiento.</p></div>
+  <div class="chartbox"><div class="ttl">Temperatura del crudo (observaciones de la hoja)</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cP1"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Flujo total</div><canvas id="cP2"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Carga total (tal como se captura, miles de BPD)</div><canvas id="cP3"></canvas><div class="tip"></div></div>
+  <div class="panel"><h2>Correlación de la corriente de bus con el proceso (r de Pearson por hoja)</h2><div class="tw"><table id="corrTable"></table></div></div>
+</section>
+<section id="v-plan" class="view" hidden>
+  <div class="infobox">Acciones consolidadas de todas las unidades, ordenadas por prioridad. Cada una trae <b>evidencia</b> (datos del reporte), <b>causa probable</b> (con su nivel de confianza) y <b>acción</b> con respaldo normativo. Son recomendaciones de ingeniería generadas por reglas: confírmalas contra el manual del fabricante y las condiciones de operación.</div>
+  <div id="planBody"></div>
+</section>
+<section id="v-cfg" class="view" hidden>
+  <div class="infobox"><b>Criterios.</b> No provienen del manual del fabricante: están calibrados para que el estado dependa del comportamiento de cada unidad. Aumenta la sensibilidad para ser más estricto; reduce para ser más holgado. «Atender» exige persistencia (k de las últimas n lecturas) o dos señales distintas a la vez.</div>
+  <div class="panel"><h2>Umbrales</h2><div class="cfgg" id="cfgBox"></div></div>
+  <div class="panel"><h2>Rangos físicos plausibles (valores fuera se excluyen como error de captura)</h2><div class="cfgg" id="cfgRange"></div></div>
+  <div style="display:flex;gap:8px"><button class="btn pri" id="btnApplyCfg">Aplicar y recalcular</button><button class="btn" id="btnResetCfg">↺ Valores iniciales</button></div>
+</section>
+<section id="v-cal" class="view" hidden>
+  <div class="panel"><h2>Reconciliación con el resumen de cada PDF</h2><div class="tw" style="max-height:300px"><table id="recTable"></table></div></div>
+  <div class="panel"><h2>Avisos de calidad de datos <span class="small muted" id="qCount"></span></h2>
+    <p class="small muted">Se conserva el dato como se capturó; lo imposible se marca y se excluye del análisis.</p>
+    <div id="qSum" class="stats"></div>
+    <div class="bar"><label>Tipo<select id="qTipo"></select></label><span class="sp"></span><button class="btn sm" id="btnQCsv">⬇ CSV</button></div>
+    <div class="tw" style="max-height:440px"><table id="qTable"></table></div></div>
+</section>
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de reportes">
+        <b>Actualizar base: arrastra una carpeta completa (o un .zip) con los reportes PDF de «Monitoreo de transformadores de desaladora», o archivos .pdf / .json sueltos</b><br>
+        <span class="muted">Se agregan sin borrar lo anterior · los duplicados (mismo folio y hoja, p. ej. copias «(1)») se omiten · se guardan en este navegador</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="btnDir">📁 Elegir carpeta</button><button class="btn" id="btnZip">🗜 Elegir ZIP</button><button class="btn" id="btnPick">📄 Elegir archivos PDF / JSON</button></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden><input type="file" id="dirIn" webkitdirectory directory multiple hidden><input type="file" id="zipIn" accept=".zip,application/zip" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <progress id="stProg" hidden style="width:100%"></progress>
+        <div class="tw" style="max-height:320px"><table id="stTable"></table></div><p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div></div>
+      <div class="panel" style="margin-top:12px"><h2>Captura manual de una lectura</h2><div id="capForm"></div></div>
+      <div class="panel"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-desaladora/v1</code></h2><pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnExport2">⬇ Exportar base (.json)</button><button class="btn" id="btnReads2">⬇ Lecturas (.csv)</button><button class="btn" id="btnPlan2">⬇ Plan de acción (.csv)</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos incluidos</button><button class="btn" id="btnWipe">🗑 Vaciar base</button></div></div>
+      <div class="panel small"><h3>Trazabilidad</h3>Cada lectura conserva folio, archivo, hoja (TAG en la hoja), SLATE, hora, variables mín/máx y avisos de limpieza. Los cálculos (kVA, relación V campo/V bus, asimetría, línea base, estado) se derivan de lo capturado.</div>
+      <div class="panel small"><h3>Seguridad y modularidad</h3>Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). Comparte núcleo con los demás módulos; cada módulo guarda su base por separado.</div>
+    </div>
+  </div>
+</section>
+</main>
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos o la carpeta para cargarlos</div>
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>
