@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-/* Extrae los reportes PDF de estado con el MISMO lector que usa la app (app/estado/parse.js) y escribe data/estado/seed_real_eas.json
+/* Extrae los reportes PDF de estado con el MISMO lector que usa la app (app/estado/parse.js) y escribe data/estado/seed_real_sub.json
    uso: node scripts/extract_estado.js <dir_con_pdfs> [<dir_con_pdfs> ...] [--out archivo.json] [--pdfjs ruta/pdf.js] */
 const fs=require('fs'),path=require('path'),vm=require('vm');
-const args=process.argv.slice(2);let out=path.join(__dirname,'..','data','estado','seed_real_eas.json'),pdfjsPath=process.env.PDFJS||'pdfjs-dist/legacy/build/pdf.js';const dirs=[];
+const args=process.argv.slice(2);let out=path.join(__dirname,'..','data','estado','seed_real_sub.json'),pdfjsPath=process.env.PDFJS||'pdfjs-dist/legacy/build/pdf.js';const dirs=[];
 for(let i=0;i<args.length;i++){if(args[i]==='--out')out=args[++i];else if(args[i]==='--pdfjs')pdfjsPath=args[++i];else dirs.push(args[i])}
 const pdfjs=require(pdfjsPath);
 const ctx=vm.createContext({console,Intl,Date,Math});
@@ -16,7 +16,7 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'..','app','shared','core.js
     const r=ctx.parseEstadoDoc(pages,path.basename(f));const base=path.basename(f);
     control.push({archivo:base,folio:r.folio,fmt:r.formato,total_esperado:r.total,extraidos:r.recs.length,warn:r.warn});
     {const d={...r};delete d.recs;d.archivo=base;d.extraidos=r.recs.length;docs.push(d)}
-    for(const x of r.recs)recs.push({...x,archivo:base});
+    for(const x of r.recs)if(x.fmt==='SUB')recs.push({...x,archivo:base});
   }
   fs.mkdirSync(path.dirname(out),{recursive:true});
   fs.writeFileSync(out,JSON.stringify({schema:'sicm-estado/v1',docs,recorridos:recs,control}));

@@ -294,22 +294,24 @@ Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anex
 
 ## Módulo Estado aparente (`app/sicm-estado.html`)
 
-Lee los reportes PDF de **inspección visual «Estado aparente»**: soloaires (`…-ELE-EAS-…`, 4128-11422-IT-001) y subestaciones (`…-ELE-SUB-…`, PO-002-6, mensual de 58 puntos C/NC/N/A y semestral de 121 puntos Sí/No). Cada punto se pondera para obtener un **índice de deficiencia (IC, 0–100)** por sección, subestación, soloaire, sector y refinería.
+Exclusivo de **subestaciones eléctricas**. Lee los reportes PDF de inspección visual PO-002-6 (`…-ELE-SUB-…`, mensual de 58 puntos C/NC/N/A y semestral de 121 puntos Sí/No), pondera cada punto en un **índice de deficiencia (IC, 0–100)** y lo integra con el **mapeo de estado** de la presentación «Mapeo de estado de subestaciones eléctricas» (Refinería Olmeca, 29.12.2025). Los reportes de soloaires se omiten al cargar.
 
 | Pieza | Archivo |
 |---|---|
-| Lector PDF por geometría (✓ → opción más cercana) | `app/estado/parse.js` |
+| Lector PDF por geometría | `app/estado/parse.js` |
 | Ponderación, IC, estados, reincidencia, calidad | `app/estado/model.js` |
-| Ingesta (PDF/carpeta/ZIP/JSON), captura manual, exportaciones | `app/estado/ingest.js` |
+| Ingesta (PDF/carpeta/ZIP/JSON), exportaciones | `app/estado/ingest.js` |
+| Mapeo de estado (distribución, tableros, presentación) | `app/estado/mapeo.js` |
 | Vistas y arranque | `app/estado/views.js`, `init.js`, `template.html` |
-| Datos incluidos (108 PDF, 640 inspecciones tras quitar 27 duplicados) | `data/estado/seed_real_eas.json` ← `node scripts/extract_estado.js <dir EAS> <dir SUB> --pdfjs <pdf.js legacy>` |
+| Recorridos incluidos (88 PDF de subestaciones, 98 inspecciones) | `data/estado/seed_real_sub.json` ← `node scripts/extract_estado.js <dir SUB> --pdfjs <pdf.js legacy>` |
+| Mapeo base (42 subestaciones, 1,451 elementos) | `data/estado/mapeo_deck.json` (extraído de la presentación .pptx) |
 | Ensamble | `python3 scripts/build_estado.py` |
 
-**Gráficos:** mapa de calor subestación × 7 secciones, salud por sector, Pareto ponderado por categoría, mosaico de soloaires, radar por subestación, tendencias y reincidencia.
+**Mapeo de estado (pestaña 2):** distribución eléctrica simplificada (generación, bahía GIS 115 kV, SEP-01/SEP-02 y sus subestaciones coloreadas), relación de subestaciones, criterio de llenado y tablero por subestación con elementos `[X / Y]` en verde/amarillo/rojo (X en anomalía o falla de Y totales). El color final es el peor entre el mapeo (editable, con historial) y los recorridos (no conformidad → amarillo; ≥ N críticos → rojo; configurable). «⬇ Presentación (.html)» genera la presentación completa (portada, introducción, distribución, relación, criterio y un tablero por subestación) lista para imprimir a PDF. En la presentación original, 14 subestaciones (sectores 6 y 7) capturaron los elementos verdes como [operativos / totales]; se normalizaron a [0 / Y].
 
-**Ponderación (propuesta editable, pestaña 5):** peso 1–5 por concepto (reglas por tipo: protecciones, UPS/baterías, puertas de emergencia, contra incendio, tierras = altos; señalización/limpieza = bajos) y marca de **crítico**; IC de sección = Σ(peso·NC) ÷ Σ(peso aplicable); la subestación pondera secciones (interior 25, baterías 20, exterior/HVAC 15, tierras/LOTO 10, hermeticidad 5). IC ≥ 8 → condicionada, ≥ 20 → deficiente; un crítico en NC fuerza al menos condicionada y 3 fuerzan deficiente. Soloaire: sin guarda/motor (crítico), sin banda, no disponible, desbalance de V/I, sobrecorriente y observaciones de campo. El PDF no define pesos: son criterio del autor, a validar.
+**Ponderación (propuesta editable, pestaña 5):** peso 1–5 por concepto y marca de crítico; el IC de la subestación pondera 7 secciones (interior 25, baterías 20, exterior/HVAC 15, tierras/LOTO 10, hermeticidad 5). IC ≥ 8 → condicionada, ≥ 20 → deficiente; un crítico en NC fuerza al menos condicionada y 3 fuerzan deficiente. El PDF no define pesos: son criterio del autor, a validar.
 
-**Límites:** en semestral el formato no distingue «No» de «No aplica» (se trata como N/A en conceptos condicionales); formatos en borrador (menos de la mitad respondido) se marcan «Sin evaluar»; un soloaire = un motor (TAG + TAG de motor).
+**Límites:** en semestral el formato no distingue «No» de «No aplica»; formatos en borrador se marcan «Sin evaluar»; solo 20 de los ~35 elementos del mapeo tienen concepto equivalente en el recorrido (el resto se captura solo en el mapeo).
 
 ## Módulo Desaladora (`app/sicm-desaladora.html`)
 
