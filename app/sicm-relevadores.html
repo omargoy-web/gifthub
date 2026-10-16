@@ -1,0 +1,2642 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Relevadores · Inspección de relevadores de protección</title>
+<style>
+/* SICM · estilos base compartidos (identidad PEMEX / Gobierno Federal) */
+:root{
+  --guinda:#691C32;--verde:#10312B;--verde2:#004731;--dorado:#BC955C;--gris:#6F7271;--gris2:#4F4F4F;
+  --bg:#F4F1EA;--surface:#FFFFFF;--surface2:#EEE9DF;--text:#1C2220;--muted:#59605D;--line:#D8D2C4;
+  --accent:#691C32;--accent-ink:#FFFFFF;--link:#691C32;--grid:rgba(0,0,0,.09);--axis:#59605D;
+  --ok:#1B7A4B;--ok-bg:#E3F2EA;--warn:#8A5A00;--warn-bg:#FFF1CC;--warn-fill:#E8A800;--crit:#B3202E;--crit-bg:#FBE3E5;--oos:#41627F;--oos-bg:#E2EBF3;
+  --shadow:0 1px 2px rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.06);
+}
+:root[data-theme="dark"]{
+  --bg:#0C1311;--surface:#15201D;--surface2:#1C2B27;--text:#E9EEEB;--muted:#9BA9A3;--line:#2B3C37;
+  --accent:#BC955C;--accent-ink:#1A1306;--link:#D8B27A;--grid:rgba(255,255,255,.08);--axis:#9BA9A3;
+  --ok:#4CC38A;--ok-bg:rgba(76,195,138,.14);--warn:#F2B21B;--warn-bg:rgba(242,178,27,.15);--warn-fill:#F2B21B;--crit:#FF7A7A;--crit-bg:rgba(255,122,122,.15);--oos:#86AACC;--oos-bg:rgba(134,170,204,.15);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;min-height:100vh}
+button,select,input,textarea{font:inherit;color:inherit}
+a{color:var(--link)}
+:focus-visible{outline:2px solid var(--dorado);outline-offset:2px}
+.top{background:linear-gradient(90deg,var(--guinda),#4d1424);color:#fff;border-bottom:3px solid var(--dorado);padding:10px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.top h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.2px}
+.top .sub{font-size:12px;opacity:.85}
+.top .grow{flex:1;min-width:240px}
+.btn{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--dorado)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.4)}
+.top .btn.ghost:hover{background:rgba(255,255,255,.12)}
+.tabs{display:flex;gap:2px;background:var(--verde);padding:0 16px;overflow-x:auto;border-bottom:1px solid #000}
+.tabs button{background:none;border:0;color:#cfe0da;padding:11px 16px;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-size:13.5px}
+.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:var(--dorado);font-weight:600}
+.tabs button:hover{color:#fff}
+main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+.view[hidden]{display:none}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.bar label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.bar select,.bar input[type=text],.bar input[type=number],.bar input[type=datetime-local]{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:120px}
+.bar .sp{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:var(--shadow);border-left:4px solid var(--gris)}
+.kpi b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.kpi.ok{border-left-color:var(--ok)}.kpi.warn{border-left-color:var(--warn-fill)}.kpi.crit{border-left-color:var(--crit)}.kpi.oos{border-left-color:var(--oos)}.kpi.gold{border-left-color:var(--dorado)}
+.grid2{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(280px,1fr);gap:14px;align-items:start}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:var(--shadow);cursor:pointer;border-top:4px solid var(--gris);display:flex;flex-direction:column;gap:6px}
+.card:hover{border-color:var(--dorado)}
+.card.s0{border-top-color:var(--ok)}.card.s1{border-top-color:var(--warn-fill)}.card.s2{border-top-color:var(--crit)}.card.s3{border-top-color:var(--oos)}
+.card .h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card .tag{font-weight:700;font-size:15px;word-break:break-word}
+.card .meta{font-size:12px;color:var(--muted)}
+.card .mx{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:12px}
+.card .mx b{font-variant-numeric:tabular-nums;font-size:13px}
+.card .mx span{color:var(--muted)}
+.card svg{width:100%;height:42px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.chip.c0{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.chip.c1{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-fill)}
+.chip.c2{background:var(--crit-bg);color:var(--crit);border-color:var(--crit)}
+.chip.c3{background:var(--oos-bg);color:var(--oos);border-color:var(--oos)}
+.badge{font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);text-transform:uppercase;letter-spacing:.3px}
+.badge.real{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.badge.sim{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-fill)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);margin-bottom:12px}
+.panel h2,.panel h3{margin:0 0 8px;font-size:14px}
+.panel h3{font-size:13px}
+.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:520px;overflow:auto}
+.alerts li{display:flex;gap:8px;padding:7px 8px;border-radius:6px;background:var(--surface2);cursor:pointer;font-size:12.5px;align-items:flex-start}
+.alerts li:hover{outline:1px solid var(--dorado)}
+.alerts .t{font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;background:var(--surface2);position:sticky;top:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface2)}
+tr.sel td{background:var(--surface2);outline:1px solid var(--dorado)}
+.tw{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:8px}
+.chartbox{position:relative;height:300px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);margin-bottom:12px}
+.chartbox.tall{height:340px}.chartbox.short{height:190px}
+.chartbox canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.chartbox .ttl{position:absolute;top:6px;left:62px;font-size:12px;font-weight:600;color:var(--muted);pointer-events:none;z-index:2}
+.chartbox .zb{position:absolute;top:4px;right:6px;display:flex;gap:4px;z-index:2}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--text);border:1px solid var(--dorado);border-radius:6px;padding:6px 8px;font-size:12px;box-shadow:var(--shadow);z-index:5;white-space:nowrap;display:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 6px}
+.legend i{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.checks{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px}
+.checks label{display:flex;gap:4px;align-items:center;cursor:pointer;color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.stat b{font-size:18px;font-variant-numeric:tabular-nums}
+.stat small{display:block;color:var(--muted);font-size:11px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:var(--bg);border-left:3px solid var(--dorado);box-shadow:-8px 0 30px rgba(0,0,0,.35);z-index:50;overflow:auto;padding:0 16px 24px;transform:translateX(105%);transition:transform .2s}
+.drawer.open{transform:none}
+.drawer .dh{position:sticky;top:0;background:var(--guinda);color:#fff;margin:0 -16px 12px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;z-index:2}
+.drawer .dh h2{margin:0;font-size:16px}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:3px 10px;font-size:13px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.tl{display:flex;gap:1px;height:20px;margin:4px 0}
+.tl span{flex:1;border-radius:1px;min-width:1px}
+.tl .t0{background:var(--ok)}.tl .t1{background:var(--warn-fill)}.tl .t2{background:var(--crit)}.tl .t3{background:var(--oos)}
+.drop{border:2px dashed var(--dorado);border-radius:12px;padding:30px 16px;text-align:center;background:var(--surface);cursor:pointer}
+.drop.over{background:var(--surface2);border-style:solid}
+.drop b{font-size:15px}
+#dropOverlay{position:fixed;inset:0;background:rgba(105,28,50,.85);color:#fff;display:none;align-items:center;justify-content:center;font-size:24px;font-weight:700;z-index:99;pointer-events:none}
+pre.code{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;max-height:340px}
+.log div{padding:3px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.warnbox{background:var(--warn-bg);border:1px solid var(--warn-fill);color:var(--text);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+.infobox{background:var(--surface2);border-left:4px solid var(--dorado);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12.5px}
+dialog{background:var(--surface);color:var(--text);border:2px solid var(--dorado);border-radius:12px;padding:16px;max-width:min(680px,94vw);width:100%}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h2{margin:0 0 10px;font-size:16px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+.form .full{grid-column:1/-1}
+.form input,.form select,.form textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--text)}
+.mpts{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px}.mpts .mp{font-size:11.5px}.mpts input{width:100%}
+.gal{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.gal figure{margin:0;width:120px}
+.gal img{width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in}
+.gal figcaption{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.calc label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}
+.calc input,.calc select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px}
+.statusbar{position:fixed;left:0;right:0;bottom:0;background:var(--verde);color:#cfe0da;font-size:11.5px;padding:3px 14px;display:flex;gap:16px;z-index:10;flex-wrap:wrap}
+@media print{.top .btn,.tabs,.statusbar,.drawer{display:none}}
+
+.suite{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.suite a,.suite .cur{font-size:12px;padding:3px 10px;border-radius:999px;text-decoration:none;border:1px solid rgba(255,255,255,.35);color:#fff}
+.suite a:hover{background:rgba(255,255,255,.14)}
+.suite .cur{background:var(--dorado);border-color:var(--dorado);color:#1a1306;font-weight:700}
+
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16)}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.grid2e{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
+.tw table td{vertical-align:top}tr.hrow{cursor:pointer}tr.hrow:hover{background:var(--surface2)}b.bad,.bad{color:var(--crit)}b.link{cursor:pointer;color:var(--dorado);text-decoration:underline}
+.seg{display:inline-flex}.seg button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:5px 14px;font-size:12.5px;cursor:pointer}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button.on{background:var(--dorado);color:#000;font-weight:700}
+.seg3{display:inline-flex}.seg3 button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:3px 9px;font-size:12px;cursor:pointer}.seg3 button:first-child{border-radius:6px 0 0 6px}.seg3 button:last-child{border-radius:0 6px 6px 0}.seg3 button.on.OK{background:var(--ok);color:#fff}.seg3 button.on.NO{background:var(--crit);color:#fff}.seg3 button.on.NA{background:var(--oos);color:#fff}
+table.chkl td{padding:4px 6px}table.chkl tr.sec td,table tr.sec td{background:var(--surface2);font-weight:700;color:var(--dorado)}tr.critrow td:first-child{border-left:4px solid var(--crit)}table.chkl tr.st-NO td{background:var(--crit-bg)}table.chkl tr.st-OK td:first-child{border-left:4px solid var(--ok)}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.capgrid label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.capgrid input,.capgrid select,table input,table select,textarea,.bar input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+table.kv{width:100%}table.kv td{padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}
+tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{background:var(--crit-bg)}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+@media print{header.top,.tabs,.bar,.statusbar,.btn{display:none!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Relevadores · Inspección de relevadores de protección</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · 4128-11422-SICM-PEO-003 (2.ª ed.) · Tipo A (visual y HMI, semestral) · Tipo B (software, eventos y conexión, anual) · IEEE C37.2 / C37.90 / C37.111 · IEC 60255 / 61850 · NFPA 70E</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnSummary">⬇ Resumen (.csv)</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="pan" aria-selected="true">1 · Panorama y programa</button>
+  <button role="tab" data-view="rel" aria-selected="false">2 · Relevador</button>
+  <button role="tab" data-view="cap" aria-selected="false">3 · Inspección (Tipo A / B)</button>
+  <button role="tab" data-view="rep" aria-selected="false">4 · Repositorio técnico</button>
+  <button role="tab" data-view="hall" aria-selected="false">5 · Hallazgos</button>
+  <button role="tab" data-view="fmt" aria-selected="false">6 · Formatos y criterios</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos</button>
+</nav>
+<main>
+<section id="v-pan" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar"><label>Subestación<select id="fSub"></select></label><label>Mostrar<select id="fEst"></select></label><span class="sp"></span><span class="small muted" id="fCount"></span><button class="btn sm" id="btnSum2">⬇ Resumen (.csv)</button></div>
+  <div class="panel"><h2>Programa de inspección · clic abre el expediente</h2><div class="tw" style="max-height:560px"><table id="tblPan"></table></div></div>
+  <div class="grid2e"><div class="panel"><h2>Agenda: inspecciones vencidas, por vencer o sin registro · clic abre la captura</h2><div class="tw" style="max-height:360px"><table id="tblAg"></table></div></div>
+  <div class="panel"><h2>Hallazgos críticos abiertos</h2><ul class="alerts" id="alCrit"></ul></div></div>
+</section>
+<section id="v-rel" class="view" hidden>
+  <div class="bar"><label>Relevador<select id="relSel"></select></label><button class="btn pri sm" id="btnNewRel">＋ Nuevo relevador</button><span class="sp"></span></div>
+  <div id="relBody"></div>
+  <dialog id="dlgRel"><h2 id="dlgRelT"></h2><div class="form" id="dlgRelF"></div><datalist id="dlFunc"></datalist><div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" id="dlgRelOk">Guardar</button><button class="btn" id="dlgRelNo">Cancelar</button></div></dialog>
+</section>
+<section id="v-cap" class="view" hidden>
+  <div class="infobox"><b>Tipo A</b> (cada 6 meses): inspección visual y navegación por el HMI del relevador, sin conectar equipo externo, solo lectura. <b>Tipo B</b> (cada 12 meses, y tras cualquier disparo): conexión con laptop para descargar eventos, oscilografías y configuración y verificar comunicaciones. La lista se genera con los conceptos y criterios de aceptación del anexo de la marca (9.1–9.8). Todo NO OK genera aviso SAP IW21; IRF / self-test, TCS en alarma o LED de servicio apagado son hallazgos <b>críticos</b>.</div>
+  <div class="panel"><div class="bar" style="margin-bottom:6px"><label>Relevador<select id="cpRel"></select></label><span class="seg" id="cpTipo"><button data-t="A">Tipo A · visual / HMI</button><button data-t="B">Tipo B · software</button></span><span class="sp"></span><button class="btn sm" id="btnBlank">🖶 Formato en blanco</button></div>
+    <div class="small" id="cpFmtInfo" style="margin-bottom:8px"></div>
+    <div class="capgrid"><label>Fecha y hora<input type="datetime-local" id="cpFecha"></label><label>OT SAP PM<input id="cpOt"></label><label>Ejecutó<input id="cpEj"></label><label>Revisó<input id="cpRev"></label><label>Firmware leído<input id="cpFw"></label><label>Inspección posterior a un disparo<select id="cpDisp"><option value="">No</option></select></label></div></div>
+  <div class="panel"><h2>Lista de verificación</h2><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn sm" id="btnAllOk">Marcar todo OK</button><button class="btn sm" id="btnClr">Limpiar respuestas</button></div><div id="cpBody"></div></div>
+  <div class="panel"><h2>Mediciones con criterio (procedimiento 7.5)</h2><div class="capgrid" id="medFld"></div><div id="medRes" style="margin:8px 0"></div><button class="btn sm" id="btnApplyMed">Aplicar mediciones a la lista</button></div>
+  <div class="panel"><h2>Dictamen y cierre</h2><div id="cpDict" style="margin-bottom:8px"></div><div class="capgrid"><label>Aviso SAP IW21 N.º<input id="cpIw"></label><label>Notificado a<input id="cpNot"></label><label>Hora de notificación<input id="cpHora"></label><label style="grid-column:1/-1">Observaciones generales<input id="cpObs"></label></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="btnCapSave">Guardar inspección</button><button class="btn" id="btnCapPrint">🖶 Formato llenado (.html)</button></div></div>
+</section>
+<section id="v-rep" class="view" hidden>
+  <div class="infobox"><b>Repositorio técnico independiente de las inspecciones.</b> Respaldos de ajustes, oscilografías COMTRADE (.cfg + .dat), eventos / SOE y logs de cada relevador, con consulta propia. Convención del procedimiento: <code>TAG_MARCA_MODELO_AAAAMMDD.ext</code> (asigna relevador y fecha automáticamente). Los archivos se guardan en este navegador (IndexedDB); exporta periódicamente y respalda en el servidor SICM.</div>
+  <div class="grid2e"><div>
+    <div class="panel"><h2>Cargar archivos</h2><div class="capgrid"><label>Relevador<select id="upRel"></select></label><label>Categoría<select id="upCat"></select></label><label>Firmware (opcional)<input id="upFw"></label><label>MOC / referencia (opcional)<input id="upMoc"></label><label style="grid-column:1/-1">Nota<input id="upNota"></label></div>
+      <div class="drop" id="drop" tabindex="0" role="button" style="margin-top:8px"><b>Arrastra archivos, una carpeta o un .zip</b><br><span class="muted">Ajustes (.txt .set .urs .cid …), oscilografías (.cfg + .dat), eventos (.csv .txt), logs · máx. 40 MB por archivo</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="btnUpF">📄 Archivos</button><button class="btn" id="btnUpD">📁 Carpeta</button><button class="btn" id="btnUpZ">🗜 ZIP</button></div>
+      <input type="file" id="upFiles" multiple hidden><input type="file" id="upDir" webkitdirectory directory multiple hidden><input type="file" id="upZip" accept=".zip" multiple hidden></div>
+    <div class="panel"><h2>Consulta</h2><div class="bar"><label>Relevador<select id="rpRel"></select></label><label>Categoría<select id="rpCat"></select></label><label>Buscar<input type="text" id="rpQ" size="18" placeholder="nombre, MOC, nota…"></label><span class="sp"></span><span class="small muted" id="rpCount"></span><button class="btn sm" id="btnArchCsv">⬇ Índice (.csv)</button></div><div class="tw" style="max-height:340px"><table id="tblArch"></table></div></div>
+    <div class="panel"><h2>Comparar respaldos de ajustes</h2><div class="bar"><label>A (anterior)<select id="cmpA"></select></label><label>B (posterior)<select id="cmpB"></select></label><button class="btn sm" id="btnCmp">Comparar</button></div><div id="cmpOut"></div></div>
+  </div><div><div class="panel" style="position:sticky;top:8px"><h2 id="vwTitle">Visor</h2><div id="vwBody"></div></div></div></div>
+</section>
+<section id="v-hall" class="view" hidden>
+  <div class="bar"><label>Mostrar<select id="hfEst"></select></label><span class="sp"></span><span class="small muted" id="hCount"></span><button class="btn sm" id="btnHallCsv">⬇ Hallazgos (.csv)</button></div>
+  <div class="panel"><h2>Seguimiento de hallazgos (NO OK) · aviso SAP IW21 y cierre</h2><div class="tw" style="max-height:620px"><table id="tblHall"></table></div></div>
+</section>
+<section id="v-fmt" class="view" hidden>
+  <div class="panel"><h2>Formatos del procedimiento (anexos 9.1 a 9.8)</h2><div class="bar"><label>Formato<select id="fmSel"></select></label><button class="btn sm" id="btnFmtBlank">🖶 Imprimir en blanco</button></div><div class="infobox" id="fmInfo"></div><div class="tw" style="max-height:520px"><table id="tblFmt"></table></div><p class="small muted">Los conceptos marcados «validar» están pendientes de confirmarse contra el manual del fabricante (anexo 9.19 del procedimiento).</p></div>
+  <div class="panel"><h2>Conexión por marca (7.4.1)</h2><div class="tw"><table id="tblConn"></table></div><p class="small muted">Regla de acceso: solo lectura (GE: Observer · ABB: VIEWER · Siemens: sin ID). No usar Reset / Clear / Test; descargar o fotografiar eventos antes de cualquier borrado; no aceptar «modo escritura».</p></div>
+  <div class="panel"><h2>Criterios numéricos e intervalos</h2><div class="capgrid" id="cfgF"></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" id="btnApplyCfg">Aplicar</button><button class="btn" id="btnResetCfg">↺ Valores del procedimiento</button></div></div>
+  <div class="panel"><h2>Equivalencia de funciones de protección (anexo 9.9)</h2><div class="tw" style="max-height:420px"><table id="tblFunc"></table></div></div>
+</section>
+<section id="v-data" class="view" hidden>
+  <div class="grid2e"><div>
+    <div class="panel"><h2>Censo de relevadores</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="btnCensoIn">⬆ Importar censo (.csv)</button><button class="btn" id="btnCensoTpl">⬇ Plantilla del censo</button><button class="btn" id="btnInspCsv">⬇ Inspecciones (.csv)</button></div><input type="file" id="censoIn" accept=".csv,text/csv" hidden>
+      <p class="small muted">Columnas: tag, sector, subestacion, tablero, interruptor, kv, funcion, marca (GE / ABB / SIE / SCH), modelo, serie, firmware, vcd, ip, observaciones. El TAG sigue la nomenclatura SAP PM.</p></div>
+    <div class="panel"><h2>Demostración</h2><p class="small">Carga 4 relevadores de ejemplo (GE 850, ABB REM615, Siemens 7SR5, Schneider P143) con inspecciones, ajustes, eventos y una oscilografía sintética para conocer el módulo. Todo queda marcado «demo» y se retira con un clic.</p><div style="display:flex;gap:8px"><button class="btn" id="btnDemo">Cargar demostración</button><button class="btn" id="btnNoDemo">Quitar demostración</button></div></div>
+    <div class="panel"><h2>Bitácora</h2><div class="log" id="log"></div></div>
+  </div><div>
+    <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="btnExport">⬇ Exportar base (.json)</button><button class="btn" id="btnImport">⬆ Importar base (.json)</button><button class="btn" id="btnWipe">🗑 Vaciar base y archivos</button></div><input type="file" id="jsonIn" accept=".json,application/json" hidden></div>
+    <div class="panel small"><h3>Seguridad y modularidad</h3>Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). El módulo no se conecta a los relevadores: registra y consulta lo que el personal captura y descarga con el software del fabricante en modo de solo lectura.</div>
+  </div></div>
+</section>
+</main>
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos o la carpeta en el repositorio técnico</div>
+<script id="formatos" type="application/json">{
+ "fuente": "4128-11422-SICM-PEO-003 V2 Rev-B (octubre 2026), anexos 9.1 a 9.8",
+ "formatos": [
+  {
+   "id": "A-GE",
+   "anexo": "9.1",
+   "tipo": "A",
+   "marca": "GE",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "GE MULTILIN SERIE 8 – 845 (transformador), 850 (alimentador), 869 (motor). Referencia: Manuales 845 y 850 (cap. 3); 869-1601-0450-C430-1/-3 (cap. 3); ver Anexo 9.18",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED IN SERVICE verde fijo (rojo = falla; naranja = Not Ready)",
+     "crit": "Verde fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "LED TRIP / ALARM (parpadeo = autodiagnóstico) / PICKUP / TEST MODE / MESSAGE / LOCAL MODE",
+     "crit": "Apagados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "[850] LED AR ENABLED / AR LOCKOUT / BKR OPEN-CLOSED / SYNCHECK OK",
+     "crit": "AR LOCKOUT apagado; BKR coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "[845] LED XFMR OVERLOAD / LOAD-LIMIT REDUCED / XFMR DE-ENERGIZED / DIFFERENTIAL BLOCKED / W1-W3 BKR",
+     "crit": "Condición apagada; BKR coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "[869] LED de causa de evento / 50P INST OC / 27 PHASE UV o LOCKOUT",
+     "crit": "Apagados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Targets: mensajes activos (disparo, alarma, Minor/Major Self-test error)",
+     "crit": "Sin targets activos",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Status → Device Status",
+     "crit": "Sin falla interna",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Status → Information (Main CPU): código de orden, serie, firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Status → Clock (y PTP Status); sin avisos IRIG-B Failure / RTC Error",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Status → Contact Inputs: 52a / 52b / resorte / carro",
+     "crit": "Coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Status → Output Relays: Relevador de Falla Crítica (Output Relay 8)",
+     "crit": "ENERGIZADO",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "Status → Switches / Breakers y Last Trip Data (1 registro)",
+     "crit": "Posición real; último disparo explicado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "B",
+     "txt": "[850] Status → Autoreclose y Arc Flash",
+     "crit": "Sin bloqueo (lockout) ni disparo de arco",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "B",
+     "txt": "Status → Communications; sin Link Error / Traffic Error / Comm Alert",
+     "crit": "Enlaces activos, sin avisos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "B",
+     "txt": "Metering → Summary / Currents / Voltages / Frequency",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "B",
+     "txt": "[850] Metering → Synchrocheck, Thermal Capacity; [845] Transformer; [869] Motor (TCU, desbalance)",
+     "crit": "Valores coherentes con la carga",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "B",
+     "txt": "Records → Events (1 024; últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "B",
+     "txt": "Records → Fault Reports / Transients / Breakers (contador) / Digital Counters",
+     "crit": "Registros coherentes; contador anotado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "B",
+     "txt": "Aviso Ambient Temperature >80C",
+     "crit": "Ausente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "B",
+     "txt": "Setpoints → Device → Communications (IP, máscara, GW, esclavo, Modbus)",
+     "crit": "Coincide con tabla de direccionamiento",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 30,
+     "sec": "B",
+     "txt": "Cerró sesión (Observer) y presionó [Home]; NO usó Reset ni Clear Records",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 31,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 32,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 33,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 34,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 35,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 36,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 37,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 38,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY /",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-ABB",
+   "anexo": "9.2",
+   "tipo": "A",
+   "marca": "ABB",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "ABB RELION SERIE 615 (REF615 / REM615 / REG615 / RED615). Referencia: Manual de operador 1MRS756834 E; Guía rápida 757259",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "Inicio de sesión [Clave] nivel VIEWER (icono V)",
+     "crit": "Nivel V",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "LED Ready fijo / Start apagado / Trip apagado",
+     "crit": "Ready fijo; sin Start ni Trip",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "11 LED programables de alarma",
+     "crit": "Apagados o explicados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Menú → Información → Identificadores de producto (código, serie, HW, SW)",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Menú → Información → Identificadores del sistema (edición IEC 61850)",
+     "crit": "Edición registrada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Estado IED → Auto- supervisión (IRF)",
+     "crit": "Sin IRF ni advertencias",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Estado E/S → Valor de entradas (tarjeta BIO)",
+     "crit": "Coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Estado E/S → salidas y comunicación; alarma TCSSCBR (TCS)",
+     "crit": "Sin alarma",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Menú → Mediciones",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Menú → Eventos (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Datos grabados → Falta grabada",
+     "crit": "Valores coherentes con el último disparo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "Menú → Reg perturbaciones: número y fecha del último registro",
+     "crit": "Registros disponibles",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Comunicación → Protocolos (MMSLPRT1 / GSELPRT1)",
+     "crit": "Sin mensajes perdidos [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 23,
+     "sec": "B",
+     "txt": "Menú → Configuración → Hora: fecha, hora y fuente de sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "B",
+     "txt": "Cerró sesión con [Clave]; NO usó [Borrar], [R/L], [Abrir]/[Cerrar] ni menú Pruebas",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 30,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 31,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 32,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-SIE",
+   "anexo": "9.3",
+   "tipo": "A",
+   "marca": "SIE",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "SIEMENS REYROLLE 7SR5 (7SR51…) y SERIE 7SR1x/2x ARGUS. Referencia: Manual 7SR51 V2.40 (C53000- G7078-C014-1), cap. 3.1; Argus: manual técnico [VALIDAR]",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED de servicio / Ready fijo; sin LED de disparo o alarma enclavados",
+     "crit": "Servicio fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Pantalla de inicio: unifilar e instrumentos configurados",
+     "crit": "Coherente con el campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "Información del equipo: ID relé, ID circuito, MLFB, serie, firmware, firmware comunicación, versión de configuración",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Instrumentos: intensidad, tensión, frecuencia, potencia, térmico, contadores",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Instrumentos → Comunicaciones (contadores)",
+     "crit": "Actividad / sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Modo de control: solo consulta de estado (IP, modo Local/Remoto/Fuera de servicio/Test)",
+     "crit": "Modo normal; sin Test",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Avisos: “Equipo no configurado”, “IEC 61850 No configurado”, alarma general",
+     "crit": "Sin avisos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Eventos / faltas / forma de onda (panel o Reydisp)",
+     "crit": "Sin eventos inexplicables [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Lista de eventos: “Inicio en frío” o reinicios inesperados",
+     "crit": "Ninguno",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Fecha, hora y sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Conector trasero pesado (7SR): firmeza, sin calentamiento ni decoloración",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "No se introdujo ID de ajustes / control; no se usó Test Matriz Salida ni reset de LED",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-SCH",
+   "anexo": "9.4",
+   "tipo": "A",
+   "marca": "SCH",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "SCHNEIDER ELECTRIC MiCOM P3P / P14x / P54x y EASERGY P5. Referencia: Manual P14x (P14x_EN_M) y P5 [VALIDAR]",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED HEALTHY verde fijo; ALARM y TRIP apagados",
+     "crit": "HEALTHY fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Menú SYSTEM DATA: modelo, serie, versión de software",
+     "crit": "Coincide con hoja de ajustes [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "Self-check: sin alarma de hardware ni de batería del reloj",
+     "crit": "Sin alarma [VALIDAR]",
+     "critico": true,
+     "validar": true
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Menú MEASUREMENTS: corrientes, tensiones, frecuencia",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Menú VIEW RECORDS: eventos (últimos 30)",
+     "crit": "Sin eventos inexplicables [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Menú VIEW RECORDS: registros de falta y perturbación",
+     "crit": "Coherentes [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Entradas ópticas y salidas de relé",
+     "crit": "Coincide con campo [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Menú COMMUNICATIONS: dirección, protocolo, estado",
+     "crit": "Coincide con tabla [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Menú DATE AND TIME",
+     "crit": "Desviación < 1 s",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "No se usó la tecla de borrado ni menús de TEST",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-GE",
+   "anexo": "9.5",
+   "tipo": "B",
+   "marca": "GE",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "GE MULTILIN SERIE 8 – EnerVista 8 Series Setup / D&I Setup. Referencia: Manuales 845/850 y 869 (cap. 3.4)",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Software EnerVista instalado (versión registrada: Help → About)",
+     "crit": "Instalado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Medio de conexión: USB (172.16.0.2 en 869) / Ethernet (IP, esclavo, puerto Modbus); máx. 3 sesiones TCP/IP",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Read Order Code ejecutado; indicador de estado verde",
+     "crit": "Sin error de comunicación",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Status → Information → Main CPU: versión de firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Targets y Status → Device Status (errores Minor/Major Self-test)",
+     "crit": "Sin errores (Anexo 9.18)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Status → Output Relays: Output Relay 8 (falla crítica)",
+     "crit": "Energizado",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Records → Events: descarga y revisión (1 024; últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Records → Fault Reports: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Records → Transients → Transient Records: Launch Viewer y Save (COMTRADE .cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "Read Device Settings: archivo de configuración guardado",
+     "crit": "Archivo en servidor SICM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "Verificación de reloj vs patrón",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Status → Communications: sin enlaces caídos / GOOSE",
+     "crit": "Sin pérdidas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "A",
+     "txt": "NO se presionó Trigger, Write Settings, Clear Records ni Maintenance → Update Firmware",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-ABB",
+   "anexo": "9.6",
+   "tipo": "B",
+   "marca": "ABB",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "ABB RELION 615 – WHMI (HTTPS) y PCM600. Referencia: Manual de operador 1MRS756834 E, 3.3, 4.2; IEC 61850 Eng. Guide 2NGA001863",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "WHMI habilitada (Configuración → HMI → Modo Web HMI) o PCM600 + Connectivity Package instalado",
+     "crit": "Habilitada / instalado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Conexión: RJ-45 frontal (192.168.0.254, DHCP) o red; ping respondido",
+     "crit": "Sin pérdida de paquetes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Inicio de sesión en mayúsculas, usuario VIEWER",
+     "crit": "Sesión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "General / Information: serie, HW, SW",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Events: descarga y revisión (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Fault Records: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Disturbance Records: guardado COMTRADE (.cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Report Summary: Events, Fault, Disturbance, Load Profile, lista de parámetros",
+     "crit": "Archivos guardados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Import/Export → Export de parámetros (respaldo)",
+     "crit": "Archivo en servidor SICM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "PCM600: Read from IED (VIEWER) y proyecto guardado con el TAG",
+     "crit": "IED sincronizado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "Contadores MMS / GOOSE; edición IEC 61850; confRev vs SCD maestro",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Audit trail: anotaciones “Firmware change” no autorizadas",
+     "crit": "Ninguna",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "A",
+     "txt": "NO se usó Import, Write to IED, Borrar ni cambios de ajuste",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-SIE",
+   "anexo": "9.7",
+   "tipo": "B",
+   "marca": "SIE",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "SIEMENS REYROLLE – Reydisp Manager 2 (7SR5) / Reydisp Evolution (7SR1x/2x). Referencia: Manual 7SR51 V2.40, cap. 1 y 3.1; Argus [VALIDAR]",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Controladores USB instalados; conexión USB (7SR5: 192.168.2.1) o serial/Ethernet",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Reydisp conectado; usuario de solo lectura",
+     "crit": "En línea",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Información del equipo: MLFB, serie, firmware, versión de configuración",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Registro de eventos: descarga y revisión (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Registro de faltas: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Registro de forma de onda: guardado COMTRADE (.cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Registro de seguridad (accesos al equipo)",
+     "crit": "Sin accesos no autorizados [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Configuración del equipo: archivo guardado",
+     "crit": "Archivo en servidor SICM [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Fecha / hora / sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "Comunicaciones: contadores, IEC 61850, GOOSE",
+     "crit": "Sin pérdidas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "NO se escribieron ajustes ni se ejecutaron órdenes de control",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-SCH",
+   "anexo": "9.8",
+   "tipo": "B",
+   "marca": "SCH",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "SCHNEIDER ELECTRIC – MiCOM S1 Studio / Easergy Studio. Referencia: Pasos heredados de la versión 1 [VALIDAR]",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Device Model (DM) instalado; conexión serial (cable Kitz) o Ethernet",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Modo Online Read Only; modelo y firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Event Records → Read from IED (512 / 1 024 eventos)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Disturbance Records → Download Record (COMTRADE)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Configuración: archivo guardado",
+     "crit": "Archivo en servidor SICM [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Fecha / hora / sincronía",
+     "crit": "Desviación < 1 s",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Comunicaciones / IEC 61850",
+     "crit": "Sin pérdidas [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "NO se escribieron ajustes",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  }
+ ]
+}</script>
+<script>
+'use strict';
+/* =====================================================================
+   SICM · NÚCLEO COMPARTIDO (módulos de la suite predictiva)
+   Utilidades, almacenamiento, motor de gráficas, Weibull y lectura de PDF.
+   Lo comparten sicm-termico.html y sicm-sfi.html; al ensamblar la app única
+   se incluye una sola vez.
+   ===================================================================== */
+/* =====================================================================
+   UTILIDADES
+   ===================================================================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MXOFF=-6*3600e3, MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const p2=n=>String(n).padStart(2,'0');
+const mx=ms=>new Date(ms+MXOFF);
+const fDate=ms=>{const d=mx(ms);return `${p2(d.getUTCDate())} ${MES[d.getUTCMonth()]} ${d.getUTCFullYear()}`};
+const fDT=ms=>{const d=mx(ms);return `${fDate(ms)} ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}`};
+const toInput=ms=>{const d=mx(ms);return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}T${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}`};
+const num=v=>{if(v==null||v==='')return null;const n=Number(String(v).replace(',','.'));return Number.isFinite(n)?n:null};
+const f1=(v,d=1)=>v==null||!Number.isFinite(v)?'—':v.toFixed(d);
+function parseTs(v){
+  if(v==null||v==='')return NaN; if(typeof v==='number')return v>1e11?v:v*1000;
+  let s=String(v).trim(), m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:[ T,]+(\d{1,2}):(\d{2}))?/);
+  if(m)return Date.UTC(+m[3],+m[2]-1,+m[1],+(m[4]||12),+(m[5]||0))-MXOFF;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))s+='T12:00:00';
+  if(!/([zZ]|[+-]\d\d:?\d\d)$/.test(s))s+='-06:00';
+  return Date.parse(s);
+}
+const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return (h>>>0).toString(36)};
+function download(name,text,mime='application/json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function pearson(x,y){const n=x.length;if(n<3)return null;const mx_=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx_)*(y[i]-my);sxx+=(x[i]-mx_)**2;syy+=(y[i]-my)**2}return sxx&&syy?sxy/Math.sqrt(sxx*syy):null}
+function ols(x,y){const n=x.length;if(n<2)return null;const mx_=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;for(let i=0;i<n;i++){sxy+=(x[i]-mx_)*(y[i]-my);sxx+=(x[i]-mx_)**2;syy+=(y[i]-my)**2}if(!sxx)return null;const b=sxy/sxx,a=my-b*mx_;return{a,b,r2:syy?(sxy*sxy)/(sxx*syy):1}}
+
+
+const PALETTE=['#2F9E8F','#BC955C','#9A6BC4','#4C8BD6','#E07A45','#7DB544','#C9557C','#8C9399','#D4C04A','#58B6D8','#C97B7B','#6E8B3D'];
+const colorOf=(i)=>PALETTE[i%PALETTE.length];
+function opts(sel,list,cur){sel.innerHTML=list.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join('');sel.value=cur}
+
+/* =====================================================================
+   ALMACENAMIENTO (IndexedDB con respaldo localStorage)
+   ===================================================================== */
+const Store=(()=>{
+  let db=null;
+  const open=(name='sicm_suite')=>new Promise(res=>{try{const r=indexedDB.open(name,1);r.onupgradeneeded=()=>{r.result.createObjectStore('kv');r.result.createObjectStore('imgs')};r.onsuccess=()=>{db=r.result;res(true)};r.onerror=()=>res(false);r.onblocked=()=>res(false)}catch(e){res(false)}});
+  const tx=(st,mode,fn)=>new Promise((res,rej)=>{try{const t=db.transaction(st,mode);const q=fn(t.objectStore(st));t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)}catch(e){rej(e)}});
+  return{
+    mode:()=>db?'IndexedDB':'localStorage',
+    open,
+    async get(st,k){if(db)return tx(st,'readonly',s=>s.get(k));try{const v=localStorage.getItem('sicm_'+st+'_'+k);return v?JSON.parse(v):undefined}catch(e){return undefined}},
+    async put(st,k,v){if(db)return tx(st,'readwrite',s=>s.put(v,k));try{localStorage.setItem('sicm_'+st+'_'+k,JSON.stringify(v))}catch(e){toast('Almacenamiento lleno: no se pudo persistir')}},
+    async del(st,k){if(db)return tx(st,'readwrite',s=>s.delete(k));try{localStorage.removeItem('sicm_'+st+'_'+k)}catch(e){}},
+    async clear(){if(db){await tx('kv','readwrite',s=>s.clear());await tx('imgs','readwrite',s=>s.clear())}else{try{Object.keys(localStorage).filter(k=>k.startsWith('sicm_')).forEach(k=>localStorage.removeItem(k))}catch(e){}}}
+  };
+})();
+function toast(msg){const d=document.createElement('div');d.textContent=msg;d.style.cssText='position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--guinda);color:#fff;padding:8px 16px;border-radius:8px;z-index:200;box-shadow:var(--shadow);font-size:13px';document.body.appendChild(d);setTimeout(()=>d.remove(),3500)}
+
+
+/* =====================================================================
+   MOTOR DE GRÁFICAS (Canvas, sin dependencias)
+   ===================================================================== */
+function niceTicks(a,b,n=6){const span=b-a;if(!(span>0))return[a];const raw=span/n,mag=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/mag,step=(f<1.5?1:f<3?2:f<7?5:10)*mag,t=[];for(let v=Math.ceil(a/step-1e-9)*step;v<=b+step*1e-6;v+=step)t.push(+v.toPrecision(12));return t}
+const TSTEPS=[1,2,3,6,12,24,48,168,336,720,1440,2160].map(h=>h*3.6e6);
+function timeTicks(a,b,max=8){const span=b-a;const st=TSTEPS.find(s=>span/s<=max)||TSTEPS[TSTEPS.length-1];const out=[];for(let t=Math.ceil((a+MXOFF)/st)*st-MXOFF;t<=b;t+=st)out.push(t);return{ticks:out,step:st}}
+class Chart{
+  constructor(canvas,opt={}){this.c=canvas;this.ctx=canvas.getContext('2d');this.opt=opt;this.data=null;this.view=null;this.full=null;this.hover=null;this.group=opt.group||[this];if(!opt.group)this.group=[this];
+    this.tip=canvas.parentElement.querySelector('.tip');
+    const ro=new ResizeObserver(()=>this.draw());ro.observe(canvas.parentElement);
+    canvas.addEventListener('pointerdown',e=>this.down(e));canvas.addEventListener('pointermove',e=>this.move(e));
+    canvas.addEventListener('pointerup',e=>this.up(e));canvas.addEventListener('pointerleave',()=>{this.hover=null;if(this.tip)this.tip.style.display='none';this.draw()});
+    canvas.addEventListener('wheel',e=>{e.preventDefault();this.zoomAt(e,e.deltaY>0?1.25:0.8)},{passive:false});
+    canvas.addEventListener('dblclick',()=>this.resetAll());
+    canvas.parentElement.querySelectorAll('[data-z]').forEach(b=>b.addEventListener('click',()=>{const z=b.dataset.z;if(z==='reset')this.resetAll();else this.zoomCenter(z==='in'?0.7:1.43)}));
+  }
+  setData(d,reset){this.data=d;const xs=d.xdom||this.extent(d);this.full=xs;if(reset||!this.view||this.view[0]<xs[0]-1||this.view[1]>xs[1]+1)this.view=[...xs];this.draw()}
+  extent(d){let a=Infinity,b=-Infinity;for(const s of d.series)for(const p of s.pts){if(p[0]<a)a=p[0];if(p[0]>b)b=p[0]}(d.vlines||[]).forEach(v=>{if(v.x<a)a=v.x;if(v.x>b)b=v.x});if(!(a<b)){a=(a||0)-1;b=(b||0)+1}return[a,b]}
+  setView(v,fromGroup){this.view=v;this.draw();if(!fromGroup)this.group.forEach(g=>{if(g!==this){g.view=[...v];g.draw()}})}
+  resetAll(){this.group.forEach(g=>{if(g.full){g.view=[...g.full];g.draw()}})}
+  clamp(v){const[f0,f1_]=this.full,fs=f1_-f0;let[a,b]=v;let w=b-a;const minW=this.data&&this.data.xType==='time'?3.6e6:fs*0.01;if(this.data&&this.data.xLog){return[Math.max(a,f0),Math.min(b,f1_)]}
+    if(w>fs){return[f0,f1_]}if(w<minW){const c=(a+b)/2;a=c-minW/2;b=c+minW/2;w=minW}if(a<f0){a=f0;b=a+w}if(b>f1_){b=f1_;a=b-w}return[a,b]}
+  xAt(px){const g=this.geom,[x0,x1]=this.view;const fr=(px-g.ml)/g.pw;return this.data.xLog?Math.pow(10,Math.log10(x0)+fr*(Math.log10(x1)-Math.log10(x0))):x0+fr*(x1-x0)}
+  zoomAt(e,f){if(!this.geom)return;const r=this.c.getBoundingClientRect(),xv=this.xAt(e.clientX-r.left);let[a,b]=this.view;
+    if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),lx=Math.log10(xv);const na=lx-(lx-la)*f,nb=lx+(lb-lx)*f;this.setView(this.clamp([Math.pow(10,na),Math.pow(10,nb)]))}
+    else this.setView(this.clamp([xv-(xv-a)*f,xv+(b-xv)*f]))}
+  zoomCenter(f){const[a,b]=this.view;if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),c=(la+lb)/2,h=(lb-la)/2*f;this.setView(this.clamp([Math.pow(10,c-h),Math.pow(10,c+h)]))}else{const c=(a+b)/2,h=(b-a)/2*f;this.setView(this.clamp([c-h,c+h]))}}
+  down(e){this.drag={x:e.clientX,v:[...this.view]};this.c.setPointerCapture(e.pointerId)}
+  up(){this.drag=null}
+  move(e){if(!this.geom||!this.data)return;const r=this.c.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+    if(this.drag){const dx=e.clientX-this.drag.x,[a,b]=this.drag.v;
+      if(this.data.xLog){const la=Math.log10(a),lb=Math.log10(b),sh=-dx/this.geom.pw*(lb-la);this.setView(this.clamp([Math.pow(10,la+sh),Math.pow(10,lb+sh)]))}
+      else{const sh=-dx/this.geom.pw*(b-a);this.setView(this.clamp([a+sh,b+sh]))}return}
+    this.hover={px,py};this.draw();this.showTip(px,py)}
+  showTip(px,py){const g=this.geom,d=this.data;if(!this.tip||!g)return;if(px<g.ml||px>g.ml+g.pw||py<g.mt||py>g.mt+g.ph){this.tip.style.display='none';return}
+    const items=[];
+    if(d.scatter){let best=null,bd=14;for(const s of d.series)for(const p of s.pts){if(s.kind!=='dots')continue;const dx=g.tx(p[0])-px,dy=(s.axis==='r'?g.ty2:g.ty)(p[1])-py,dd=Math.hypot(dx,dy);if(dd<bd){bd=dd;best={s,p}}}
+      if(best){items.push(d.tipPt?d.tipPt(best.s,best.p):`${esc(best.s.name)}: ${d.xFmt(best.p[0])} → ${d.yFmt(best.p[1])}`)}}
+    else{const xv=this.xAt(px);let xs=null;
+      for(const s of d.series){if(s.noTip)continue;const i=nearest(s.pts,xv);if(i<0)continue;const p=s.pts[i];if(Math.abs(g.tx(p[0])-px)>60)continue;if(xs==null)xs=p[0];
+        items.push(`<span style="color:${s.color}">●</span> ${esc(s.name)}: <b>${(s.axis==='r'?d.y2Fmt:d.yFmt)(p[1])}</b>${p[2]&&p[2].sim?' <span class="badge sim">sim</span>':p[2]&&p[2].real?' <span class="badge real">real</span>':''}`)}
+      if(items.length){items.unshift(`<b>${esc(d.xFmt(xs!=null?xs:xv))}</b>`);if(d.tipExtra&&xs!=null){const t=d.tipExtra(xs);if(t)items.push(t)}}}
+    if(!items.length){this.tip.style.display='none';return}
+    this.tip.innerHTML=items.join('<br>');this.tip.style.display='block';
+    const W=this.c.clientWidth,tw=this.tip.offsetWidth;this.tip.style.left=Math.min(Math.max(4,px+14),W-tw-4)+'px';this.tip.style.top=Math.max(26,py-10)+'px'}
+  draw(){
+    const c=this.c,ctx=this.ctx,W=c.clientWidth,H=c.clientHeight;if(!W||!H)return;const dpr=window.devicePixelRatio||1;
+    if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr)}
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);const d=this.data;if(!d||!this.view)return;
+    const css=getComputedStyle(document.documentElement),col=n=>css.getPropertyValue(n).trim();
+    if(d.noData){ctx.fillStyle=col('--muted');ctx.font='13px "Segoe UI",system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(d.noData,W/2,H/2);return}
+    const hasR=d.series.some(s=>s.axis==='r'&&s.pts.length);
+    const ml=56,mr=hasR?50:16,mt=26,mb=d.xLabel?44:30,pw=W-ml-mr,ph=H-mt-mb;if(pw<50||ph<40)return;
+    const[x0,x1]=this.view,xl=d.xLog,lx0=Math.log10(x0),lx1=Math.log10(x1);
+    const tx=v=>xl?ml+(Math.log10(v)-lx0)/(lx1-lx0)*pw:ml+(v-x0)/(x1-x0)*pw;
+    // dominios Y
+    const dom=(axis)=>{let a=Infinity,b=-Infinity;for(const s of d.series){if((s.axis||'l')!==axis)continue;for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;if(p[1]<a)a=p[1];if(p[1]>b)b=p[1]}}
+      if(d.hInclude!==false)for(const h of d.hlines||[]){if((h.axis||'l')!==axis)continue;if(h.y<a)a=h.y;if(h.y>b)b=h.y}
+      if(!(a<=b)){a=0;b=1}if(a===b){a-=1;b+=1}const pad=(b-a)*0.07;return[a-pad,b+pad]};
+    let[y0,y1]=d.ydom||dom('l');if(d.yMin0&&y0>0)y0=0;if(d.ydomL)[y0,y1]=d.ydomL;
+    const[z0,z1]=hasR?(d.y2dom||dom('r')):[0,1];
+    const ty=v=>mt+ph-(v-y0)/(y1-y0)*ph, ty2=v=>mt+ph-(v-z0)/(z1-z0)*ph;
+    this.geom={ml,mt,pw,ph,tx,ty,ty2};
+    const grid=col('--grid'),axis=col('--axis'),txt=col('--text');
+    ctx.font='11px "Segoe UI",system-ui,sans-serif';ctx.lineWidth=1;
+    // rejilla y ejes Y
+    const tkY=niceTicks(y0,y1,5),stY=tkY.length>1?tkY[1]-tkY[0]:1,yt=d.yTicks?d.yTicks.filter(t=>t.v>=y0&&t.v<=y1):tkY.map(v=>({v,label:d.yFmt(v,stY)}));
+    ctx.fillStyle=axis;ctx.textAlign='right';ctx.textBaseline='middle';
+    for(const t of yt){const y=ty(t.v);ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.fillText(t.label,ml-6,y)}
+    if(hasR){ctx.textAlign='left';const tkR=niceTicks(z0,z1,5),stR=tkR.length>1?tkR[1]-tkR[0]:1;for(const v of tkR){ctx.fillText(d.y2Fmt(v,stR),ml+pw+6,ty2(v))}}
+    // ejes X
+    ctx.textAlign='center';ctx.textBaseline='top';let xt=[];
+    if(d.xType==='time'){const{ticks,step}=timeTicks(x0,x1);xt=ticks.map(t=>({v:t,label:step<864e5?`${p2(mx(t).getUTCDate())} ${p2(mx(t).getUTCHours())}h`:`${p2(mx(t).getUTCDate())} ${MES[mx(t).getUTCMonth()]}`}));
+      if(step>=864e5&&x1-x0>150*864e5)xt=xt.map(t=>({...t,label:t.label+' '+String(mx(t.v).getUTCFullYear()).slice(2)}))}
+    else if(xl){const lo=Math.floor(lx0),hi=Math.ceil(lx1);for(let k=lo;k<=hi;k++)for(const m of[1,2,5]){const v=m*Math.pow(10,k);if(v>=x0&&v<=x1)xt.push({v,label:d.xFmt(v)})}}
+    else xt=niceTicks(x0,x1,7).map(v=>({v,label:d.xFmt(v)}));
+    let lastX=-99;for(const t of xt){const x=tx(t.v);ctx.strokeStyle=grid;ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();if(x-lastX>46){ctx.fillStyle=axis;ctx.fillText(t.label,x,mt+ph+6);lastX=x}}
+    ctx.strokeStyle=axis;ctx.beginPath();ctx.moveTo(ml,mt);ctx.lineTo(ml,mt+ph);ctx.lineTo(ml+pw,mt+ph);ctx.stroke();
+    ctx.fillStyle=axis;ctx.textAlign='left';ctx.textBaseline='bottom';if(d.yLabel)ctx.fillText(d.yLabel,4,mt-4);
+    ctx.textAlign='right';ctx.textBaseline='bottom';if(d.xLabel)ctx.fillText(d.xLabel,ml+pw,H-4);
+    // recorte
+    ctx.save();ctx.beginPath();ctx.rect(ml,mt,pw,ph);ctx.clip();
+    for(const h of d.hlines||[]){const y=(h.axis==='r'?ty2:ty)(h.y);ctx.strokeStyle=h.color;ctx.lineWidth=h.w||1.4;ctx.setLineDash(h.dash||[6,4]);ctx.beginPath();ctx.moveTo(ml,y);ctx.lineTo(ml+pw,y);ctx.stroke();ctx.setLineDash([]);
+      if(h.label){ctx.fillStyle=h.color;ctx.textAlign='left';if(y-14<mt){ctx.textBaseline='top';ctx.fillText(h.label,ml+6,y+3)}else{ctx.textBaseline='bottom';ctx.fillText(h.label,ml+6,y-2)}}}
+    for(const v of d.vlines||[]){const x=tx(v.x);ctx.strokeStyle=v.color;ctx.lineWidth=1.6;ctx.setLineDash(v.dash||[5,4]);ctx.beginPath();ctx.moveTo(x,mt);ctx.lineTo(x,mt+ph);ctx.stroke();ctx.setLineDash([]);
+      if(v.label){ctx.fillStyle=v.color;ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(v.label,x+4,mt+4)}}
+    for(const s of d.series){const Y=s.axis==='r'?ty2:ty;ctx.strokeStyle=s.color;ctx.fillStyle=s.color;ctx.lineWidth=s.width||1.8;ctx.setLineDash(s.dash||[]);
+      if(s.kind==='dots'){for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;ctx.fillStyle=p[2]&&p[2].c?p[2].c:s.color;ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(tx(p[0]),Y(p[1]),s.r||3.2,0,6.283);ctx.fill();ctx.globalAlpha=1}}
+      else if(s.kind==='stem'){const y0p=Y(0);for(const p of s.pts){if(p[0]<x0||p[0]>x1||p[1]==null)continue;const x=tx(p[0]);ctx.strokeStyle=p[2]&&p[2].c?p[2].c:s.color;ctx.beginPath();ctx.moveTo(x,y0p);ctx.lineTo(x,Y(p[1]));ctx.stroke()}}
+      else{ctx.beginPath();let pen=false,prev=null;for(const p of s.pts){if(p[1]==null){pen=false;continue}
+          if(p[0]<x0&&!(prev&&prev[0]<x0&&false)){}
+          const x=tx(p[0]),y=Y(p[1]);if(!pen){ctx.moveTo(x,y);pen=true}else ctx.lineTo(x,y);prev=p}ctx.stroke();
+        if(s.markers||s.pts.length<=60){ctx.setLineDash([]);ctx.fillStyle=s.color;for(const p of s.pts){if(p[1]==null||p[0]<x0||p[0]>x1)continue;ctx.beginPath();ctx.arc(tx(p[0]),Y(p[1]),2.6,0,6.283);ctx.fill()}}
+        if(s.markReal){for(const p of s.pts){if(!(p[2]&&p[2].real)||p[0]<x0||p[0]>x1||p[1]==null)continue;const x=tx(p[0]),y=Y(p[1]);ctx.setLineDash([]);ctx.fillStyle=s.color;ctx.strokeStyle=col('--surface');ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x+5,y);ctx.lineTo(x,y+5);ctx.lineTo(x-5,y);ctx.closePath();ctx.fill();ctx.stroke()}}}
+      ctx.setLineDash([])}
+    // crosshair
+    if(this.hover&&!d.scatter){const hx=this.hover.px;if(hx>=ml&&hx<=ml+pw){ctx.strokeStyle=col('--dorado');ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(hx,mt);ctx.lineTo(hx,mt+ph);ctx.stroke();ctx.setLineDash([]);
+      const xv=this.xAt(hx);for(const s of d.series){if(s.noTip||s.kind==='dots')continue;const i=nearest(s.pts,xv);if(i<0)continue;const p=s.pts[i];if(p[1]==null)continue;ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(tx(p[0]),(s.axis==='r'?ty2:ty)(p[1]),3.5,0,6.283);ctx.fill()}}}
+    ctx.restore();
+  }
+}
+function nearest(pts,x){let lo=0,hi=pts.length-1;if(hi<0)return-1;while(lo<hi){const m=(lo+hi)>>1;if(pts[m][0]<x)lo=m+1;else hi=m}if(lo>0&&Math.abs(pts[lo-1][0]-x)<Math.abs(pts[lo][0]-x))lo--;return lo}
+
+
+/* =====================================================================
+   WEIBULL (matemática)
+   ===================================================================== */
+function gammaFn(z){if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gammaFn(1-z));z-=1;const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];let x=c[0];for(let i=1;i<g+2;i++)x+=c[i]/(z+i);const t=z+g+0.5;return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x}
+function weibullFit(data){
+  const s=[...data].sort((a,b)=>a.t-b.t),n=s.length;let prev=0;const pts=[];
+  s.forEach((d,i)=>{if(!d.fail)return;const rr=n-i,inc=(n+1-prev)/(1+rr);prev+=inc;pts.push({t:d.t,F:(prev-0.3)/(n+0.4)})});
+  if(pts.length<2)return null;
+  const x=pts.map(p=>Math.log(p.t)),y=pts.map(p=>Math.log(-Math.log(1-p.F)));const r=ols(x,y);if(!r||r.b<=0)return null;
+  return{beta:r.b,eta:Math.exp(-r.a/r.b),r2:r.r2,pts,nf:pts.length,ns:n-pts.length,n}}
+const wF=(t,b,e)=>1-Math.exp(-Math.pow(t/e,b)), wR=(t,b,e)=>Math.exp(-Math.pow(t/e,b)), wH=(t,b,e)=>b/e*Math.pow(t/e,b-1);
+const wRUL=(t,b,e,q)=>e*Math.pow(Math.pow(t/e,b)-Math.log(q),1/b)-t; // q=0.5 mediana; q=0.9 → 10 % prob. de falla
+
+/* ---------- Lectura de PDF (pdf.js incrustado, sin red) ---------- */
+async function pdfPages(file){
+  if(!window.pdfjsLib)throw new Error('Lector PDF no disponible en este archivo HTML');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='pdf.worker.js';
+  if(!globalThis.pdfjsWorker&&globalThis['pdfjs-dist/build/pdf.worker'])globalThis.pdfjsWorker=globalThis['pdfjs-dist/build/pdf.worker'];
+  const doc=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false,disableFontFace:true,useSystemFonts:false,verbosity:0}).promise;
+  const pages=[];
+  for(let n=1;n<=doc.numPages;n++){const pg=await doc.getPage(n),tc=await pg.getTextContent();pages.push(tc.items.filter(i=>typeof i.str==='string').map(i=>({s:i.str,x:i.transform[4],y:i.transform[5],w:i.width||0})))}
+  await doc.destroy();return pages;
+}
+const flatOf=items=>items.map(i=>i.s).join(' ').replace(/\s+/g,' ').trim();
+const NUMR='(-?\\d[\\d,]*(?:\\.\\d+)?)',nC=v=>v==null||v===''?null:num(String(v).replace(/,/g,''));
+const tri=(flat,label)=>{const m=flat.match(new RegExp(label+'\\s*[^\\d\\-]*?'+NUMR+'\\s+'+NUMR+'\\s+'+NUMR,'i'));return m?[nC(m[1]),nC(m[2]),nC(m[3])]:null};
+function captOf(flat){const m=flat.match(/Capturado:\s*(\d{1,2})\/(\d{1,2})\/(\d{4}),?\s*(\d{1,2}):(\d{2})\s*([ap])\.?\s*m/i);let cap=null;
+  if(m){let h=+m[4]%12;if(m[6].toLowerCase()==='p')h+=12;cap=`${m[3]}-${p2(+m[2])}-${p2(+m[1])}T${p2(h)}:${m[5]}`}
+  const g=flat.match(/GPS\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);return{capturado:cap,gps:g?[num(g[1]),num(g[2])]:null}}
+function rowsOf(items){const rs=[];[...items].sort((a,b)=>b.y-a.y||a.x-b.x).forEach(it=>{if(!it.s.trim())return;const r=rs.find(r=>Math.abs(r.y-it.y)<3);if(r)r.it.push(it);else rs.push({y:it.y,it:[it]})});rs.forEach(r=>r.it.sort((a,b)=>a.x-b.x));return rs}
+function toks(it){const out=[],re=/\S+/g,len=it.s.length||1;let m;while((m=re.exec(it.s)))out.push({t:m[0],x:it.x+(m.index+m[0].length/2)/len*(it.w||len*5)});return out}
+function colVals(items,labelRe,heads){ // asigna cada valor a su columna por posición X
+  const rs=rowsOf(items),hi=rs.findIndex(r=>labelRe.test(r.it.map(i=>i.s).join(' ')));if(hi<0)return null;
+  const isVal=r=>/TEMPERATURA/i.test(r.it.map(i=>i.s).join(' '));
+  let hr=[rs[hi]];if(rs[hi+1]&&!isVal(rs[hi+1]))hr.push(rs[hi+1]);
+  const ht=hr.flatMap(r=>r.it.flatMap(toks)).filter(t=>heads.includes(t.t));if(ht.length<2)return null;
+  let vi=-1;for(let k=hi+1;k<Math.min(rs.length,hi+4);k++)if(isVal(rs[k])){vi=k;break}if(vi<0)return null;
+  const vt=rs[vi].it.flatMap(toks).filter(t=>/^-?\d+(\.\d+)?$/.test(t.t)),out={};
+  for(const v of vt){let best=null,bd=1e9;for(const h of ht){const d=Math.abs(h.x-v.x);if(d<bd){bd=d;best=h}}const key=best.t.replace(/^X0$/,'Xo').replace(/^Nucleo$/i,'Núcleo');out[key]=num(v.t)}
+  return out}
+
+/* ---------- Menú de módulos de la suite ---------- */
+/* ---------- Carga masiva: carpeta arrastrada, selector de carpeta, ZIP o archivos sueltos (compartido por los módulos) ---------- */
+async function bulkZipList(file){
+  const size=file.size,tail=Math.min(size,66000),buf=new Uint8Array(await file.slice(size-tail).arrayBuffer()),dv=new DataView(buf.buffer);
+  let eocd=-1;for(let i=tail-22;i>=0;i--)if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}
+  if(eocd<0)throw new Error('No es un archivo ZIP válido');
+  let total=dv.getUint16(eocd+10,true),cdSize=dv.getUint32(eocd+12,true),cdOff=dv.getUint32(eocd+16,true);
+  if(total===0xffff||cdOff===0xffffffff){const loc=eocd-20;if(loc>=0&&dv.getUint32(loc,true)===0x07064b50){const off64=Number(dv.getBigUint64(loc+8,true)),b2=new DataView(await file.slice(off64,off64+56).arrayBuffer());total=Number(b2.getBigUint64(32,true));cdSize=Number(b2.getBigUint64(40,true));cdOff=Number(b2.getBigUint64(48,true))}}
+  const cd=new DataView(await file.slice(cdOff,cdOff+cdSize).arrayBuffer()),td=new TextDecoder('utf-8'),out=[];let p=0;
+  for(let k=0;k<total&&p+46<=cd.byteLength;k++){
+    if(cd.getUint32(p,true)!==0x02014b50)break;
+    const flags=cd.getUint16(p+8,true),method=cd.getUint16(p+10,true);let csz=cd.getUint32(p+20,true),usz=cd.getUint32(p+24,true);
+    const nl=cd.getUint16(p+28,true),el=cd.getUint16(p+30,true),cl=cd.getUint16(p+32,true);let lho=cd.getUint32(p+42,true);
+    const name=td.decode(new Uint8Array(cd.buffer,cd.byteOffset+p+46,nl));
+    if(csz===0xffffffff||usz===0xffffffff||lho===0xffffffff){let q=p+46+nl,end=q+el;while(q+4<=end){const id=cd.getUint16(q,true),sz=cd.getUint16(q+2,true);if(id===1){let r=q+4;if(usz===0xffffffff){usz=Number(cd.getBigUint64(r,true));r+=8}if(csz===0xffffffff){csz=Number(cd.getBigUint64(r,true));r+=8}if(lho===0xffffffff){lho=Number(cd.getBigUint64(r,true))}}q+=4+sz}}
+    if(!name.endsWith('/'))out.push({name,method,csz,usz,lho,enc:!!(flags&1)});
+    p+=46+nl+el+cl}
+  return out}
+async function bulkZipBlob(file,e){
+  if(e.enc)throw new Error('ZIP cifrado: no soportado');
+  const lh=new DataView(await file.slice(e.lho,e.lho+30).arrayBuffer()),start=e.lho+30+lh.getUint16(26,true)+lh.getUint16(28,true),blob=file.slice(start,start+e.csz);
+  if(e.method===0)return blob;
+  if(e.method!==8)throw new Error('método de compresión no soportado: '+e.method);
+  if(typeof DecompressionStream==='undefined')throw new Error('Este navegador no puede descomprimir ZIP: usa la carpeta sin comprimir');
+  return await new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob()}
+async function bulkReadAll(reader){const out=[];for(;;){const b=await new Promise((res,rej)=>reader.readEntries(res,rej));if(!b.length)break;out.push(...b)}return out}
+async function bulkWalk(entry,prefix,out){
+  if(entry.isFile){const f=await new Promise((res,rej)=>entry.file(res,rej));out.push({name:entry.name,path:prefix+entry.name,file:f})}
+  else if(entry.isDirectory){for(const k of await bulkReadAll(entry.createReader()))await bulkWalk(k,prefix+entry.name+'/',out)}}
+// → {files:[{name,path,size,arrayBuffer(),text(),zip?}], skipped:n, errors:[…]} con solo las extensiones pedidas (por defecto PDF y JSON).
+// Llamar de forma SÍNCRONA dentro del evento drop (los DataTransferItem caducan al primer await).
+async function bulkCollect(items,fileList,ext=/\.(pdf|json)$/i){
+  const raw=[];
+  if(items&&items.length&&items[0].webkitGetAsEntry){const ents=[...items].map(i=>i.webkitGetAsEntry()).filter(Boolean);for(const e of ents)await bulkWalk(e,'',raw)}
+  else for(const f of fileList||[])raw.push({name:f.name,path:f.webkitRelativePath||f.name,file:f});
+  const files=[],errors=[];let skipped=0;
+  for(const r of raw){
+    if(/\.zip$/i.test(r.name)){try{for(const e of await bulkZipList(r.file)){const nm=e.name.replace(/^.*\//,'');if(!ext.test(nm)||/^__MACOSX|\/\./.test(e.name)||nm.startsWith('.')){skipped++;continue}
+      files.push({name:nm,path:r.name+'/'+e.name,size:e.usz,zip:r.name,arrayBuffer:async()=>(await bulkZipBlob(r.file,e)).arrayBuffer(),text:async()=>(await bulkZipBlob(r.file,e)).text()})}}catch(err){errors.push(`${r.name}: ${err.message}`)}}
+    else if(ext.test(r.name)&&!r.name.startsWith('.'))files.push({name:r.name,path:r.path,size:r.file.size,arrayBuffer:()=>r.file.arrayBuffer(),text:()=>r.file.text()});
+    else skipped++}
+  return{files,skipped,errors}}
+
+const SUITE=[
+  {id:'termico',file:'sicm-termico.html',nombre:'Térmico',desc:'Transformadores · Tableros · Motores'},
+  {id:'sfi',file:'sicm-sfi.html',nombre:'SFI · UPS · Baterías',desc:'Cargadores, UPS y bancos de baterías'},
+  {id:'motores',file:'sicm-motores.html',nombre:'Motores',desc:'Vibraciones, variador y espectros FFT'},
+  {id:'desbalance',file:'sicm-desbalance.html',nombre:'Desbalance CCM',desc:'Desbalance de voltaje en tableros de baja tensión'},
+  {id:'estado',file:'sicm-estado.html',nombre:'Estado aparente',desc:'Inspección visual ponderada de subestaciones y soloaires'},
+  {id:'desaladora',file:'sicm-desaladora.html',nombre:'Desaladora',desc:'Transformadores (unidades de potencia) de desaladoras'},
+  {id:'aceite',file:'sicm-aceite.html',nombre:'Trafos en aceite',desc:'Inspección de transformadores en aceite y análisis del aceite (ventana operativa / ASTM-IEEE)'},
+  {id:'relevadores',file:'sicm-relevadores.html',nombre:'Relevadores',desc:'Inspección Tipo A (HMI) y Tipo B (software), repositorio de ajustes, oscilografías y eventos'}
+];
+function renderSuiteNav(cur){const el=document.getElementById('suiteNav');if(!el)return;
+  el.innerHTML=SUITE.map(m=>m.id===cur?`<span class="cur" aria-current="page" title="${esc(m.desc)}">${esc(m.nombre)}</span>`:`<a href="${esc(m.file)}" title="${esc(m.desc)}">${esc(m.nombre)}</a>`).join('')}
+
+/* =====================================================================
+   SICM-RELEVADORES · LECTORES DE ARCHIVOS TÉCNICOS: COMTRADE (IEEE C37.111, .cfg + .dat ASCII/BINARIO), texto/CSV de eventos y comparación de ajustes
+   Mismo código en navegador y Node. Depende de core.js (num, parseTs).
+   ===================================================================== */
+const stripAcc=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const nTag=t=>String(t==null?'':t).replace(/[‐-―]/g,'-').trim().replace(/\s+/g,' ').toUpperCase();
+const KB=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' kB':(n/1048576).toFixed(1)+' MB';
+const decodeText=buf=>{try{return new TextDecoder('utf-8',{fatal:false}).decode(buf)}catch(e){let s='';const u=new Uint8Array(buf);for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return s}};
+
+/* ---------- COMTRADE ---------- */
+function parseCfg(txt){
+  const L=txt.replace(/^﻿/,'').split(/\r?\n/).map(s=>s.trim()).filter(s=>s!==''),f=i=>(L[i]||'').split(',').map(s=>s.trim());
+  if(L.length<4)throw new Error('Archivo .cfg demasiado corto');
+  const h=f(0),c=f(1),nA=parseInt((c[1]||'0'))||0,nD=parseInt((c[2]||'0'))||0;
+  if(!(nA+nD>0))throw new Error('El .cfg no declara canales (línea 2: TT,##A,##D)');
+  const an=[],dg=[];
+  for(let i=0;i<nA;i++){const p=f(2+i);an.push({n:+p[0]||i+1,id:p[1]||'A'+(i+1),ph:p[2]||'',cc:p[3]||'',uu:p[4]||'',a:num(p[5])??1,b:num(p[6])??0,skew:num(p[7])??0,min:num(p[8]),max:num(p[9]),pri:num(p[10])??1,sec:num(p[11])??1,ps:(p[12]||'P').toUpperCase()})}
+  for(let i=0;i<nD;i++){const p=f(2+nA+i);dg.push({n:+p[0]||i+1,id:p[1]||'D'+(i+1),ph:p[2]||'',cc:p[3]||'',y:p[4]||'0'})}
+  let k=2+nA+nD;const freq=num(f(k++)[0])||60,nr=parseInt(f(k++)[0])||1,rates=[];
+  for(let i=0;i<nr;i++){const p=f(k++);rates.push({samp:num(p[0])||0,end:parseInt(p[1])||0})}
+  const t0=parseCtTime(L[k++]),t1=parseCtTime(L[k++]),ft=(L[k++]||'ASCII').trim().toUpperCase(),tm=num((L[k]||'').split(',')[0])||1;
+  return{station:h[0]||'',dev:h[1]||'',rev:h[2]||'1991',nA,nD,an,dg,freq,rates,t0,trig:t1,ft,tmult:tm}}
+function parseCtTime(s){const m=String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s*,\s*(\d{1,2}):(\d{2}):(\d{2})(?:[.,](\d+))?/);if(!m)return null;
+  // formato dd/mm/aaaa (también aceptado mm/dd si dd > 12 no aplica: se asume dd/mm/aaaa) · fracción en µs/ns → ms
+  const fr=m[7]?parseFloat('0.'+m[7]):0;return{ms:Date.UTC(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+m[6])+fr*1000,txt:`${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]} ${m[4].padStart(2,'0')}:${m[5]}:${m[6]}${m[7]?'.'+m[7]:''}`}}
+function parseDat(cfg,data){
+  const nA=cfg.nA,nD=cfg.nD,rows=[],tm=cfg.tmult||1;let ts=[];
+  const A=[...Array(nA)].map(()=>[]),D=[...Array(nD)].map(()=>[]);
+  if(cfg.ft==='BINARY'||cfg.ft==='BINARY32'||cfg.ft==='FLOAT32'){
+    const dv=new DataView(data),nw=Math.ceil(nD/16),b32=cfg.ft!=='BINARY',asz=cfg.ft==='BINARY'?2:4,rec=4+4+asz*nA+2*nw;
+    if(rec<=8||data.byteLength<rec)throw new Error('Archivo .dat vacío o inconsistente con el .cfg');
+    const n=Math.floor(data.byteLength/rec);
+    for(let i=0;i<n;i++){const o=i*rec;ts.push(dv.getUint32(o+4,true)*tm);
+      for(let j=0;j<nA;j++)A[j].push(cfg.ft==='BINARY'?dv.getInt16(o+8+2*j,true):cfg.ft==='BINARY32'?dv.getInt32(o+8+4*j,true):dv.getFloat32(o+8+4*j,true));
+      for(let w=0;w<nw;w++){const word=dv.getUint16(o+8+asz*nA+2*w,true);for(let b=0;b<16&&w*16+b<nD;b++)D[w*16+b].push((word>>b)&1)}}
+  }else{
+    const t=(typeof data==='string'?data:decodeText(data)).split(/\r?\n/);
+    for(const line of t){if(!line.trim())continue;const p=line.split(',');if(p.length<2+nA)continue;ts.push((+p[1]||0)*tm);
+      for(let j=0;j<nA;j++)A[j].push(+p[2+j]);for(let j=0;j<nD;j++)D[j].push(+p[2+nA+j]?1:0)}
+  }
+  const n=ts.length;if(!n)throw new Error('El .dat no contiene muestras');
+  // sin sello de tiempo válido → se reconstruye con la tasa de muestreo del .cfg
+  if(ts.every(x=>!x)||(n>2&&ts[n-1]<=ts[0])){const sr=(cfg.rates[0]&&cfg.rates[0].samp)||1;ts=ts.map((_,i)=>i/sr*1e6)}
+  const ms=ts.map(x=>x/1000);const tTrig=cfg.t0&&cfg.trig?cfg.trig.ms-cfg.t0.ms:0;   // ms desde el inicio hasta el disparo
+  return{ms,tTrig,A,D,n}}
+function comtrade(cfgText,dat){
+  const cfg=parseCfg(cfgText),d=parseDat(cfg,dat);
+  const ch=cfg.an.map((c,j)=>{const raw=d.A[j],v=raw.map(x=>c.a*x+c.b),sr=cfg.rates[0]&&cfg.rates[0].samp?cfg.rates[0].samp:(d.n/((d.ms[d.n-1]-d.ms[0])/1000||1)),cyc=Math.max(4,Math.round(sr/cfg.freq));
+    let peak=0,pk=0;for(let i=0;i<v.length;i++)if(Math.abs(v[i])>peak){peak=Math.abs(v[i]);pk=i}
+    const rms=(a,b)=>{let s=0;for(let i=a;i<b;i++)s+=v[i]*v[i];return Math.sqrt(s/Math.max(1,b-a))};
+    const r1=rms(0,Math.min(cyc,v.length));let rmax=0;for(let i=0;i+cyc<=v.length;i+=Math.max(1,cyc>>3)){const r=rms(i,i+cyc);if(r>rmax)rmax=r}
+    const k=cfg.ps==='S'&&c.sec?c.pri/c.sec:1;
+    return{...c,v,peak,tPeak:d.ms[pk]-d.tTrig-d.ms[0],rms1:r1,rmsMax:rmax,kPri:c.ps==='S'&&c.sec?c.pri/c.sec:(c.ps==='P'?1:1)}});
+  const dg=cfg.dg.map((c,j)=>{const x=d.D[j];let ch=[];for(let i=1;i<x.length;i++)if(x[i]!==x[i-1])ch.push({t:d.ms[i]-d.ms[0]-d.tTrig,to:x[i]});return{...c,x,chg:ch,normal:+c.y}});
+  const sr=cfg.rates[0]&&cfg.rates[0].samp?cfg.rates[0].samp:0;
+  return{cfg,t:d.ms.map(x=>x-d.ms[0]-d.tTrig),n:d.n,sr,dur:d.ms[d.n-1]-d.ms[0],ch,dg}}
+
+/* ---------- texto / CSV de eventos y registros ---------- */
+const EV_KEYS=[['trip',/\b(trip|disparo|operate|operaci[oó]n de protecci)/i],['alarma',/\b(alarm|alarma|warning|aviso)\b/i],['pickup',/\b(pick-?up|arranque|start)\b/i],['falla',/\b(fault|falta|falla|irf|self-?test|autodiagn)/i],['tcs',/\b(tcs|trip circuit|circuito de disparo|coil monitor)/i],['com',/\b(link|comm|goose|mms|ethernet|comunicaci)/i],['reloj',/\b(clock|reloj|irig|rtc|sntp|ptp|time sync)/i],['acceso',/\b(login|logout|password|contrase|acceso|access|user)/i],['ajuste',/\b(setting|ajuste|settings changed|write|escritura|config)/i]];
+function textStats(txt){const lines=txt.split(/\r?\n/),c={};let n=0;for(const l of lines){if(!l.trim())continue;n++;for(const [k,re] of EV_KEYS)if(re.test(l))c[k]=(c[k]||0)+1}return{lines:n,c}}
+const guessSep=l=>{const a=(l.match(/;/g)||[]).length,b=(l.match(/,/g)||[]).length,t=(l.match(/\t/g)||[]).length;return t>a&&t>b?'\t':a>b?';':b>0?',':null};
+function csvRows(txt,max=2000){const L=txt.split(/\r?\n/).filter(s=>s.trim()!==''),sep=guessSep(L[0]||'');if(!sep)return null;
+  const rows=[];for(const l of L.slice(0,max)){const r=[];let cur='',q=false;for(let i=0;i<l.length;i++){const c=l[i];if(q){if(c==='"'){if(l[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}else if(c==='"')q=true;else if(c===sep){r.push(cur);cur=''}else cur+=c}r.push(cur);rows.push(r)}
+  const w=rows[0].length;return rows.filter(r=>r.length>=Math.max(2,w-2))}
+/* diferencias de ajustes: LCS de líneas (se ignoran espacios y líneas vacías) */
+function lineDiff(a,b,max=4000){
+  const norm=t=>t.split(/\r?\n/).map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean).slice(0,max),A=norm(a),B=norm(b),n=A.length,m=B.length;
+  const dp=[];for(let i=0;i<=n;i++)dp.push(new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=A[i]===B[j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const out=[];let i=0,j=0;while(i<n&&j<m){if(A[i]===B[j]){out.push({t:'=',a:A[i]});i++;j++}else if(dp[i+1][j]>=dp[i][j+1]){out.push({t:'-',a:A[i]});i++}else{out.push({t:'+',b:B[j]});j++}}
+  while(i<n)out.push({t:'-',a:A[i++]});while(j<m)out.push({t:'+',b:B[j++]});
+  // pares -/+ contiguos → cambio
+  const res=[];for(let k=0;k<out.length;k++){if(out[k].t==='-'&&out[k+1]&&out[k+1].t==='+'){res.push({t:'~',a:out[k].a,b:out[k+1].b});k++}else res.push(out[k])}
+  return{rows:res,same:res.filter(x=>x.t==='=').length,chg:res.filter(x=>x.t==='~').length,add:res.filter(x=>x.t==='+').length,del:res.filter(x=>x.t==='-').length,nA:n,nB:m}}
+/* nombre de archivo según el procedimiento: TAG_MARCA_MODELO_AAAAMMDD.ext */
+function nameInfo(name){const base=name.replace(/\.[^.]+$/,''),ext=(name.match(/\.([^.]+)$/)||[])[1]||'',p=base.split('_'),dm=base.match(/(20\d{2})(\d{2})(\d{2})(?!\d)/);
+  return{base,ext:ext.toLowerCase(),tag:p.length>1?nTag(p[0]):null,fecha:dm?Date.UTC(+dm[1],+dm[2]-1,+dm[3],12)-MXOFF:null}}
+function catOf(ext,name){ext=ext.toLowerCase();const n=stripAcc(name);
+  if(['cfg','dat','cff','hdr','inf'].includes(ext)&&!/ajuste|setting/.test(n))return'oscilo';
+  if(['set','urs','cid','icd','scd','pcmt','pcmx','rdb','s1p','sdf','dcb'].includes(ext)||/ajuste|setting|config/.test(n))return'ajustes';
+  if(/evento|event|sequence|soe|sec_ev/.test(n))return'eventos';if(['log','evt'].includes(ext)||/log|bitacora|registro/.test(n))return'log';
+  if(['csv','txt'].includes(ext))return'eventos';return'otro'}
+
+/* =====================================================================
+   SICM-RELEVADORES · MODELO: censo, formatos del procedimiento 4128-11422-SICM-PEO-003 (anexos 9.1–9.8), programa de inspecciones Tipo A / Tipo B,
+   evaluación de listas de verificación, mediciones con criterio y hallazgos.
+   Estados: 0 = OK · 1 = condicionado / por vencer · 2 = crítico / vencido · 3 = sin dato
+   ===================================================================== */
+const STN=['Sin hallazgos','Con hallazgos','Hallazgo CRÍTICO','Sin evaluar'],STC=['ok','warn','crit','oos'];
+const PST=['Al corriente','Por vencer','Vencida','Sin registro'];                // estado del programa de inspección
+const MARCAS={GE:'GE Multilin',ABB:'ABB Relion',SIE:'Siemens Reyrolle',SCH:'Schneider'};
+const TIPOS={A:'Tipo A · visual y HMI',B:'Tipo B · software, eventos y conexión'};
+const CATS={ajustes:'Ajustes / configuración',oscilo:'Oscilografías (COMTRADE)',eventos:'Eventos / SOE',log:'Logs / bitácoras',otro:'Otros'};
+/* Conexión por marca · procedimiento 7.4.1 */
+const CONEXION=[['GE','GE Serie 8 (845/850/869)','USB tipo B (adaptador «GE RNDIS Device»)','172.16.0.2 en 869 v4.30 (845/850 [VALIDAR EN EQUIPO/MANUAL])','Ethernet puerto trasero; IEC 61850 MMS/GOOSE; hasta 3 sesiones TCP/IP (850/869)','EnerVista 8 Series Setup / D&I Setup','Observer'],
+  ['ABB','ABB Relion 615','RJ-45 en el LHMI','192.168.0.254 fija; el relevador entrega IP a la laptop por DHCP','Ethernet RJ-45/fibra (HSR/PRP); IEC 61850, hasta 5 clientes (PCM600 ocupa 1)','WHMI (HTTPS) y PCM600 + Connectivity Package','VIEWER'],
+  ['SIE','Siemens Reyrolle 7SR5 / 7SR1x-2x','USB (instalar controladores antes) / serial DB9','192.168.2.1 (7SR5) · serial: N/A','Ethernet (módulo EN100), RS-485; IEC 61850; interfaz web desde V2.40','Reydisp Manager 2 / Reydisp Evolution','Sin ID para lectura'],
+  ['SCH','Schneider MiCOM P3P / P14x / P54x, Easergy P5','Serial DB9 con cable Kitz; USB/Ethernet según modelo','[VALIDAR EN EQUIPO/MANUAL]','Ethernet / serial; IEC 61850 en módulo Ethernet','MiCOM S1 Studio / Easergy Studio','Solo lectura']];
+/* Equivalencia de funciones · anexo 9.9 */
+const FUNC=[['50','Sobrecorriente instantánea','850/860/869','REF615/REG615','7SR10/11/12 Argus','P143/P5x1'],['51','Sobrecorriente temporizada','850/860/869','REF615/REG615','7SR10/11/12 Argus','P143/P5x1'],['50N/51N','Sobrecorriente de tierra','850/860/869','REF615/REG615','7SR10/11/12 Argus','P143/P5x1'],['50BF','Falla de interruptor','850/860','REF615/REG615','7SR10/11/12 Argus','P143/P5x1'],['21','Distancia','890','RED615/REL670','7SR191 Agile','P546'],['67','Sobrecorriente direccional','850/860','REF615/REG615','7SR12 Argus','P143'],['87T','Diferencial de transformador','845','RET670','7SR45 Duobias','P5x3'],['87L','Diferencial de línea','890','RED615','7SR224 Solkor','—'],['87M','Diferencial de motor','489/869','REM615','—','P139'],['49','Imagen térmica del motor','489/869','REM615','—','P139'],['46','Secuencia negativa','489/869/860','REG615/REM615','7SR10 Argus','P139/P143'],['27','Bajo voltaje','850/860','REF615/REG615','7SR10 Argus','P143/P5x1'],['59','Sobrevoltaje','860','REG615','7SR10 Argus','P143'],['81','Frecuencia (sub/sobre)','860','REG615','7SR10 Argus','P143'],['25','Verificación de sincronismo','860','REG615','—','—'],['32','Potencia inversa','860','REG615','—','—'],['40','Pérdida de excitación','860','REG615','—','—'],['86','Relevador de bloqueo (lockout)','Externo','Externo','Externo','Externo']];
+const VCD_NOM=[48,110,125,220,250];
+const CFG0={int:{A:6,B:12},alerta:30,t:{gab:55,vcd:10,i:5,v:2,fHz:0.1,reloj:1,clockGoose:0.001,amb:40,pres:25}};
+let CFG=structuredClone(CFG0);
+let FORMATOS=[];const fmtOf=id=>FORMATOS.find(f=>f.id===id);
+const fmtId=(tipo,marca)=>`${tipo}-${marca}`;
+
+/* ---------- mediciones con criterio (7.5 del procedimiento) ---------- */
+const MEDMAP=[['gab',/Temperatura del gabinete/i],['vcd',/Alimentaci[oó]n auxiliar CD/i],['i',/Corrientes Ia, ?Ib, ?Ic vs/i],['v',/Tensiones Va, ?Vb, ?Vc vs/i],['f',/^Frecuencia$/i],['reloj',/(Status → Clock|Fecha, hora|Hora|Verificaci[oó]n de reloj)/i],['amb',/^Entorno:/i]];
+const pct=(a,b)=>b?Math.abs(a-b)/Math.abs(b)*100:null;
+function evalMed(m){ // devuelve {k:{s,txt,val}} con s: 0 ok · 2 fuera de criterio · null sin dato
+  const T=CFG.t,o={};
+  if(m.gab!=null&&m.gab!=='')o.gab={s:+m.gab<T.gab?0:2,val:`${m.gab} °C`,txt:`< ${T.gab} °C`};
+  if(m.vcd_nom&&m.vcd_med!=null&&m.vcd_med!==''){const lo=m.vcd_nom*(1-T.vcd/100),hi=m.vcd_nom*(1+T.vcd/100),v=+m.vcd_med;o.vcd={s:v>=lo&&v<=hi?0:2,val:`${v} VCD (nominal ${m.vcd_nom})`,txt:`${lo.toFixed(1)} a ${hi.toFixed(1)} VCD (±${T.vcd} %)`}}
+  const dif=(rel,pat,lim,u)=>{const d=[];for(const k of ['a','b','c']){const r=num(rel&&rel[k]),p=num(pat&&pat[k]);if(r!=null&&p!=null)d.push(pct(r,p))}return d.length?{max:Math.max(...d),n:d.length}:null};
+  const di=dif(m.i_rel,m.i_pat),dv=dif(m.v_rel,m.v_pat);
+  if(di)o.i={s:di.max<T.i?0:2,val:`dif. máx. ${di.max.toFixed(2)} %`,txt:`< ${T.i} %`,num:di.max};
+  if(dv)o.v={s:dv.max<T.v?0:2,val:`dif. máx. ${dv.max.toFixed(2)} %`,txt:`< ${T.v} %`,num:dv.max};
+  if(m.f!=null&&m.f!==''){const d=Math.abs(+m.f-60);o.f={s:d<=T.fHz+1e-9?0:2,val:`${m.f} Hz`,txt:`60.0 ± ${T.fHz} Hz`}}
+  if(m.reloj!=null&&m.reloj!==''){const lim=m.goose?T.clockGoose:T.reloj,d=Math.abs(+m.reloj);o.reloj={s:d<lim?0:2,val:`${m.reloj} s`,txt:`< ${lim} s${m.goose?' (GOOSE)':''}`}}
+  if(m.amb!=null&&m.amb!==''){o.amb={s:+m.amb<=T.amb?0:2,val:`${m.amb} °C`,txt:`≤ ${T.amb} °C`}}
+  return o}
+/* ---------- evaluación de una inspección ---------- */
+function evalInsp(r){
+  const f=fmtOf(r.fmt);if(!f)return{est:3,no:[],ok:0,na:0,pend:0,tot:0,crit:[]};
+  const no=[],crit=[];let ok=0,na=0,pend=0;
+  for(const it of f.items){const a=(r.items||{})[it.n],v=a&&a.v;
+    if(v==='OK')ok++;else if(v==='NA')na++;else if(v==='NO'){const x={...it,val:a.val||'',obs:a.obs||''};no.push(x);if(it.critico)crit.push(x)}else pend++}
+  const mm=evalMed(r.med||{});
+  const est=crit.length?2:no.length?1:(ok+na===0?3:0);
+  return{est,no,crit,ok,na,pend,tot:f.items.length,pct:ok+no.length?ok/(ok+no.length)*100:null,med:mm}}
+/* ---------- índice ---------- */
+const IX={rel:new Map(),list:[],insp:[],hall:[],arch:[]};
+const addMonths=(ts,m)=>{const d=new Date(ts+MXOFF);d.setUTCMonth(d.getUTCMonth()+m);return d.getTime()-MXOFF};
+function prog(last,meses,now){ // estado del programa
+  if(!last)return{s:3,due:null,dias:null};const due=addMonths(last.ts,meses),dias=Math.round((due-now)/864e5);
+  return{s:dias<0?2:dias<=CFG.alerta?1:0,due,dias}}
+function rebuild(){
+  IX.rel=new Map();IX.insp=[];IX.hall=[];IX.arch=DB.arch.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));const now=Date.now();
+  for(const r of DB.rel){IX.rel.set(r.id,{...r,A:[],B:[],arch:[],hall:[]})}
+  for(const i of DB.insp){const t=IX.rel.get(i.relId);if(!t)continue;const m={r:i,ts:i.ts,e:evalInsp(i),rel:t};(i.tipo==='A'?t.A:t.B).push(m);IX.insp.push(m)}
+  for(const a of DB.arch){const t=IX.rel.get(a.relId);if(t)t.arch.push(a)}
+  for(const t of IX.rel.values()){
+    t.A.sort((a,b)=>a.ts-b.ts);t.B.sort((a,b)=>a.ts-b.ts);t.lastA=t.A[t.A.length-1]||null;t.lastB=t.B[t.B.length-1]||null;
+    t.pA=prog(t.lastA,CFG.int.A,now);t.pB=prog(t.lastB,CFG.int.B,now);
+    t.last=[t.lastA,t.lastB].filter(Boolean).sort((a,b)=>b.ts-a.ts)[0]||null;
+    t.cond=t.last?t.last.e.est:3;                         // condición según el último dictamen
+    const ps=[t.pA.s,t.pB.s];t.progWorst=ps.includes(2)?2:ps.includes(1)?1:ps.includes(3)?3:0;
+    t.nextDue=[t.pA.due,t.pB.due].filter(x=>x!=null).sort((a,b)=>a-b)[0]??null}
+  for(const m of IX.insp)for(const x of m.e.no){const key=m.r.id+':'+x.n,h=(DB.hall[key])||{};IX.hall.push({key,m,item:x,rel:m.rel,estado:h.estado||'abierto',aviso:h.aviso||'',nota:h.nota||'',cierre:h.cierre||null})}
+  IX.list=[...IX.rel.values()].sort((a,b)=>String(a.sub||'').localeCompare(String(b.sub||''),'es',{numeric:true})||a.tag.localeCompare(b.tag,'es',{numeric:true}))}
+const openHall=()=>IX.hall.filter(h=>h.estado!=='cerrado');
+/* recomendaciones por relevador */
+function recsFor(t){
+  const R=[],add=(p,x,ref)=>R.push({p,x,ref});
+  if(t.pA.s===3)add(1,`Sin inspección Tipo A registrada: programar la inspección visual y por HMI (cada ${CFG.int.A} meses).`,'PEO-003 7.1.4');
+  else if(t.pA.s===2)add(2,`Inspección Tipo A vencida desde hace ${-t.pA.dias} días (intervalo ${CFG.int.A} meses).`,'PEO-003 7.1.4');
+  else if(t.pA.s===1)add(1,`Inspección Tipo A vence en ${t.pA.dias} días.`,'PEO-003 7.1.4');
+  if(t.pB.s===3)add(1,`Sin inspección Tipo B (descarga de eventos, oscilografías y configuración, conexión con la máquina): programarla, mínimo una vez al año.`,'PEO-003 7.1.4 / 7.4');
+  else if(t.pB.s===2)add(2,`Inspección Tipo B vencida desde hace ${-t.pB.dias} días (anual).`,'PEO-003 7.1.4');
+  else if(t.pB.s===1)add(1,`Inspección Tipo B vence en ${t.pB.dias} días.`,'PEO-003 7.1.4');
+  for(const h of IX.hall.filter(h=>h.rel===t&&h.estado!=='cerrado'))add(h.item.critico?3:1,`${h.item.critico?'CRÍTICO · ':''}${h.item.txt} — criterio: ${h.item.crit}${h.item.val?` · leído: ${h.item.val}`:''}. ${h.item.critico?'Notificar de inmediato al Coordinador SICM y generar aviso SAP IW21 prioritario.':'Generar aviso SAP IW21 y dar seguimiento.'}`,'PEO-003 7.3.6');
+  if(t.last&&t.last.r.fw_leido&&t.fw&&String(t.last.r.fw_leido).trim()!==String(t.fw).trim())add(1,`Firmware leído (${t.last.r.fw_leido}) difiere del censo (${t.fw}): puede indicar una actualización no registrada. Documentar y notificar (MOC).`,'PEO-003 7.7.2');
+  if(!t.arch.some(a=>a.cat==='ajustes'))add(0,'Sin respaldo de ajustes en el repositorio técnico: cargar el archivo de configuración descargado en la inspección Tipo B.','PEO-003 7.4 / 7.9.5');
+  R.sort((a,b)=>b.p-a.p);return R}
+
+/* =====================================================================
+   SICM-RELEVADORES · BASE LOCAL, REPOSITORIO TÉCNICO (archivos en IndexedDB), IMPORTACIONES, DEMOSTRACIÓN Y EXPORTACIONES
+   ===================================================================== */
+const emptyDB=()=>({schema:'sicm-relevadores/v1',rel:[],insp:[],arch:[],hall:{},bitacora:[]});
+let DB=emptyDB(),saveT=0;
+function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),200)}
+function saveCfg(){Store.put('kv','cfg',CFG).catch(()=>{})}
+const log=(t)=>{DB.bitacora.unshift({ts:Date.now(),t});DB.bitacora=DB.bitacora.slice(0,120)};
+const uid=p=>p+hash(String(Math.random())+Date.now())+Math.floor(Math.random()*1e4).toString(36);
+
+/* ---------- censo ---------- */
+const REL_COLS=['tag','sector','subestacion','tablero','interruptor','kv','funcion','marca','modelo','serie','firmware','vcd','ip','observaciones'];
+function normRel(o){
+  const tag=nTag(o.tag);if(!tag)return null;const mk=String(o.marca||'').trim(),mkey=Object.keys(MARCAS).find(k=>k===mk.toUpperCase()||stripAcc(MARCAS[k]).includes(stripAcc(mk))||(/^ge|multilin|vernova/i.test(mk)&&k==='GE')||(/abb|relion/i.test(mk)&&k==='ABB')||(/siemens|reyrolle/i.test(mk)&&k==='SIE')||(/schneider|micom|easergy/i.test(mk)&&k==='SCH'));
+  return{id:tag,tag,sector:num(o.sector),sub:o.subestacion||o.sub||'',tablero:o.tablero||'',interruptor:o.interruptor||'',kv:num(o.kv),funcion:o.funcion||'',marca:mkey||'GE',modelo:o.modelo||'',serie:o.serie||'',fw:o.firmware||o.fw||'',vcd:num(o.vcd),ip:o.ip||'',nota:o.observaciones||o.nota||'',demo:!!o.demo}}
+function saveRel(o){const r=normRel(o);if(!r)return null;const i=DB.rel.findIndex(x=>x.id===r.id);if(i>=0)DB.rel[i]={...DB.rel[i],...r};else DB.rel.push(r);rebuild();save();return r}
+function delRel(id){DB.rel=DB.rel.filter(r=>r.id!==id);DB.insp=DB.insp.filter(i=>i.relId!==id);const gone=DB.arch.filter(a=>a.relId===id);DB.arch=DB.arch.filter(a=>a.relId!==id);gone.forEach(a=>Store.del('imgs','rf_'+a.id).catch(()=>{}));rebuild();save()}
+function importRelCsv(txt){const R=csvRows(txt,5000);if(!R||R.length<2){toast('CSV sin filas');return 0}const hd=R[0].map(h=>stripAcc(h).replace(/[^a-z0-9]+/g,'_'));let n=0;
+  const al={tag:['tag','relevador','equipo'],sector:['sector'],subestacion:['subestacion','sub'],tablero:['tablero','gabinete','tablero_gabinete'],interruptor:['interruptor','interruptor_asociado'],kv:['kv','tension','nivel_de_tension'],funcion:['funcion','funcion_de_proteccion','ieee_c37_2'],marca:['marca'],modelo:['modelo'],serie:['serie','no_serie','numero_de_serie'],firmware:['firmware','fw','version_de_firmware'],vcd:['vcd','alimentacion_cd','tension_cd'],ip:['ip','direccion_ip'],observaciones:['observaciones','obs','notas']};
+  for(const r of R.slice(1)){const o={};for(const [k,a] of Object.entries(al)){const i=hd.findIndex(h=>a.includes(h));if(i>=0)o[k]=(r[i]||'').trim()}const x=normRel(o);if(x){const i=DB.rel.findIndex(y=>y.id===x.id);if(i>=0)DB.rel[i]={...DB.rel[i],...x};else DB.rel.push(x);n++}}
+  rebuild();save();log(`Censo importado: ${n} relevador(es)`);return n}
+const relTemplate=()=>csvOut('plantilla-censo-relevadores.csv',[REL_COLS,['REL-SE15-01','2','SE-15','Tablero 13.8 kV, celda 3','52-15-03 (13.8 kV)','13.8','50/51','GE','850','','1.80','125','10.10.15.21','Ejemplo: borrar esta fila']]);
+
+/* ---------- inspecciones ---------- */
+function saveInsp(o){
+  const r={id:o.id||uid('i'),relId:o.relId,tipo:o.tipo,fmt:o.fmt,ts:o.ts,ot:o.ot||'',ejecuto:o.ejecuto||'',reviso:o.reviso||'',items:o.items||{},med:o.med||{},iw21:o.iw21||'',notificado:o.notificado||'',hora:o.hora||'',fw_leido:o.fw_leido||'',ip_leida:o.ip_leida||'',disparo:!!o.disparo,obs:o.obs||'',demo:!!o.demo};
+  if(!r.relId||!fmtOf(r.fmt)||!Number.isFinite(r.ts))return null;
+  const i=DB.insp.findIndex(x=>x.id===r.id);if(i>=0)DB.insp[i]=r;else DB.insp.push(r);
+  if(r.fw_leido){const rel=DB.rel.find(x=>x.id===r.relId);if(rel&&!rel.fw)rel.fw=r.fw_leido}
+  rebuild();save();log(`Inspección ${r.tipo} · ${r.relId} · ${fDate(r.ts)}`);return r}
+function delInsp(id){DB.insp=DB.insp.filter(i=>i.id!==id);rebuild();save()}
+function setHall(key,patch){DB.hall[key]={...(DB.hall[key]||{}),...patch};rebuild();save()}
+
+/* ---------- repositorio técnico: archivos ---------- */
+const FILE_LIMIT=40*1048576;
+async function putFile(buf,meta){
+  const a={id:uid('f'),relId:meta.relId||'',cat:meta.cat,nombre:meta.nombre,ext:meta.ext,size:buf.byteLength,ts:meta.ts||Date.now(),subido:Date.now(),h:hash(meta.nombre+':'+buf.byteLength+':'+Array.from(new Uint8Array(buf.slice(0,2048))).join(',')),nota:meta.nota||'',moc:meta.moc||'',fw:meta.fw||'',inspId:meta.inspId||'',demo:!!meta.demo};
+  if(DB.arch.some(x=>x.h===a.h&&x.relId===a.relId))return{dup:true,a};
+  await Store.put('imgs','rf_'+a.id,buf);DB.arch.push(a);return{a}}
+async function addFiles(files,opt){
+  const rep={n:0,dup:0,big:0,sinRel:0,err:0};if(Store.mode()!=='IndexedDB'){toast('El almacén de archivos requiere IndexedDB (no disponible en este navegador/modo)');return rep}
+  for(const f of files){
+    try{if(f.size>FILE_LIMIT){rep.big++;continue}const buf=await f.arrayBuffer(),ni=nameInfo(f.name),relId=opt.relId||(DB.rel.find(r=>r.id===ni.tag)||{}).id||'';
+      if(!relId)rep.sinRel++;
+      const cat=opt.cat&&opt.cat!=='auto'?opt.cat:catOf(ni.ext,f.name);
+      const r=await putFile(buf,{relId,cat,nombre:f.name,ext:ni.ext,ts:opt.ts||ni.fecha||f.lastModified||Date.now(),nota:opt.nota,moc:opt.moc,fw:opt.fw,inspId:opt.inspId});
+      if(r.dup)rep.dup++;else rep.n++}catch(e){rep.err++}}
+  rebuild();save();log(`Repositorio: ${rep.n} archivo(s) cargado(s)`);return rep}
+async function fileBuf(id){return Store.get('imgs','rf_'+id)}
+async function delFile(id){DB.arch=DB.arch.filter(a=>a.id!==id);await Store.del('imgs','rf_'+id).catch(()=>{});rebuild();save()}
+async function downloadFile(a){const b=await fileBuf(a.id);if(!b){toast('Archivo no disponible en el almacén');return}const u=document.createElement('a');u.href=URL.createObjectURL(new Blob([b]));u.download=a.nombre;document.body.appendChild(u);u.click();u.remove()}
+
+/* ---------- exportaciones ---------- */
+const dl=(name,txt,mime)=>download(name,txt,mime||'application/json');
+const stamp=()=>new Date().toISOString().slice(0,10);
+const csvq=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+const csvOut=(name,rows)=>download(name,'﻿'+rows.map(r=>r.map(csvq).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+function exportDB(){dl(`sicm-relevadores-base-${stamp()}.json`,JSON.stringify({...DB,cfg:CFG,generado:new Date().toISOString(),nota:'Los archivos del repositorio técnico (binarios) no se incluyen: solo sus metadatos.'}))}
+function exportResumen(){
+  const rows=[['subestacion','tag','marca','modelo','serie','firmware','kv','funcion','ult_tipoA','prox_tipoA','estado_A','ult_tipoB','prox_tipoB','estado_B','ult_dictamen','hallazgos_abiertos','archivos_repositorio']];
+  for(const t of IX.list)rows.push([t.sub,t.tag,MARCAS[t.marca],t.modelo,t.serie,t.fw,t.kv,t.funcion,t.lastA?toInput(t.lastA.ts).slice(0,10):'',t.pA.due?toInput(t.pA.due).slice(0,10):'',PST[t.pA.s],t.lastB?toInput(t.lastB.ts).slice(0,10):'',t.pB.due?toInput(t.pB.due).slice(0,10):'',PST[t.pB.s],STN[t.cond],IX.hall.filter(h=>h.rel===t&&h.estado!=='cerrado').length,t.arch.length]);
+  csvOut(`relevadores-resumen-${stamp()}.csv`,rows)}
+function exportHall(){
+  const rows=[['tag','subestacion','tipo','fecha','folio_ot','n','hallazgo','criterio','valor_leido','observaciones','critico','aviso_sap','estado','nota','cierre']];
+  for(const h of IX.hall)rows.push([h.rel.tag,h.rel.sub,h.m.r.tipo,toInput(h.m.ts).slice(0,10),h.m.r.ot,h.item.n,h.item.txt,h.item.crit,h.item.val,h.item.obs,h.item.critico?'sí':'',h.aviso,h.estado,h.nota,h.cierre?toInput(h.cierre).slice(0,10):'']);
+  csvOut(`relevadores-hallazgos-${stamp()}.csv`,rows)}
+function exportInsp(){
+  const rows=[['tag','tipo','formato','fecha','ot','ejecuto','reviso','dictamen','ok','no_ok','na','pendientes','cumplimiento_pct','iw21','fw_leido']];
+  for(const m of IX.insp.sort((a,b)=>b.ts-a.ts))rows.push([m.rel.tag,m.r.tipo,m.r.fmt,toInput(m.ts).slice(0,10),m.r.ot,m.r.ejecuto,m.r.reviso,STN[m.e.est],m.e.ok,m.e.no.length,m.e.na,m.e.pend,m.e.pct!=null?m.e.pct.toFixed(0):'',m.r.iw21,m.r.fw_leido]);
+  csvOut(`relevadores-inspecciones-${stamp()}.csv`,rows)}
+function exportArch(){
+  const rows=[['tag','categoria','archivo','fecha','tamano','firmware','moc','nota','inspeccion']];
+  for(const a of IX.arch)rows.push([a.relId,CATS[a.cat],a.nombre,a.ts?toInput(a.ts).slice(0,10):'',a.size,a.fw,a.moc,a.nota,a.inspId]);csvOut(`relevadores-repositorio-${stamp()}.csv`,rows)}
+
+/* ---------- datos de demostración (marcados demo:true; se pueden quitar) ---------- */
+function demoComtrade(){ // falla bifásica sintética: 3 corrientes + 3 tensiones, 60 Hz, 1920 Hz de muestreo
+  const sr=1920,N=sr*0.5,cfg=`SE-DEMO,REL-DEMO-01,2013\n8,6A,2D\n`+
+    ['IA','IB','IC'].map((c,i)=>`${i+1},${c},${'ABC'[i]},,A,0.1,0,0,-32767,32767,600,5,S`).join('\n')+'\n'+['VA','VB','VC'].map((c,i)=>`${i+4},${c},${'ABC'[i]},,V,0.01,0,0,-32767,32767,13800,120,S`).join('\n')+'\n'+
+    `7,PICKUP 50,,,0\n8,TRIP,,,0\n60\n1\n${sr},${N}\n16/10/2026,10:00:00.000000\n16/10/2026,10:00:00.200000\nBINARY\n1\n`;
+  const rec=4+4+2*6+2,buf=new ArrayBuffer(rec*N),dv=new DataView(buf);
+  for(let i=0;i<N;i++){const t=i/sr,f=t>=0.2&&t<0.283,o=i*rec;dv.setUint32(o,i+1,true);dv.setUint32(o+4,Math.round(t*1e6),true);
+    const w=2*Math.PI*60*t,ia=(f?12*Math.sqrt(2)*Math.sin(w-0.2)*1.0:2*Math.sqrt(2)*Math.sin(w))/0.1,ib=(f?-12*Math.sqrt(2)*Math.sin(w-0.2):2*Math.sqrt(2)*Math.sin(w-2.094))/0.1,ic=(2*Math.sqrt(2)*Math.sin(w+2.094))/0.1;
+    const va=(f?60:115)*Math.sqrt(2)*Math.sin(w)/0.01,vb=(f?60:115)*Math.sqrt(2)*Math.sin(w-2.094)/0.01,vc=115*Math.sqrt(2)*Math.sin(w+2.094)/0.01;
+    [ia,ib,ic,va,vb,vc].forEach((x,j)=>dv.setInt16(o+8+2*j,Math.max(-32767,Math.min(32767,Math.round(x))),true));
+    dv.setUint16(o+8+12,(t>=0.2?1:0)|(t>=0.226?2:0),true)}
+  return{cfg,dat:buf}}
+async function loadDemo(){
+  const mk=(o)=>saveRel({...o,demo:true}),DAY=864e5,now=Date.now();
+  mk({tag:'REL-DEMO-01',sector:2,subestacion:'SE-15',tablero:'Tablero 13.8 kV celda 3',interruptor:'52-15-03',kv:13.8,funcion:'50/51',marca:'GE',modelo:'850',serie:'GE850-0001',firmware:'1.80',vcd:125,ip:'10.10.15.21'});
+  mk({tag:'REL-DEMO-02',sector:2,subestacion:'SE-15',tablero:'Tablero 13.8 kV celda 5',interruptor:'52-15-05',kv:13.8,funcion:'87M',marca:'ABB',modelo:'REM615',serie:'ABB-0002',firmware:'5.0',vcd:110,ip:'10.10.15.22'});
+  mk({tag:'REL-DEMO-03',sector:8,subestacion:'SEP-01',tablero:'Patio 115 kV',interruptor:'52-115-01',kv:115,funcion:'87T',marca:'SIE',modelo:'7SR5',serie:'SIE-0003',firmware:'2.40',vcd:125});
+  mk({tag:'REL-DEMO-04',sector:8,subestacion:'SEP-01',tablero:'Tablero 34.5 kV',interruptor:'52-34-02',kv:34.5,funcion:'50/51',marca:'SCH',modelo:'P143',serie:'SCH-0004',firmware:'B1.00',vcd:110});
+  const fill=(fid,over)=>{const f=fmtOf(fid),it={};for(const x of f.items)it[x.n]={v:'OK',val:'',obs:''};for(const [n,v] of Object.entries(over||{}))it[n]={...it[n],...v};return it};
+  const ins=(relId,tipo,marca,dias,over,extra)=>saveInsp({relId,tipo,fmt:fmtId(tipo,marca),ts:now-dias*DAY,ot:'OT-'+(100000+Math.floor(dias)),ejecuto:'Ing. de Sector (demo)',reviso:'Ing. Especialista SICM (demo)',items:fill(fmtId(tipo,marca),over),demo:true,...extra});
+  ins('REL-DEMO-01','A','GE',170,{},{fw_leido:'1.80'});ins('REL-DEMO-01','B','GE',100,{},{fw_leido:'1.80',med:{reloj:0.4}});ins('REL-DEMO-01','A','GE',15,{35:{v:'NO',val:'Alarma TCS activa',obs:'Posible bobina de disparo abierta'}},{fw_leido:'1.80',iw21:'IW21-DEMO-1',med:{gab:41,vcd_nom:125,vcd_med:126,i_rel:{a:598,b:601,c:600},i_pat:{a:600,b:600,c:600},f:60.02}});
+  ins('REL-DEMO-02','A','ABB',200,{},{fw_leido:'5.0'});ins('REL-DEMO-02','B','ABB',200,{},{fw_leido:'5.0'});
+  ins('REL-DEMO-03','A','SIE',20,{3:{v:'NO',val:'58 °C',obs:'Gabinete caliente'}},{fw_leido:'2.40'});ins('REL-DEMO-03','B','SIE',20,{},{fw_leido:'2.41'});
+  const c=demoComtrade();await putFile(new TextEncoder().encode(c.cfg).buffer,{relId:'REL-DEMO-01',cat:'oscilo',nombre:'REL-DEMO-01_GE_850_20261016.cfg',ext:'cfg',ts:Date.UTC(2026,9,16,16,0),nota:'Oscilografía sintética de demostración (falla bifásica)',demo:true});
+  await putFile(c.dat,{relId:'REL-DEMO-01',cat:'oscilo',nombre:'REL-DEMO-01_GE_850_20261016.dat',ext:'dat',ts:Date.UTC(2026,9,16,16,0),demo:true});
+  const s1='[Protection]\nPhase IOC1 Pickup = 4.00\nPhase IOC1 Delay = 0.00\nPhase TOC1 Pickup = 1.20\nPhase TOC1 Curve = IEEE Very Inverse\nPhase TOC1 TD = 0.50\nBreaker Coil Monitoring = Enabled\n',s2=s1.replace('Pickup = 1.20','Pickup = 1.10').replace('TD = 0.50','TD = 0.80')+'Ground IOC1 Pickup = 0.50\n';
+  await putFile(new TextEncoder().encode(s1).buffer,{relId:'REL-DEMO-01',cat:'ajustes',nombre:'REL-DEMO-01_GE_850_20260706.txt',ext:'txt',ts:Date.UTC(2026,6,6,12),fw:'1.80',moc:'MOC-DEMO-001',demo:true});
+  await putFile(new TextEncoder().encode(s2).buffer,{relId:'REL-DEMO-01',cat:'ajustes',nombre:'REL-DEMO-01_GE_850_20261016.txt',ext:'txt',ts:Date.UTC(2026,9,16,12),fw:'1.80',moc:'MOC-DEMO-002',nota:'Ajuste modificado (demo)',demo:true});
+  const ev='fecha,hora,evento\n2026-10-16,09:58:11.120,Phase IOC1 PKP\n2026-10-16,09:58:11.170,Phase IOC1 OP\n2026-10-16,09:58:11.215,TRIP Breaker open\n2026-10-16,10:12:40.001,Link Error Primary\n2026-10-16,10:12:44.310,Link restored\n2026-10-15,08:00:00.000,Login Observer\n2026-10-12,07:11:00.000,Alarm Trip Circuit Supervision\n';
+  await putFile(new TextEncoder().encode(ev).buffer,{relId:'REL-DEMO-01',cat:'eventos',nombre:'REL-DEMO-01_GE_850_20261016_eventos.csv',ext:'csv',ts:Date.UTC(2026,9,16,12),demo:true});
+  log('Datos de demostración cargados');rebuild();save()}
+async function quitDemo(){for(const a of DB.arch.filter(a=>a.demo))await Store.del('imgs','rf_'+a.id).catch(()=>{});DB.arch=DB.arch.filter(a=>!a.demo);DB.insp=DB.insp.filter(i=>!i.demo);DB.rel=DB.rel.filter(r=>!r.demo);rebuild();save()}
+
+/* =====================================================================
+   SICM-RELEVADORES · VISTAS
+   ===================================================================== */
+const S={view:'pan',sel:null,f:{sub:'',est:''},cap:{id:null,tipo:'A',items:{},med:{}},rp:{rel:'',cat:'',q:'',sel:null},fm:'A-GE',hf:'abierto',tr:'gab'};
+const CH={};
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const chip=(s,txt)=>`<span class="chip c${s==null?3:s}">${esc(txt!=null?txt:STN[s==null?3:s])}</span>`;
+const pchip=(s,t)=>`<span class="chip c${s}">${esc(t||PST[s])}</span>`;
+const prioChip=p=>`<span class="chip c${[0,1,2,2][p]}">${['Rutina','Programar','Próximo paro','Inmediata'][p]}</span>`;
+const fF=(v,d=1)=>v==null||!Number.isFinite(v)?'—':Number(v).toLocaleString('es-MX',{minimumFractionDigits:d,maximumFractionDigits:d});
+const relName=id=>{const t=IX.rel.get(id);return t?t.tag:(id||'(sin asignar)')};
+const subs=()=>[...new Set(IX.list.map(t=>t.sub).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es',{numeric:true}));
+const relOpts=(sel,withAll)=>{sel.innerHTML=(withAll?'<option value="">Todos</option>':'')+IX.list.map(t=>`<option value="${esc(t.id)}">${esc(t.tag)} · ${esc(t.sub||'')} · ${esc(MARCAS[t.marca])} ${esc(t.modelo)}</option>`).join('')};
+function refreshAll(){renderStatus();switchView(S.view,true)}
+function renderStatus(){$('#statusbar').innerHTML=`<span>${IX.list.length} relevadores</span><span>${IX.insp.length} inspecciones (${IX.insp.filter(m=>m.r.tipo==='A').length} Tipo A · ${IX.insp.filter(m=>m.r.tipo==='B').length} Tipo B)</span><span>${IX.arch.length} archivos en el repositorio</span><span>${openHall().length} hallazgos abiertos</span><span>Almacén: ${Store.mode()}</span>`}
+function switchView(v,keep){
+  S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
+  requestAnimationFrame(()=>{if(v==='pan')renderPan();if(v==='rel')renderRel();if(v==='cap')renderCap();if(v==='rep')renderRepo();if(v==='hall')renderHall();if(v==='fmt')renderFmt();if(v==='data')renderData();if(!keep)window.scrollTo(0,0)})}
+const open=(tag,view)=>{S.sel=tag;switchView(view||'rel')};
+
+/* ---------- 1 · Panorama ---------- */
+function renderPan(){
+  const L=IX.list.filter(t=>(!S.f.sub||t.sub===S.f.sub)&&(S.f.est===''||(S.f.est==='p'?t.progWorst>=1:String(t.cond)===S.f.est)));
+  const all=IX.list,oh=openHall(),crit=oh.filter(h=>h.item.critico);
+  $('#kpis').innerHTML=[['gold',all.length,'Relevadores en el censo'],['ok',all.filter(t=>t.pA.s===0).length,'Tipo A al corriente'],['ok',all.filter(t=>t.pB.s===0).length,'Tipo B al corriente'],['warn',all.filter(t=>t.pA.s===1||t.pB.s===1).length,'Por vencer (≤ '+CFG.alerta+' d)'],['crit',all.filter(t=>t.pA.s===2||t.pB.s===2).length,'Con inspección vencida'],['oos',all.filter(t=>t.pA.s===3||t.pB.s===3).length,'Sin primer registro'],['warn',oh.length,'Hallazgos abiertos'],['crit',crit.length,'Hallazgos CRÍTICOS abiertos'],['gold',IX.arch.length,'Archivos técnicos']].map(([c,v,l])=>`<div class="kpi ${c}"><b>${v}</b><span>${l}</span></div>`).join('');
+  opts($('#fSub'),[['','Todas'],...subs().map(s=>[s,s])],S.f.sub);opts($('#fEst'),[['','Todos'],['p','Programa con atraso o por vencer'],['0','Sin hallazgos'],['1','Con hallazgos'],['2','Hallazgo CRÍTICO'],['3','Sin evaluar']],S.f.est);
+  $('#fCount').textContent=`${L.length} de ${all.length} relevadores · Tipo A cada ${CFG.int.A} meses (HMI) · Tipo B cada ${CFG.int.B} meses (software, eventos y conexión)`;
+  const pc=(p,l)=>`<td>${l?fDate(l.ts):'<span class="muted">—</span>'}</td><td>${p.due?fDate(p.due):'—'}</td><td>${pchip(p.s)}${p.dias!=null?` <span class="small muted">${p.dias<0?'hace '+(-p.dias):'en '+p.dias} d</span>`:''}</td>`;
+  $('#tblPan').innerHTML='<tr><th>Subestación</th><th>TAG</th><th>Equipo</th><th class="n">kV</th><th>Función</th><th colspan="3">Tipo A · visual / HMI</th><th colspan="3">Tipo B · software / eventos</th><th>Último dictamen</th><th class="n">Hallazgos abiertos</th><th class="n">Archivos</th></tr>'+(L.map(t=>{const ho=IX.hall.filter(h=>h.rel===t&&h.estado!=='cerrado');
+    return`<tr class="click hrow" data-tag="${esc(t.id)}"><td>${esc(t.sub||'—')}</td><td><b>${esc(t.tag)}</b></td><td class="small">${esc(MARCAS[t.marca])} ${esc(t.modelo)}</td><td class="n">${fF(t.kv,1)}</td><td>${esc(t.funcion||'—')}</td>${pc(t.pA,t.lastA)}${pc(t.pB,t.lastB)}<td>${chip(t.cond)}</td><td class="n">${ho.length?`<b class="${ho.some(h=>h.item.critico)?'bad':''}">${ho.length}</b>`:'0'}</td><td class="n">${t.arch.length}</td></tr>`}).join('')||'<tr><td colspan="14" class="muted">Sin relevadores en el censo. Agrégalos en la pestaña 2, importa el censo (CSV) o carga los datos de demostración en la pestaña 7.</td></tr>');
+  $$('#tblPan tr.hrow').forEach(tr=>tr.addEventListener('click',()=>open(tr.dataset.tag)));
+  const ag=[];for(const t of all){for(const [k,p] of [['A',t.pA],['B',t.pB]])ag.push({t,k,p})}ag.sort((a,b)=>(a.p.due??-1e15)-(b.p.due??-1e15)||0);
+  $('#tblAg').innerHTML='<tr><th>Relevador</th><th>Inspección</th><th>Vence</th><th>Estado</th></tr>'+(ag.filter(x=>x.p.s!==0).slice(0,25).map(x=>`<tr class="click hrow" data-tag="${esc(x.t.id)}"><td><b>${esc(x.t.tag)}</b> <span class="small muted">${esc(x.t.sub||'')}</span></td><td>${TIPOS[x.k]}</td><td>${x.p.due?fDate(x.p.due):'—'}</td><td>${pchip(x.p.s)}${x.p.dias!=null?` <span class="small muted">${x.p.dias<0?'hace '+(-x.p.dias):'en '+x.p.dias} d</span>`:''}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">Todas las inspecciones están al corriente.</td></tr>');
+  $$('#tblAg tr.hrow').forEach(tr=>tr.addEventListener('click',()=>open(tr.dataset.tag,'cap')));
+  $('#alCrit').innerHTML=crit.length?crit.slice(0,15).map(h=>`<li class="al" data-tag="${esc(h.rel.id)}"><span class="t">${esc(h.rel.tag)}</span> ${esc(h.item.txt)} <span class="small muted">· ${fDate(h.m.ts)}${h.aviso?' · '+esc(h.aviso):''}</span></li>`).join(''):'<li class="muted">Sin hallazgos críticos abiertos.</li>';
+  $$('#alCrit li.al').forEach(li=>li.addEventListener('click',()=>open(li.dataset.tag)))}
+
+/* ---------- 2 · Relevador (expediente y censo) ---------- */
+const FLD=[['tag','TAG (nomenclatura SAP PM)'],['sector','Sector'],['subestacion','Subestación'],['tablero','Tablero / gabinete'],['interruptor','Interruptor asociado (TAG y kV)'],['kv','Nivel de tensión protegido (kV)'],['funcion','Función IEEE C37.2'],['marca','Marca'],['modelo','Modelo'],['serie','N.º de serie'],['firmware','Firmware'],['vcd','Alimentación auxiliar (VCD nominal)'],['ip','Dirección IP'],['observaciones','Observaciones']];
+function relDialog(t){
+  const d=$('#dlgRel');$('#dlgRelT').textContent=t?`Editar ${t.tag}`:'Nuevo relevador';
+  $('#dlgRelF').innerHTML=FLD.map(([k,l])=>{const v=t?({subestacion:t.sub,firmware:t.fw,observaciones:t.nota}[k]??t[k]):'';
+    if(k==='marca')return`<label>${l}<select id="rf_${k}">${Object.entries(MARCAS).map(([a,b])=>`<option value="${a}" ${t&&t.marca===a?'selected':''}>${b}</option>`).join('')}</select></label>`;
+    if(k==='funcion')return`<label>${l}<input id="rf_${k}" list="dlFunc" value="${esc(v??'')}"></label>`;
+    if(k==='vcd')return`<label>${l}<select id="rf_${k}"><option value="">—</option>${VCD_NOM.map(x=>`<option ${t&&t.vcd===x?'selected':''}>${x}</option>`).join('')}</select></label>`;
+    return`<label ${k==='observaciones'?'class="full"':''}>${l}<input id="rf_${k}" value="${esc(v??'')}" ${k==='tag'&&t?'readonly':''}></label>`}).join('');
+  $('#dlFunc').innerHTML=FUNC.map(f=>`<option value="${f[0]}">${esc(f[1])}</option>`).join('');d.dataset.edit=t?t.id:'';d.showModal()}
+function relDialogSave(){const o={};for(const [k] of FLD)o[k]=$('#rf_'+k).value;if(!o.tag.trim()){toast('Falta el TAG');return}const r=saveRel(o);if(r){S.sel=r.id;$('#dlgRel').close();refreshAll();toast('Relevador guardado')}}
+const MEDK=[['gab','Temperatura del gabinete (°C)'],['vcd','Alimentación auxiliar (VCD medido)'],['i','Corrientes · dif. máx. vs patrón (%)'],['v','Tensiones · dif. máx. vs patrón (%)'],['reloj','Desviación del reloj (s)']];
+function medVal(m,k){const r=m.r.med||{};if(k==='gab')return num(r.gab);if(k==='vcd')return num(r.vcd_med);if(k==='reloj')return num(r.reloj);const e=m.e.med&&m.e.med[k];return e?e.num:null}
+function renderRel(){
+  relOpts($('#relSel'));if(!S.sel||!IX.rel.has(S.sel))S.sel=IX.list.length?IX.list[0].id:null;$('#relSel').value=S.sel||'';
+  const t=IX.rel.get(S.sel),box=$('#relBody');if(!t){box.innerHTML='<div class="infobox">Sin relevadores. Usa «＋ Nuevo relevador», importa el censo (CSV) o carga la demostración en la pestaña 7.</div>';return}
+  const R=recsFor(t),ho=IX.hall.filter(h=>h.rel===t);
+  const kv=(a,b)=>`<tr><td class="muted">${a}</td><td>${b==null||b===''?'—':esc(b)}</td></tr>`;
+  const hist=[...t.A,...t.B].sort((a,b)=>b.ts-a.ts);
+  box.innerHTML=`<div class="kpis"><div class="kpi ${STC[t.cond]}"><b>${STN[t.cond]}</b><span>Último dictamen ${t.last?fDate(t.last.ts):''}</span></div><div class="kpi ${STC[t.pA.s]}"><b>${PST[t.pA.s]}</b><span>Tipo A · próx. ${t.pA.due?fDate(t.pA.due):'—'}</span></div><div class="kpi ${STC[t.pB.s]}"><b>${PST[t.pB.s]}</b><span>Tipo B · próx. ${t.pB.due?fDate(t.pB.due):'—'}</span></div><div class="kpi gold"><b>${t.arch.length}</b><span>Archivos técnicos</span></div></div>
+  <div class="grid2e"><div>
+   <div class="panel"><h2>Ficha del relevador</h2><table class="kv"><tbody>${kv('TAG',t.tag)}${kv('Subestación / tablero',[t.sub,t.tablero].filter(Boolean).join(' · '))}${kv('Sector',t.sector)}${kv('Interruptor asociado',t.interruptor)}${kv('Nivel de tensión',t.kv!=null?t.kv+' kV':null)}${kv('Función (IEEE C37.2)',t.funcion)}${kv('Equipo',MARCAS[t.marca]+' '+t.modelo)}${kv('N.º de serie',t.serie)}${kv('Firmware (censo)',t.fw)}${kv('Alimentación auxiliar',t.vcd?t.vcd+' VCD':null)}${kv('Dirección IP',t.ip)}${kv('Observaciones',t.nota)}</tbody></table>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="btnRelEdit">✎ Editar ficha</button><button class="btn sm" id="btnRelInsp">＋ Registrar inspección</button><button class="btn sm" id="btnRelRepo">🗂 Archivos técnicos</button><button class="btn sm" id="btnRelDel">🗑 Eliminar</button></div></div>
+   <div class="panel"><h2>Acciones recomendadas</h2>${R.length?`<table><tr><th>Prioridad</th><th>Acción</th><th>Referencia</th></tr>${R.map(x=>`<tr><td>${prioChip(x.p)}</td><td class="small">${esc(x.x)}</td><td class="small">${esc(x.ref)}</td></tr>`).join('')}</table>`:'<p class="muted">Sin acciones pendientes.</p>'}</div>
+   <div class="panel"><h2>Tendencia de mediciones (Tipo A / B)</h2><div class="bar"><label>Parámetro<select id="trSel">${MEDK.map(([k,l])=>`<option value="${k}" ${S.tr===k?'selected':''}>${l}</option>`).join('')}</select></label></div><div class="chartbox short"><canvas id="cTr"></canvas><div class="tip"></div></div></div>
+  </div><div>
+   <div class="panel"><h2>Historial de inspecciones (${hist.length})</h2>${hist.length?`<div class="tw" style="max-height:340px"><table><tr><th>Fecha</th><th>Tipo</th><th>OT</th><th>Dictamen</th><th class="n">OK / NO / N/A</th><th></th></tr>${hist.map(m=>`<tr><td>${fDate(m.ts)}</td><td>${m.r.tipo}</td><td class="small">${esc(m.r.ot||'—')}</td><td>${chip(m.e.est)}</td><td class="n">${m.e.ok} / ${m.e.no.length} / ${m.e.na}${m.e.pend?` <span class="muted">(+${m.e.pend} sin resp.)</span>`:''}</td><td style="white-space:nowrap"><button class="btn sm" data-edit="${m.r.id}" title="Ver / editar">✎</button> <button class="btn sm" data-print="${m.r.id}" title="Formato imprimible">🖶</button> <button class="btn sm" data-delin="${m.r.id}" title="Eliminar">🗑</button></td></tr>`).join('')}</table></div>`:'<p class="muted">Sin inspecciones registradas.</p>'}</div>
+   <div class="panel"><h2>Hallazgos (${ho.filter(h=>h.estado!=='cerrado').length} abiertos de ${ho.length})</h2>${ho.length?`<table><tr><th>Fecha</th><th>Hallazgo</th><th>Estado</th></tr>${ho.map(h=>`<tr><td>${fDate(h.m.ts)}</td><td class="small">${h.item.critico?'<b class="bad">CRÍTICO</b> ':''}${esc(h.item.txt)}${h.item.val?` <span class="muted">· ${esc(h.item.val)}</span>`:''}</td><td>${chip(h.estado==='cerrado'?0:h.item.critico?2:1,h.estado==='cerrado'?'Cerrado':'Abierto')}</td></tr>`).join('')}</table>`:'<p class="muted">Sin hallazgos.</p>'}</div>
+   <div class="panel"><h2>Archivos técnicos (${t.arch.length})</h2>${t.arch.length?`<table>${[...t.arch].sort((a,b)=>b.ts-a.ts).slice(0,8).map(a=>`<tr class="click hrow" data-file="${a.id}"><td>${esc(CATS[a.cat])}</td><td class="small">${esc(a.nombre)}</td><td>${a.ts?fDate(a.ts):'—'}</td></tr>`).join('')}</table>`:'<p class="muted">Sin archivos. Se cargan en la pestaña 4 (ajustes, oscilografías, eventos y logs).</p>'}</div>
+  </div></div>`;
+  $('#btnRelEdit').onclick=()=>relDialog(t);$('#btnRelInsp').onclick=()=>{S.cap={id:null,tipo:'A',items:{},med:{}};switchView('cap')};$('#btnRelRepo').onclick=()=>{S.rp.rel=t.id;switchView('rep')};
+  $('#btnRelDel').onclick=()=>{if(confirm(`¿Eliminar ${t.tag} con sus inspecciones y archivos?`)){delRel(t.id);S.sel=null;refreshAll()}};
+  $$('#relBody [data-edit]').forEach(b=>b.onclick=()=>{const m=IX.insp.find(x=>x.r.id===b.dataset.edit);S.cap={id:m.r.id,tipo:m.r.tipo,items:structuredClone(m.r.items),med:structuredClone(m.r.med||{}),f:m.r};switchView('cap')});
+  $$('#relBody [data-print]').forEach(b=>b.onclick=()=>{const m=IX.insp.find(x=>x.r.id===b.dataset.print);dl(`${t.tag}_${m.r.fmt}_${toInput(m.ts).slice(0,10)}.html`,formatoHtml(m.r.fmt,m.r,t),'text/html;charset=utf-8')});
+  $$('#relBody [data-delin]').forEach(b=>b.onclick=()=>{if(confirm('¿Eliminar esta inspección?')){delInsp(b.dataset.delin);refreshAll()}});
+  $$('#relBody tr[data-file]').forEach(tr=>tr.onclick=()=>{S.rp={rel:t.id,cat:'',q:'',sel:tr.dataset.file};switchView('rep')});
+  $('#trSel').onchange=e=>{S.tr=e.target.value;renderRel()};
+  const pts=hist.slice().reverse().map(m=>{const v=medVal(m,S.tr);return v==null?null:[m.ts,v,{real:true}]}).filter(Boolean);
+  const T=CFG.t,lim={gab:[T.gab],i:[T.i],v:[T.v],reloj:[T.reloj]}[S.tr];
+  CH.T=new Chart($('#cTr'));CH.T.setData({xType:'time',xFmt:fDate,yFmt:v=>f1(v,2),y2Fmt:v=>f1(v,2),yLabel:'',hInclude:true,series:[{name:MEDK.find(x=>x[0]===S.tr)[1],color:cssv('--dorado'),width:2.4,pts}],hlines:(lim||[]).map(y=>({y,color:cssv('--crit'),label:'Límite'})),noData:pts.length?null:'Sin mediciones registradas de este parámetro'},true)}
+
+/* ---------- 3 · Captura de inspección ---------- */
+function curFormat(){const t=IX.rel.get(S.sel);return t?fmtOf(fmtId(S.cap.tipo,t.marca)):null}
+function renderCap(){
+  relOpts($('#cpRel'));if(!S.sel||!IX.rel.has(S.sel))S.sel=IX.list.length?IX.list[0].id:null;$('#cpRel').value=S.sel||'';
+  const t=IX.rel.get(S.sel),box=$('#cpBody');if(!t){box.innerHTML='<div class="infobox">Primero registra al menos un relevador (pestaña 2).</div>';return}
+  const f=S.cap.f||{},c=S.cap;
+  $$('#cpTipo button').forEach(b=>b.classList.toggle('on',b.dataset.t===c.tipo));
+  $('#cpFecha').value=toInput(f.ts||Date.now());$('#cpOt').value=f.ot||'';$('#cpEj').value=f.ejecuto||'';$('#cpRev').value=f.reviso||'';$('#cpFw').value=f.fw_leido||'';$('#cpDisp').checked=!!f.disparo;
+  $('#cpIw').value=f.iw21||'';$('#cpNot').value=f.notificado||'';$('#cpHora').value=f.hora||'';$('#cpObs').value=f.obs||'';
+  const fm=curFormat();if(!fm){box.innerHTML='<div class="warnbox">No hay formato para esta marca/tipo.</div>';return}
+  $('#cpFmtInfo').innerHTML=`<b>Anexo ${fm.anexo}</b> · ${esc(fm.titulo)} · ${esc(fm.modelos)}${c.id?' · <span class="badge sim">editando inspección guardada</span>':''}`;
+  const secs=Object.entries(fm.secs);
+  box.innerHTML=`<div class="tw" style="max-height:none"><table class="chkl"><tr><th>N.º</th><th>Verificación / ruta de menú</th><th>Criterio de aceptación</th><th>Resultado</th><th>Valor leído</th><th>Observaciones</th></tr>${secs.map(([k,nm])=>`<tr class="sec"><td colspan="6">${k}. ${esc(nm)}</td></tr>`+fm.items.filter(i=>i.sec===k).map(i=>{const a=c.items[i.n]||{};
+    return`<tr data-n="${i.n}" class="${i.critico?'critrow':''} st-${a.v||''}"><td class="n">${i.n}</td><td>${esc(i.txt)}${i.critico?' <span class="chip c2" title="Su NO OK es hallazgo crítico (PEO-003 7.3.6)">⚠ crítico</span>':''}${i.validar?' <span class="badge sim">validar</span>':''}</td><td class="small">${esc(i.crit)}</td><td style="white-space:nowrap"><span class="seg3">${[['OK','OK'],['NO','NO OK'],['NA','N/A']].map(([v,l])=>`<button type="button" data-v="${v}" class="${a.v===v?'on '+v:''}">${l}</button>`).join('')}</span></td><td><input data-val="${i.n}" value="${esc(a.val||'')}" size="14"></td><td><input data-obs="${i.n}" value="${esc(a.obs||'')}" size="22"></td></tr>`}).join('')).join('')}</table></div>`;
+  renderMed();renderDict()}
+const MEDFLD=`<label>Temp. gabinete (°C)<input data-m="gab"></label><label>Alim. aux. nominal (VCD)<select data-m="vcd_nom"><option value="">—</option>${VCD_NOM.map(x=>`<option>${x}</option>`).join('')}</select></label><label>Alim. aux. medida (VCD)<input data-m="vcd_med"></label><label>Frecuencia (Hz)<input data-m="f"></label><label>Desv. reloj vs patrón (s)<input data-m="reloj"></label><label>Esquema con GOOSE<select data-m="goose"><option value="">No</option><option value="1">Sí (&lt; 1 ms)</option></select></label><label>Temp. ambiente (°C)<input data-m="amb"></label>`;
+function renderMed(){
+  const m=S.cap.med||{};$('#medFld').innerHTML=MEDFLD+['i','v'].map(k=>['a','b','c'].map(p=>`<label>${k==='i'?'I':'V'}${p} relevador<input data-mm="${k}_rel.${p}"></label><label>${k==='i'?'I':'V'}${p} patrón<input data-mm="${k}_pat.${p}"></label>`).join('')).join('');
+  $$('#medFld [data-m]').forEach(i=>{const v=m[i.dataset.m];i.value=v==null?'':v});$$('#medFld [data-mm]').forEach(i=>{const [a,b]=i.dataset.mm.split('.');const v=m[a]&&m[a][b];i.value=v==null?'':v});showMed()}
+function showMed(){const e=evalMed(S.cap.med||{});$('#medRes').innerHTML=Object.keys(e).length?Object.entries(e).map(([k,x])=>`<span class="chip c${x.s}" title="criterio ${esc(x.txt)}">${MEDK.find(a=>a[0]===k)?MEDK.find(a=>a[0]===k)[1].split(' (')[0]:{f:'Frecuencia',amb:'Ambiente'}[k]||k}: ${esc(x.val)} ${x.s===0?'✓':'✗ '+esc(x.txt)}</span>`).join(' '):'<span class="muted">Captura mediciones para evaluarlas contra el criterio del procedimiento (7.5).</span>'}
+function applyMed(){
+  const fm=curFormat(),e=evalMed(S.cap.med||{});let n=0;if(!fm)return;
+  for(const [k,x] of Object.entries(e)){const re=MEDMAP.find(a=>a[0]===k)[1],it=fm.items.find(i=>re.test(i.txt));if(!it)continue;
+    const prev=S.cap.items[it.n]||{};S.cap.items[it.n]={...prev,v:x.s===0?'OK':'NO',val:x.val,obs:prev.obs||(x.s===0?'':'Fuera de criterio: '+x.txt)};n++}
+  renderCap();toast(n?`${n} concepto(s) de la lista actualizados desde las mediciones`:'Ninguna medición coincide con conceptos de esta lista')}
+function renderDict(){
+  const fm=curFormat();if(!fm)return;const f={fmt:fm.id,items:S.cap.items,med:S.cap.med},e=evalInsp(f);
+  $('#cpDict').innerHTML=`${chip(e.est,e.est===3?'Sin respuestas':'Dictamen: '+STN[e.est])} <span class="small">OK ${e.ok} · NO OK ${e.no.length} · N/A ${e.na} · sin responder ${e.pend} de ${e.tot}${e.pct!=null?` · cumplimiento ${e.pct.toFixed(0)} %`:''}</span>${e.crit.length?`<div class="warnbox" style="margin:8px 0 0"><b>Hallazgo CRÍTICO.</b> Notificar de inmediato al Coordinador SICM y generar aviso SAP IW21 prioritario (PEO-003 7.3.6): ${e.crit.map(x=>esc(x.txt)).join(' · ')}</div>`:e.no.length?`<div class="infobox" style="margin:8px 0 0">Todo NO OK se notifica al Coordinador SICM y genera aviso SAP IW21 (7.3.6).</div>`:''}`}
+function readCapHead(){return{relId:S.sel,tipo:S.cap.tipo,fmt:curFormat().id,ts:parseTs($('#cpFecha').value),ot:$('#cpOt').value,ejecuto:$('#cpEj').value,reviso:$('#cpRev').value,fw_leido:$('#cpFw').value,disparo:$('#cpDisp').checked,iw21:$('#cpIw').value,notificado:$('#cpNot').value,hora:$('#cpHora').value,obs:$('#cpObs').value,items:S.cap.items,med:S.cap.med,id:S.cap.id||undefined,demo:S.cap.f&&S.cap.f.demo}}
+function capSave(){
+  const o=readCapHead();if(!Number.isFinite(o.ts)){toast('Falta la fecha');return}
+  if(!Object.values(o.items).some(a=>a&&a.v)){toast('Marca al menos un concepto');return}
+  const r=saveInsp(o);if(r){S.cap={id:null,tipo:S.cap.tipo,items:{},med:{}};toast('Inspección guardada');switchView('rel')}else toast('No se pudo guardar')}
+
+/* formato imprimible con la estructura de los anexos 9.1–9.8 (en blanco o llenado) */
+function formatoHtml(fid,r,t){
+  const f=fmtOf(fid),e=r?evalInsp(r):null,box=v=>v?'☒':'☐',secs=Object.entries(f.secs);
+  const cell=(i)=>{const a=r&&r.items[i.n]||{};return`<td class="c">${box(a.v==='OK')}</td><td class="c">${box(a.v==='NO')}</td><td class="c">${box(a.v==='NA')}</td><td>${esc([a.val,a.obs].filter(Boolean).join(' · '))}</td>`};
+  const h=(l,v)=>`<td><b>${l}</b> ${esc(v||'')}</td>`;
+  return`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Anexo ${f.anexo} · ${esc(t?t.tag:'')}</title><style>body{font:11px Arial,sans-serif;margin:18px;color:#000}table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:3px 5px;vertical-align:top}th{background:#eee}h1{font-size:14px;margin:6px 0}h2{font-size:12px;margin:10px 0 4px}.c{text-align:center;width:26px}.sec td{background:#ddd;font-weight:bold}.crit{color:#a00;font-weight:bold}.head td{width:50%}@media print{@page{size:landscape;margin:10mm}}</style></head><body>
+  <table><tr><td><b>PEMEX · Transformación Industrial</b><br>Subdirección de Producción de Petrolíferos · Refinería Olmeca<br>Superintendencia de Ingeniería de Confiabilidad del Mantenimiento</td><td><b>4128-11422-SICM-PEO-003</b> · Segunda edición · octubre 2026<br>Procedimiento de mantenimiento predictivo: inspección predictiva de relevadores de protección eléctrica</td></tr></table>
+  <h1>ANEXO ${f.anexo}: LISTA DE VERIFICACIÓN – ${esc(f.titulo)}</h1><div><b>Marca / modelos:</b> ${esc(f.modelos)}</div>
+  <table class="head"><tr>${h('TAG:',t&&t.tag)}${h('Subestación / tablero:',t&&[t.sub,t.tablero].filter(Boolean).join(' · '))}</tr><tr>${h('Modelo / No. serie:',t&&(t.modelo+' / '+t.serie))}${h('Firmware:',(r&&r.fw_leido)||(t&&t.fw))}</tr><tr>${h('OT SAP PM:',r&&r.ot)}${h('Fecha:',r&&toInput(r.ts).replace('T',' '))}</tr><tr>${h('Ejecutó:',r&&r.ejecuto)}${h('Revisó:',r&&r.reviso)}</tr></table>
+  <table style="margin-top:8px"><tr><th>No.</th><th>Verificación / ruta de menú</th><th>Criterio de aceptación</th><th>OK</th><th>NO OK</th><th>N/A</th><th>Valor leído / observaciones</th></tr>${secs.map(([k,nm])=>`<tr class="sec"><td colspan="7">${k}. ${esc(nm)}</td></tr>`+f.items.filter(i=>i.sec===k).map(i=>`<tr><td>${i.n}</td><td>${esc(i.txt)}${i.critico?' <span class="crit">(crítico)</span>':''}</td><td>${esc(i.crit)}</td>${cell(i)}</tr>`).join('')).join('')}</table>
+  <p><b>Dictamen:</b> ${box(e&&e.est===0)} Sin hallazgos &nbsp; ${box(e&&e.est===1)} Con hallazgos (aviso SAP IW21 No. ${esc((r&&r.iw21)||'__________')}) &nbsp; ${box(e&&e.est===2)} Hallazgo CRÍTICO (notificado a: ${esc((r&&r.notificado)||'______________')} hora: ${esc((r&&r.hora)||'______')})</p>
+  ${r&&r.obs?`<p><b>Observaciones generales:</b> ${esc(r.obs)}</p>`:''}<p style="margin-top:28px">Firma ejecutor: ______________________ &nbsp;&nbsp;&nbsp; Firma Ing. Especialista SICM: ______________________</p><p style="color:#666">Generado por SICM-Relevadores el ${new Date().toLocaleString('es-MX')} a partir del catálogo del procedimiento (anexo ${f.anexo}).</p></body></html>`}
+
+/* ---------- 4 · Repositorio técnico ---------- */
+const TEXTEXT=['txt','csv','log','set','urs','cid','icd','scd','xml','json','ini','hdr','inf','evt','pcmt','rdb','s1p','sdf','dcb','tsv','md','cfg'];
+function repoList(){const q=stripAcc(S.rp.q||'');return IX.arch.filter(a=>(!S.rp.rel||a.relId===S.rp.rel)&&(!S.rp.cat||a.cat===S.rp.cat)&&(!q||stripAcc([a.nombre,a.nota,a.moc,a.fw,a.relId].join(' ')).includes(q)))}
+function renderRepo(){
+  relOpts($('#rpRel'),true);$('#rpRel').value=S.rp.rel;opts($('#rpCat'),[['','Todas las categorías'],...Object.entries(CATS)],S.rp.cat);$('#rpQ').value=S.rp.q||'';
+  relOpts($('#upRel'));$('#upRel').insertAdjacentHTML('afterbegin','<option value="">(automático por nombre: TAG_MARCA_MODELO_AAAAMMDD)</option>');$('#upRel').value='';
+  opts($('#upCat'),[['auto','Detectar por extensión / nombre'],...Object.entries(CATS)],'auto');
+  const L=repoList();$('#rpCount').textContent=`${L.length} de ${IX.arch.length} archivos · ${KB(IX.arch.reduce((s,a)=>s+a.size,0))} en total`;
+  $('#tblArch').innerHTML='<tr><th>Relevador</th><th>Categoría</th><th>Archivo</th><th>Fecha</th><th class="n">Tamaño</th><th>Firmware</th><th>MOC / nota</th></tr>'+(L.map(a=>`<tr class="click hrow ${S.rp.sel===a.id?'sel':''}" data-id="${a.id}"><td><b>${esc(relName(a.relId))}</b></td><td>${esc(CATS[a.cat])}</td><td class="small">${esc(a.nombre)}${a.demo?' <span class="badge sim">demo</span>':''}</td><td>${a.ts?fDate(a.ts):'—'}</td><td class="n">${KB(a.size)}</td><td class="small">${esc(a.fw||'—')}</td><td class="small">${esc([a.moc,a.nota].filter(Boolean).join(' · ')||'—')}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">Sin archivos. Carga los respaldos de ajustes, oscilografías (COMTRADE .cfg + .dat), eventos y logs descargados en la inspección Tipo B.</td></tr>');
+  $$('#tblArch tr.hrow').forEach(tr=>tr.onclick=()=>{S.rp.sel=tr.dataset.id;renderRepo()});
+  // comparador de ajustes
+  const aj=IX.arch.filter(a=>a.cat==='ajustes'&&(!S.rp.rel||a.relId===S.rp.rel)).sort((a,b)=>a.ts-b.ts),op=aj.map(a=>[a.id,`${relName(a.relId)} · ${a.ts?fDate(a.ts):'s/f'} · ${a.nombre}`]);
+  opts($('#cmpA'),op,S.rp.cmpA&&aj.some(a=>a.id===S.rp.cmpA)?S.rp.cmpA:(aj[aj.length-2]||aj[0]||{}).id);opts($('#cmpB'),op,S.rp.cmpB&&aj.some(a=>a.id===S.rp.cmpB)?S.rp.cmpB:(aj[aj.length-1]||{}).id);
+  $('#cmpOut').innerHTML=aj.length<2?'<span class="muted">Se necesitan al menos dos archivos de ajustes del relevador para compararlos.</span>':'';
+  const a=IX.arch.find(x=>x.id===S.rp.sel);renderViewer(a)}
+async function renderViewer(a){
+  const box=$('#vwBody');if(!a){box.innerHTML='<p class="muted">Selecciona un archivo de la lista para consultarlo: oscilografías (forma de onda), eventos y logs (búsqueda y conteo por tipo) y ajustes (texto).</p>';$('#vwTitle').textContent='Visor';return}
+  $('#vwTitle').textContent=`${a.nombre} · ${CATS[a.cat]}`;
+  const head=`<div class="small" style="margin-bottom:8px"><b>${esc(relName(a.relId))}</b> · ${a.ts?fDT(a.ts):'—'} · ${KB(a.size)}${a.fw?' · fw '+esc(a.fw):''}${a.moc?' · '+esc(a.moc):''}<br>${esc(a.nota||'')}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn sm" id="vwDl">⬇ Descargar</button><button class="btn sm" id="vwEdit">✎ Datos del archivo</button><button class="btn sm" id="vwDel">🗑 Eliminar</button></div>`;
+  box.innerHTML=head+'<p class="muted">Cargando…</p>';
+  const wire=()=>{$('#vwDl').onclick=()=>downloadFile(a);$('#vwDel').onclick=async()=>{if(confirm('¿Eliminar el archivo del repositorio?')){await delFile(a.id);S.rp.sel=null;renderRepo()}};
+    $('#vwEdit').onclick=()=>{const n=prompt('Nota',a.nota||'');if(n===null)return;const mo=prompt('MOC / referencia (opcional)',a.moc||'');const fw=prompt('Firmware (opcional)',a.fw||'');a.nota=n;a.moc=mo||'';a.fw=fw||'';save();renderRepo()}};
+  const buf=await fileBuf(a.id);if(!buf){box.innerHTML=head+'<div class="warnbox">El contenido no está en el almacén de este navegador (solo se conservan los metadatos).</div>';wire();return}
+  const ext=a.ext;
+  try{
+    if(a.cat==='oscilo'&&['cfg','dat','cff'].includes(ext)){const base=a.nombre.replace(/\.[^.]+$/,'');
+      const pair=(e)=>IX.arch.find(x=>x.relId===a.relId&&x.nombre.replace(/\.[^.]+$/,'')===base&&x.ext===e);
+      const c=pair('cfg'),d=pair('dat');
+      if(!c||!d){box.innerHTML=head+`<div class="warnbox">Falta el archivo ${!c?'.cfg':'.dat'} del par COMTRADE (mismo nombre base «${esc(base)}»). Cárgalo para ver la forma de onda.</div>`;wire();return}
+      const ct=comtrade(decodeText(await fileBuf(c.id)),await fileBuf(d.id));box.innerHTML=head+osciHtml(ct);wire();osciWire(ct);return}
+    if(TEXTEXT.includes(ext)||a.cat==='eventos'||a.cat==='log'||a.cat==='ajustes'){const txt=decodeText(buf);box.innerHTML=head+textHtml(txt,a);wire();textWire(txt,a);return}
+    box.innerHTML=head+'<p class="muted">Formato sin visor integrado: descárgalo para abrirlo con el software del fabricante (EnerVista, PCM600, Reydisp, S1 Studio).</p>';wire()
+  }catch(e){box.innerHTML=head+`<div class="warnbox">No se pudo leer el archivo: ${esc(e.message||e)}</div>`;wire()}}
+/* --- COMTRADE --- */
+const OSC={ct:null,grp:'I',pri:false,on:new Set()};
+function osciHtml(ct){OSC.ct=ct;OSC.on=new Set(ct.ch.filter(c=>/^[AI]/i.test(c.uu)||c.uu==='A').map(c=>c.n));if(!OSC.on.size)ct.ch.slice(0,3).forEach(c=>OSC.on.add(c.n));
+  const c=ct.cfg;
+  return`<div class="stats"><div class="stat"><span>Estación / equipo</span><b style="font-size:14px">${esc(c.station)} / ${esc(c.dev)}</b></div><div class="stat"><span>Inicio de la captura</span><b style="font-size:14px">${c.t0?esc(c.t0.txt):'—'}</b></div><div class="stat"><span>Disparo (t = 0)</span><b style="font-size:14px">${c.trig?esc(c.trig.txt):'—'}</b></div><div class="stat"><span>Muestras / duración</span><b style="font-size:14px">${ct.n} · ${fF(ct.dur,1)} ms</b></div><div class="stat"><span>Muestreo</span><b style="font-size:14px">${fF(ct.sr,0)} Hz · ${c.freq} Hz · ${c.ft}</b></div></div>
+  <div class="bar"><label>Valores<select id="osPri"><option value="0">Registrados</option><option value="1">Primarios (si el .cfg está en secundario)</option></select></label><span id="osCh" style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px"></span></div>
+  <div class="chartbox"><div class="ttl">Forma de onda · tiempo en ms respecto al disparo · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cOsc"></canvas><div class="tip"></div></div>
+  <div class="tw" style="max-height:230px"><table><tr><th>Canal</th><th>Fase</th><th>Unidad</th><th class="n">Pico</th><th class="n">t del pico (ms)</th><th class="n">RMS 1.er ciclo</th><th class="n">RMS máx. (1 ciclo)</th><th class="n">Relación</th></tr>${ct.ch.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.ph)}</td><td>${esc(x.uu)}</td><td class="n">${fF(x.peak,2)}</td><td class="n">${fF(x.tPeak,1)}</td><td class="n">${fF(x.rms1,2)}</td><td class="n">${fF(x.rmsMax,2)}</td><td class="n">${x.rms1>0?fF(x.rmsMax/x.rms1,2)+' ×':'—'}</td></tr>`).join('')}</table></div>
+  ${ct.dg.length?`<h4 style="margin:10px 0 4px;font-size:12px;color:var(--dorado)">Señales digitales · cambios de estado</h4><table>${ct.dg.map(x=>`<tr><td>${esc(x.id)}</td><td class="small">${x.chg.length?x.chg.slice(0,8).map(c=>`${c.to?'↑':'↓'} ${fF(c.t,2)} ms`).join(' · ')+(x.chg.length>8?' …':''):'<span class="muted">sin cambios</span>'}</td></tr>`).join('')}</table>`:''}`}
+function osciWire(ct){
+  CH.O=new Chart($('#cOsc'));
+  $('#osCh').innerHTML=ct.ch.map((c,i)=>`<label><input type="checkbox" data-ch="${c.n}" ${OSC.on.has(c.n)?'checked':''}> <span style="color:${colorOf(i)}">●</span> ${esc(c.id)} (${esc(c.uu)})</label>`).join('');
+  const draw=()=>{const k=OSC.pri;const ser=ct.ch.filter(c=>OSC.on.has(c.n)).map(c=>{const i=ct.ch.indexOf(c),f=k&&c.ps==='S'&&c.sec?c.pri/c.sec:1,step=Math.max(1,Math.floor(ct.n/4000));const pts=[];for(let j=0;j<ct.n;j+=step)pts.push([ct.t[j],c.v[j]*f]);return{name:c.id+' ('+c.uu+')',color:colorOf(i),width:1.8,pts}});
+    CH.O.group=[CH.O];CH.O.setData({xType:'lin',xFmt:v=>f1(v,1)+' ms',yFmt:v=>f1(v,1),y2Fmt:v=>f1(v,1),yLabel:'',hInclude:true,series:ser,vlines:[{x:0,color:cssv('--crit'),label:'Disparo'}],noData:ser.length?null:'Selecciona canales'},true)};
+  $$('#osCh input').forEach(i=>i.onchange=()=>{const n=+i.dataset.ch;i.checked?OSC.on.add(n):OSC.on.delete(n);draw()});$('#osPri').onchange=e=>{OSC.pri=e.target.value==='1';draw()};draw()}
+/* --- texto / eventos --- */
+function textHtml(txt,a){const st=textStats(txt),rows=a.cat!=='ajustes'?csvRows(txt,1500):null;
+  return`<div class="stats"><div class="stat"><span>Líneas</span><b>${st.lines}</b></div>${EV_KEYS.filter(k=>st.c[k[0]]).map(k=>`<div class="stat"><span>${k[0]}</span><b>${st.c[k[0]]}</b></div>`).join('')}</div>
+  <div class="bar"><label>Buscar<input type="text" id="txQ" placeholder="trip, alarm, TCS, fecha…" size="26"></label><label>Tipo<select id="txK"><option value="">Todos</option>${EV_KEYS.map(k=>`<option value="${k[0]}">${k[0]}</option>`).join('')}</select></label><span class="small muted" id="txN"></span></div>
+  <div class="tw" style="max-height:420px"><table id="txT"></table></div>`}
+function textWire(txt,a){
+  const rows=a.cat!=='ajustes'?csvRows(txt,1500):null,lines=txt.split(/\r?\n/).filter(s=>s.trim()!=='');
+  const draw=()=>{const q=stripAcc($('#txQ').value),k=$('#txK').value,re=k?EV_KEYS.find(x=>x[0]===k)[1]:null,mark=l=>EV_KEYS.filter(x=>x[1].test(l)).map(x=>x[0]);
+    if(rows&&rows.length>1){const hd=rows[0],body=rows.slice(1).filter(r=>{const j=r.join(' ');return(!q||stripAcc(j).includes(q))&&(!re||re.test(j))});
+      $('#txN').textContent=`${body.length} de ${rows.length-1} filas`;$('#txT').innerHTML='<tr>'+hd.map(h=>`<th>${esc(h)}</th>`).join('')+'<th>Tipo</th></tr>'+body.slice(0,800).map(r=>`<tr>${r.map(c=>`<td class="small">${esc(c)}</td>`).join('')}<td class="small">${mark(r.join(' ')).map(m=>`<span class="badge ${m==='trip'||m==='tcs'||m==='falla'?'sim':''}">${m}</span>`).join(' ')}</td></tr>`).join('')}
+    else{const body=lines.filter(l=>(!q||stripAcc(l).includes(q))&&(!re||re.test(l)));$('#txN').textContent=`${body.length} de ${lines.length} líneas`;$('#txT').innerHTML=body.slice(0,1500).map((l,i)=>`<tr><td class="n muted">${i+1}</td><td class="small" style="white-space:pre-wrap;font-family:monospace">${esc(l)}</td><td>${mark(l).map(m=>`<span class="badge">${m}</span>`).join(' ')}</td></tr>`).join('')}};
+  $('#txQ').oninput=draw;$('#txK').onchange=draw;draw()}
+async function runCompare(){
+  const A=IX.arch.find(x=>x.id===$('#cmpA').value),B=IX.arch.find(x=>x.id===$('#cmpB').value);if(!A||!B)return;S.rp.cmpA=A.id;S.rp.cmpB=B.id;
+  const [a,b]=await Promise.all([fileBuf(A.id),fileBuf(B.id)]);if(!a||!b){toast('Contenido no disponible');return}
+  const d=lineDiff(decodeText(a),decodeText(b));
+  $('#cmpOut').innerHTML=`<div class="stats"><div class="stat"><span>Líneas iguales</span><b>${d.same}</b></div><div class="stat"><span>Modificadas</span><b>${d.chg}</b></div><div class="stat"><span>Agregadas en B</span><b>${d.add}</b></div><div class="stat"><span>Eliminadas de A</span><b>${d.del}</b></div></div>${d.chg+d.add+d.del===0?'<div class="infobox">Los dos archivos son equivalentes (ignorando espacios y líneas vacías).</div>':`<div class="tw" style="max-height:340px"><table><tr><th></th><th>A · ${esc(A.nombre)}</th><th>B · ${esc(B.nombre)}</th></tr>${d.rows.filter(r=>r.t!=='=').map(r=>`<tr class="df${r.t==='~'?'c':r.t==='+'?'a':'d'}"><td>${r.t==='~'?'≠':r.t}</td><td class="small mono">${esc(r.a||'')}</td><td class="small mono">${esc(r.b||'')}</td></tr>`).join('')}</table></div><p class="small muted">Todo cambio de ajustes requiere MOC y autorización escrita del Coordinador SICM (PEO-003, anexo 9.15). Esta comparación solo documenta diferencias entre respaldos.</p>`}`}
+
+/* ---------- 5 · Hallazgos ---------- */
+function renderHall(){
+  opts($('#hfEst'),[['abierto','Abiertos'],['cerrado','Cerrados'],['','Todos']],S.hf);
+  const L=IX.hall.filter(h=>S.hf===''||h.estado===S.hf||(S.hf==='abierto'&&h.estado!=='cerrado')).sort((a,b)=>(b.item.critico-a.item.critico)||(b.m.ts-a.m.ts));
+  $('#hCount').textContent=`${L.length} hallazgo(s) · ${openHall().length} abiertos · ${openHall().filter(h=>h.item.critico).length} críticos`;
+  $('#tblHall').innerHTML='<tr><th>Relevador</th><th>Fecha</th><th>Tipo</th><th>Hallazgo (criterio)</th><th>Valor / obs.</th><th>Aviso SAP IW21</th><th>Estado</th><th>Nota</th></tr>'+(L.map(h=>`<tr data-k="${esc(h.key)}" class="${h.item.critico?'critrow':''}"><td><b class="link" data-open="${esc(h.rel.id)}">${esc(h.rel.tag)}</b><div class="small muted">${esc(h.rel.sub||'')}</div></td><td>${fDate(h.m.ts)}</td><td>${h.m.r.tipo}</td><td class="small">${h.item.critico?'<span class="chip c2">CRÍTICO</span> ':''}${esc(h.item.txt)}<div class="muted">criterio: ${esc(h.item.crit)}</div></td><td class="small">${esc([h.item.val,h.item.obs].filter(Boolean).join(' · ')||'—')}</td><td><input data-f="aviso" value="${esc(h.aviso)}" size="12"></td><td><select data-f="estado"><option value="abierto" ${h.estado!=='cerrado'?'selected':''}>Abierto</option><option value="cerrado" ${h.estado==='cerrado'?'selected':''}>Cerrado${h.cierre?' '+fDate(h.cierre):''}</option></select></td><td><input data-f="nota" value="${esc(h.nota)}" size="22"></td></tr>`).join('')||'<tr><td colspan="8" class="muted">Sin hallazgos en este filtro.</td></tr>');
+  $$('#tblHall tr[data-k]').forEach(tr=>{$$('[data-f]',tr).forEach(i=>i.onchange=()=>{const patch={[i.dataset.f]:i.value};if(i.dataset.f==='estado')patch.cierre=i.value==='cerrado'?Date.now():null;setHall(tr.dataset.k,patch);refreshAll()})});
+  $$('#tblHall [data-open]').forEach(b=>b.onclick=()=>open(b.dataset.open))}
+
+/* ---------- 6 · Formatos y criterios ---------- */
+function renderFmt(){
+  opts($('#fmSel'),FORMATOS.map(f=>[f.id,`Anexo ${f.anexo} · ${f.tipo==='A'?'Tipo A':'Tipo B'} · ${MARCAS[f.marca]}`]),S.fm);const f=fmtOf(S.fm);
+  $('#fmInfo').innerHTML=`<b>${esc(f.titulo)}</b><br>${esc(f.modelos)}`;
+  $('#tblFmt').innerHTML='<tr><th>N.º</th><th>Verificación / ruta de menú</th><th>Criterio de aceptación</th><th></th></tr>'+Object.entries(f.secs).map(([k,n])=>`<tr class="sec"><td colspan="4">${k}. ${esc(n)}</td></tr>`+f.items.filter(i=>i.sec===k).map(i=>`<tr><td class="n">${i.n}</td><td>${esc(i.txt)}</td><td class="small">${esc(i.crit)}</td><td>${i.critico?'<span class="chip c2">⚠ crítico</span> ':''}${i.validar?'<span class="badge sim">validar en equipo/manual</span>':''}</td></tr>`).join('')).join('');
+  $('#tblConn').innerHTML='<tr><th>Marca / familia</th><th>Frontal (conexión directa)</th><th>IP del puerto frontal</th><th>Red (estación / IEC 61850)</th><th>Software</th><th>Rol de solo lectura</th></tr>'+CONEXION.map(r=>`<tr><td><b>${esc(r[1])}</b></td>${r.slice(2).map(x=>`<td class="small">${esc(x)}</td>`).join('')}</tr>`).join('');
+  $('#tblFunc').innerHTML='<tr><th>IEEE C37.2</th><th>Descripción</th><th>GE Multilin</th><th>ABB Relion</th><th>Reyrolle 7SR</th><th>Schneider MiCOM</th></tr>'+FUNC.map(r=>`<tr>${r.map((x,i)=>`<td class="small">${i===0?'<b>'+esc(x)+'</b>':esc(x)}</td>`).join('')}</tr>`).join('');
+  const T=CFG.t;$('#cfgF').innerHTML=[['Intervalo Tipo A (meses) · visual y HMI','int.A',CFG.int.A],['Intervalo Tipo B (meses) · software, eventos y conexión','int.B',CFG.int.B],['Aviso de vencimiento (días)','alerta',CFG.alerta],['Temp. gabinete: rechazo ≥ (°C)','t.gab',T.gab],['Alim. auxiliar ± (%)','t.vcd',T.vcd],['Corrientes vs patrón: rechazo ≥ (%)','t.i',T.i],['Tensiones vs patrón: rechazo ≥ (%)','t.v',T.v],['Frecuencia ± (Hz)','t.fHz',T.fHz],['Desviación de reloj < (s)','t.reloj',T.reloj],['… con GOOSE < (s)','t.clockGoose',T.clockGoose],['Temp. ambiente máx. (°C)','t.amb',T.amb],['Presurización mín. (Pa)','t.pres',T.pres]].map(([l,k,v])=>`<label>${l}<input data-c="${k}" value="${v}"></label>`).join('')}
+function applyCfg(){$$('#cfgF [data-c]').forEach(i=>{const v=num(i.value);if(v==null)return;const p=i.dataset.c.split('.');if(p.length===2)CFG[p[0]][p[1]]=v;else CFG[p[0]]=v});saveCfg();rebuild();refreshAll();toast('Criterios aplicados')}
+
+/* ---------- 7 · Datos ---------- */
+function renderData(){
+  $('#dbStats').innerHTML=`<table class="kv"><tr><td>Relevadores</td><td class="n">${DB.rel.length}</td></tr><tr><td>Inspecciones Tipo A</td><td class="n">${DB.insp.filter(i=>i.tipo==='A').length}</td></tr><tr><td>Inspecciones Tipo B</td><td class="n">${DB.insp.filter(i=>i.tipo==='B').length}</td></tr><tr><td>Archivos técnicos</td><td class="n">${DB.arch.length}</td></tr><tr><td>Registros de demostración</td><td class="n">${DB.rel.filter(r=>r.demo).length} relevadores</td></tr></table>`;
+  $('#log').innerHTML=DB.bitacora.length?DB.bitacora.map(b=>`<div>${esc(fDT(b.ts))} · ${esc(b.t)}</div>`).join(''):'<div class="muted">Sin movimientos.</div>'}
+
+/* =====================================================================
+   SICM-RELEVADORES · ARRANQUE Y EVENTOS
+   ===================================================================== */
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem('sicm_theme',t)}catch(e){}Object.values(CH).forEach(c=>c.draw())}
+function importDB(o){
+  if(!o||typeof o!=='object'||!Array.isArray(o.rel)){toast('JSON no reconocido (se esperaba una base sicm-relevadores)');return}
+  const has=new Set(DB.rel.map(r=>r.id));let n=0;for(const r of o.rel)if(!has.has(r.id)){DB.rel.push(r);n++}
+  const hi=new Set(DB.insp.map(i=>i.id));for(const i of (o.insp||[]))if(!hi.has(i.id))DB.insp.push(i);
+  const ha=new Set(DB.arch.map(a=>a.id));for(const a of (o.arch||[]))if(!ha.has(a.id))DB.arch.push(a);Object.assign(DB.hall,o.hall||{});
+  if(o.cfg&&o.cfg.int)CFG={...structuredClone(CFG0),...o.cfg,t:{...CFG0.t,...o.cfg.t},int:{...CFG0.int,...o.cfg.int}};
+  rebuild();save();saveCfg();refreshAll();toast(`Base importada (${n} relevadores nuevos)`)}
+async function uploadFiles(files){
+  const rep=await addFiles(files,{relId:$('#upRel').value,cat:$('#upCat').value,fw:$('#upFw').value,moc:$('#upMoc').value,nota:$('#upNota').value});
+  toast(`${rep.n} archivo(s) cargado(s)`+(rep.dup?` · ${rep.dup} duplicado(s)`:'')+(rep.sinRel?` · ${rep.sinRel} sin relevador asignado (revisa el nombre TAG_MARCA_MODELO_AAAAMMDD)`:'')+(rep.big?` · ${rep.big} mayor(es) a 40 MB omitido(s)`:'')+(rep.err?` · ${rep.err} con error`:''));
+  switchView('rep',true)}
+async function init(){
+  FORMATOS=JSON.parse($('#formatos').textContent).formatos;
+  let th='dark';try{th=localStorage.getItem('sicm_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){}
+  document.documentElement.dataset.theme=th;
+  await Store.open('sicm_relevadores');renderSuiteNav('relevadores');
+  try{const c=await Store.get('kv','cfg');if(c&&c.int)CFG={...structuredClone(CFG0),...c,t:{...CFG0.t,...c.t},int:{...CFG0.int,...c.int}}}catch(e){}
+  try{const s=await Store.get('kv','db');if(s&&s.rel)DB={...emptyDB(),...s}}catch(e){}
+  rebuild();
+  $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+  $('#btnTheme').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+  $('#btnSummary').addEventListener('click',exportResumen);$('#btnSum2').addEventListener('click',exportResumen);
+  $('#fSub').addEventListener('change',e=>{S.f.sub=e.target.value;renderPan()});$('#fEst').addEventListener('change',e=>{S.f.est=e.target.value;renderPan()});
+  // relevador
+  $('#relSel').addEventListener('change',e=>{S.sel=e.target.value;renderRel()});$('#btnNewRel').addEventListener('click',()=>relDialog(null));$('#dlgRelOk').addEventListener('click',relDialogSave);$('#dlgRelNo').addEventListener('click',()=>$('#dlgRel').close());
+  // captura
+  $('#cpRel').addEventListener('change',e=>{S.sel=e.target.value;S.cap={id:null,tipo:S.cap.tipo,items:{},med:{}};renderCap()});
+  $('#cpTipo').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.t===S.cap.tipo)return;S.cap={id:null,tipo:b.dataset.t,items:{},med:S.cap.med||{}};renderCap()});
+  $('#cpDisp').innerHTML='<option value="">No</option><option value="1">Sí</option>';
+  $('#cpDisp').addEventListener('change',()=>{$('#cpDisp').checked=$('#cpDisp').value==='1'});Object.defineProperty($('#cpDisp'),'checked',{get(){return this.value==='1'},set(v){this.value=v?'1':''}});
+  $('#cpBody').addEventListener('click',e=>{const b=e.target.closest('.seg3 button');if(!b)return;const tr=b.closest('tr'),n=+tr.dataset.n,a=S.cap.items[n]=S.cap.items[n]||{};a.v=a.v===b.dataset.v?null:b.dataset.v;
+    tr.className=tr.className.replace(/st-\w*/,'')+' st-'+(a.v||'');$$('.seg3 button',tr).forEach(x=>{x.className=a.v===x.dataset.v?'on '+x.dataset.v:''});renderDict()});
+  $('#cpBody').addEventListener('input',e=>{const i=e.target;const k=i.dataset.val?'val':i.dataset.obs?'obs':null;if(!k)return;const n=+(i.dataset.val||i.dataset.obs);(S.cap.items[n]=S.cap.items[n]||{})[k]=i.value});
+  $('#medFld').addEventListener('input',e=>{const i=e.target,m=S.cap.med=S.cap.med||{};if(i.dataset.m){m[i.dataset.m]=i.value}else if(i.dataset.mm){const [a,b]=i.dataset.mm.split('.');m[a]=m[a]||{};m[a][b]=i.value}showMed()});
+  $('#btnApplyMed').addEventListener('click',applyMed);
+  $('#btnAllOk').addEventListener('click',()=>{const f=curFormat();if(!f)return;for(const i of f.items)S.cap.items[i.n]={...(S.cap.items[i.n]||{}),v:'OK'};renderCap()});
+  $('#btnClr').addEventListener('click',()=>{S.cap.items={};renderCap()});
+  $('#btnCapSave').addEventListener('click',capSave);
+  $('#btnBlank').addEventListener('click',()=>{const t=IX.rel.get(S.sel),f=curFormat();if(f)dl(`formato_${f.id}_${t?t.tag:'blanco'}.html`,formatoHtml(f.id,null,t),'text/html;charset=utf-8')});
+  $('#btnCapPrint').addEventListener('click',()=>{const t=IX.rel.get(S.sel),f=curFormat();if(!f)return;const o=readCapHead();dl(`${t.tag}_${f.id}_${toInput(o.ts).slice(0,10)}.html`,formatoHtml(f.id,o,t),'text/html;charset=utf-8')});
+  // repositorio
+  $('#rpRel').addEventListener('change',e=>{S.rp.rel=e.target.value;renderRepo()});$('#rpCat').addEventListener('change',e=>{S.rp.cat=e.target.value;renderRepo()});$('#rpQ').addEventListener('input',e=>{S.rp.q=e.target.value;renderRepo()});
+  $('#btnUpF').addEventListener('click',()=>$('#upFiles').click());$('#btnUpD').addEventListener('click',()=>$('#upDir').click());$('#btnUpZ').addEventListener('click',()=>$('#upZip').click());
+  $('#upFiles').addEventListener('change',e=>{uploadFiles([...e.target.files]);e.target.value=''});
+  for(const id of ['upDir','upZip'])$('#'+id).addEventListener('change',async e=>{const c=await bulkCollect(null,e.target.files,/./);e.target.value='';uploadFiles(c.files)});
+  const drop=$('#drop');drop.addEventListener('click',()=>$('#upFiles').click());
+  let dc=0;const hasFiles=e=>e.dataTransfer&&[...e.dataTransfer.types].includes('Files');
+  window.addEventListener('dragenter',e=>{if(!hasFiles(e)||S.view!=='rep')return;dc++;$('#dropOverlay').style.display='flex'});
+  window.addEventListener('dragleave',e=>{if(!hasFiles(e))return;dc=Math.max(0,dc-1);if(!dc)$('#dropOverlay').style.display='none'});
+  window.addEventListener('dragover',e=>{if(hasFiles(e)&&S.view==='rep')e.preventDefault()});
+  window.addEventListener('drop',async e=>{if(!hasFiles(e)||S.view!=='rep')return;e.preventDefault();dc=0;$('#dropOverlay').style.display='none';const c=await bulkCollect(e.dataTransfer.items,e.dataTransfer.files,/./);uploadFiles(c.files)});
+  $('#btnArchCsv').addEventListener('click',exportArch);$('#btnCmp').addEventListener('click',runCompare);
+  // hallazgos / formatos / datos
+  $('#hfEst').addEventListener('change',e=>{S.hf=e.target.value;renderHall()});$('#btnHallCsv').addEventListener('click',exportHall);
+  $('#fmSel').addEventListener('change',e=>{S.fm=e.target.value;renderFmt()});$('#btnFmtBlank').addEventListener('click',()=>dl(`formato_${S.fm}_blanco.html`,formatoHtml(S.fm,null,null),'text/html;charset=utf-8'));
+  $('#btnApplyCfg').addEventListener('click',applyCfg);$('#btnResetCfg').addEventListener('click',()=>{CFG=structuredClone(CFG0);saveCfg();rebuild();refreshAll();toast('Criterios del procedimiento restablecidos')});
+  $('#btnCensoIn').addEventListener('click',()=>$('#censoIn').click());$('#censoIn').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const n=importRelCsv(await f.text());refreshAll();toast(n+' relevador(es) importado(s)')});
+  $('#btnCensoTpl').addEventListener('click',relTemplate);$('#btnInspCsv').addEventListener('click',exportInsp);
+  $('#btnDemo').addEventListener('click',async()=>{await loadDemo();refreshAll();toast('Demostración cargada')});$('#btnNoDemo').addEventListener('click',async()=>{await quitDemo();S.sel=null;refreshAll();toast('Demostración retirada')});
+  $('#btnExport').addEventListener('click',exportDB);$('#btnImport').addEventListener('click',()=>$('#jsonIn').click());$('#jsonIn').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{importDB(JSON.parse(await f.text()))}catch(err){toast('JSON inválido')}});
+  $('#btnWipe').addEventListener('click',async()=>{if(!confirm('¿Vaciar la base y todos los archivos del repositorio?'))return;await Store.clear();DB=emptyDB();rebuild();save();S.sel=null;refreshAll()});
+  refreshAll();
+  window.__ready=true;
+}
+init();
+
+</script>
+</body>
+</html>

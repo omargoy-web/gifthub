@@ -1,0 +1,1585 @@
+{
+ "fuente": "4128-11422-SICM-PEO-003 V2 Rev-B (octubre 2026), anexos 9.1 a 9.8",
+ "formatos": [
+  {
+   "id": "A-GE",
+   "anexo": "9.1",
+   "tipo": "A",
+   "marca": "GE",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "GE MULTILIN SERIE 8 – 845 (transformador), 850 (alimentador), 869 (motor). Referencia: Manuales 845 y 850 (cap. 3); 869-1601-0450-C430-1/-3 (cap. 3); ver Anexo 9.18",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED IN SERVICE verde fijo (rojo = falla; naranja = Not Ready)",
+     "crit": "Verde fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "LED TRIP / ALARM (parpadeo = autodiagnóstico) / PICKUP / TEST MODE / MESSAGE / LOCAL MODE",
+     "crit": "Apagados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "[850] LED AR ENABLED / AR LOCKOUT / BKR OPEN-CLOSED / SYNCHECK OK",
+     "crit": "AR LOCKOUT apagado; BKR coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "[845] LED XFMR OVERLOAD / LOAD-LIMIT REDUCED / XFMR DE-ENERGIZED / DIFFERENTIAL BLOCKED / W1-W3 BKR",
+     "crit": "Condición apagada; BKR coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "[869] LED de causa de evento / 50P INST OC / 27 PHASE UV o LOCKOUT",
+     "crit": "Apagados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Targets: mensajes activos (disparo, alarma, Minor/Major Self-test error)",
+     "crit": "Sin targets activos",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Status → Device Status",
+     "crit": "Sin falla interna",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Status → Information (Main CPU): código de orden, serie, firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Status → Clock (y PTP Status); sin avisos IRIG-B Failure / RTC Error",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Status → Contact Inputs: 52a / 52b / resorte / carro",
+     "crit": "Coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Status → Output Relays: Relevador de Falla Crítica (Output Relay 8)",
+     "crit": "ENERGIZADO",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "Status → Switches / Breakers y Last Trip Data (1 registro)",
+     "crit": "Posición real; último disparo explicado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "B",
+     "txt": "[850] Status → Autoreclose y Arc Flash",
+     "crit": "Sin bloqueo (lockout) ni disparo de arco",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "B",
+     "txt": "Status → Communications; sin Link Error / Traffic Error / Comm Alert",
+     "crit": "Enlaces activos, sin avisos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "B",
+     "txt": "Metering → Summary / Currents / Voltages / Frequency",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "B",
+     "txt": "[850] Metering → Synchrocheck, Thermal Capacity; [845] Transformer; [869] Motor (TCU, desbalance)",
+     "crit": "Valores coherentes con la carga",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "B",
+     "txt": "Records → Events (1 024; últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "B",
+     "txt": "Records → Fault Reports / Transients / Breakers (contador) / Digital Counters",
+     "crit": "Registros coherentes; contador anotado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "B",
+     "txt": "Aviso Ambient Temperature >80C",
+     "crit": "Ausente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "B",
+     "txt": "Setpoints → Device → Communications (IP, máscara, GW, esclavo, Modbus)",
+     "crit": "Coincide con tabla de direccionamiento",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 30,
+     "sec": "B",
+     "txt": "Cerró sesión (Observer) y presionó [Home]; NO usó Reset ni Clear Records",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 31,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 32,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 33,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 34,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 35,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 36,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 37,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 38,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY /",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-ABB",
+   "anexo": "9.2",
+   "tipo": "A",
+   "marca": "ABB",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "ABB RELION SERIE 615 (REF615 / REM615 / REG615 / RED615). Referencia: Manual de operador 1MRS756834 E; Guía rápida 757259",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "Inicio de sesión [Clave] nivel VIEWER (icono V)",
+     "crit": "Nivel V",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "LED Ready fijo / Start apagado / Trip apagado",
+     "crit": "Ready fijo; sin Start ni Trip",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "11 LED programables de alarma",
+     "crit": "Apagados o explicados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Menú → Información → Identificadores de producto (código, serie, HW, SW)",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Menú → Información → Identificadores del sistema (edición IEC 61850)",
+     "crit": "Edición registrada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Estado IED → Auto- supervisión (IRF)",
+     "crit": "Sin IRF ni advertencias",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Estado E/S → Valor de entradas (tarjeta BIO)",
+     "crit": "Coincide con campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Estado E/S → salidas y comunicación; alarma TCSSCBR (TCS)",
+     "crit": "Sin alarma",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Menú → Mediciones",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Menú → Eventos (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Datos grabados → Falta grabada",
+     "crit": "Valores coherentes con el último disparo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "Menú → Reg perturbaciones: número y fecha del último registro",
+     "crit": "Registros disponibles",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "B",
+     "txt": "Menú → Monitorización → Comunicación → Protocolos (MMSLPRT1 / GSELPRT1)",
+     "crit": "Sin mensajes perdidos [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 23,
+     "sec": "B",
+     "txt": "Menú → Configuración → Hora: fecha, hora y fuente de sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "B",
+     "txt": "Cerró sesión con [Clave]; NO usó [Borrar], [R/L], [Abrir]/[Cerrar] ni menú Pruebas",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 30,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 31,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 32,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-SIE",
+   "anexo": "9.3",
+   "tipo": "A",
+   "marca": "SIE",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "SIEMENS REYROLLE 7SR5 (7SR51…) y SERIE 7SR1x/2x ARGUS. Referencia: Manual 7SR51 V2.40 (C53000- G7078-C014-1), cap. 3.1; Argus: manual técnico [VALIDAR]",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED de servicio / Ready fijo; sin LED de disparo o alarma enclavados",
+     "crit": "Servicio fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Pantalla de inicio: unifilar e instrumentos configurados",
+     "crit": "Coherente con el campo",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "Información del equipo: ID relé, ID circuito, MLFB, serie, firmware, firmware comunicación, versión de configuración",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Instrumentos: intensidad, tensión, frecuencia, potencia, térmico, contadores",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Instrumentos → Comunicaciones (contadores)",
+     "crit": "Actividad / sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Modo de control: solo consulta de estado (IP, modo Local/Remoto/Fuera de servicio/Test)",
+     "crit": "Modo normal; sin Test",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Avisos: “Equipo no configurado”, “IEC 61850 No configurado”, alarma general",
+     "crit": "Sin avisos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Eventos / faltas / forma de onda (panel o Reydisp)",
+     "crit": "Sin eventos inexplicables [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Lista de eventos: “Inicio en frío” o reinicios inesperados",
+     "crit": "Ninguno",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "Fecha, hora y sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "B",
+     "txt": "Conector trasero pesado (7SR): firmeza, sin calentamiento ni decoloración",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "B",
+     "txt": "No se introdujo ID de ajustes / control; no se usó Test Matriz Salida ni reset de LED",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 28,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 29,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "A-SCH",
+   "anexo": "9.4",
+   "tipo": "A",
+   "marca": "SCH",
+   "titulo": "INSPECCIÓN TIPO A (MANUAL, NAVEGANDO EN EL HMI DEL RELEVADOR)",
+   "modelos": "SCHNEIDER ELECTRIC MiCOM P3P / P14x / P54x y EASERGY P5. Referencia: Manual P14x (P14x_EN_M) y P5 [VALIDAR]",
+   "secs": {
+    "A": "Inspección visual",
+    "B": "Navegación por el HMI",
+    "C": "Alimentación, mediciones, TCS, entorno y cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Gabinete: integridad física, tornillería, bisagras, cierre y puerta",
+     "crit": "Sin daño ni holgura",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Limpieza exterior; sin condensación, corrosión ni depósitos salinos en bornes y cableado",
+     "crit": "Sin condensación / corrosión",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Temperatura del gabinete (termómetro de contacto o cámara termográfica)",
+     "crit": "< 55 °C",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Rotulación: TAG, tensión de CD y función de protección legibles y correctas",
+     "crit": "Coincide con plano y SAP PM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Cableado trasero: sin cables sueltos, aislamiento íntegro, terminales apretadas",
+     "crit": "Sin anomalías",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Sin alarmas sonoras ni visuales activas antes de iniciar",
+     "crit": "Sin alarmas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Pantalla: legibilidad, contraste, retroiluminación, sin segmentos dañados ni mensajes de error",
+     "crit": "Legible, sin errores",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Teclas de navegación responden (sin operar control, reset ni borrado)",
+     "crit": "Responden",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Se fotografió la pantalla de inicio y los targets/eventos activos",
+     "crit": "Evidencia tomada",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "LED HEALTHY verde fijo; ALARM y TRIP apagados",
+     "crit": "HEALTHY fijo",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Menú SYSTEM DATA: modelo, serie, versión de software",
+     "crit": "Coincide con hoja de ajustes [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 12,
+     "sec": "B",
+     "txt": "Self-check: sin alarma de hardware ni de batería del reloj",
+     "crit": "Sin alarma [VALIDAR]",
+     "critico": true,
+     "validar": true
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Menú MEASUREMENTS: corrientes, tensiones, frecuencia",
+     "crit": "Ver 7.5.2",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Menú VIEW RECORDS: eventos (últimos 30)",
+     "crit": "Sin eventos inexplicables [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Menú VIEW RECORDS: registros de falta y perturbación",
+     "crit": "Coherentes [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Entradas ópticas y salidas de relé",
+     "crit": "Coincide con campo [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 17,
+     "sec": "B",
+     "txt": "Menú COMMUNICATIONS: dirección, protocolo, estado",
+     "crit": "Coincide con tabla [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 18,
+     "sec": "B",
+     "txt": "Menú DATE AND TIME",
+     "crit": "Desviación < 1 s",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 19,
+     "sec": "B",
+     "txt": "No se usó la tecla de borrado ni menús de TEST",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 20,
+     "sec": "C",
+     "txt": "Alimentación auxiliar CD medida en terminales (multímetro CAT III)",
+     "crit": "±10 % del nominal (ver 7.5.1)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 21,
+     "sec": "C",
+     "txt": "Corrientes Ia, Ib, Ic vs medidor patrón",
+     "crit": "Diferencia < 5 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 22,
+     "sec": "C",
+     "txt": "Tensiones Va, Vb, Vc vs medidor patrón",
+     "crit": "Diferencia < 2 %",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 23,
+     "sec": "C",
+     "txt": "Frecuencia",
+     "crit": "60.0 ± 0.1 Hz",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 24,
+     "sec": "C",
+     "txt": "Alarma de supervisión del circuito de disparo (TCS)",
+     "crit": "Sin alarma (si hay: CRÍTICO)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 25,
+     "sec": "C",
+     "txt": "Entorno: polvo, vapores, T ambiente, HVAC/presurizador, corrosión",
+     "crit": "≤ 40 °C; presión > 25 Pa; < 1000 Å",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 26,
+     "sec": "C",
+     "txt": "Firmware vs hoja de ajustes SICM / SAP PM",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 27,
+     "sec": "C",
+     "txt": "Relevador queda en servicio, sin alarmas nuevas, sesión cerrada",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-GE",
+   "anexo": "9.5",
+   "tipo": "B",
+   "marca": "GE",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "GE MULTILIN SERIE 8 – EnerVista 8 Series Setup / D&I Setup. Referencia: Manuales 845/850 y 869 (cap. 3.4)",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Software EnerVista instalado (versión registrada: Help → About)",
+     "crit": "Instalado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Medio de conexión: USB (172.16.0.2 en 869) / Ethernet (IP, esclavo, puerto Modbus); máx. 3 sesiones TCP/IP",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Read Order Code ejecutado; indicador de estado verde",
+     "crit": "Sin error de comunicación",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Status → Information → Main CPU: versión de firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Targets y Status → Device Status (errores Minor/Major Self-test)",
+     "crit": "Sin errores (Anexo 9.18)",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Status → Output Relays: Output Relay 8 (falla crítica)",
+     "crit": "Energizado",
+     "critico": true,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Records → Events: descarga y revisión (1 024; últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Records → Fault Reports: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Records → Transients → Transient Records: Launch Viewer y Save (COMTRADE .cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "Read Device Settings: archivo de configuración guardado",
+     "crit": "Archivo en servidor SICM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "Verificación de reloj vs patrón",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Status → Communications: sin enlaces caídos / GOOSE",
+     "crit": "Sin pérdidas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "A",
+     "txt": "NO se presionó Trigger, Write Settings, Clear Records ni Maintenance → Update Firmware",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-ABB",
+   "anexo": "9.6",
+   "tipo": "B",
+   "marca": "ABB",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "ABB RELION 615 – WHMI (HTTPS) y PCM600. Referencia: Manual de operador 1MRS756834 E, 3.3, 4.2; IEC 61850 Eng. Guide 2NGA001863",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "WHMI habilitada (Configuración → HMI → Modo Web HMI) o PCM600 + Connectivity Package instalado",
+     "crit": "Habilitada / instalado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Conexión: RJ-45 frontal (192.168.0.254, DHCP) o red; ping respondido",
+     "crit": "Sin pérdida de paquetes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Inicio de sesión en mayúsculas, usuario VIEWER",
+     "crit": "Sesión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "General / Information: serie, HW, SW",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Events: descarga y revisión (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Fault Records: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Disturbance Records: guardado COMTRADE (.cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Report Summary: Events, Fault, Disturbance, Load Profile, lista de parámetros",
+     "crit": "Archivos guardados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Import/Export → Export de parámetros (respaldo)",
+     "crit": "Archivo en servidor SICM",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "PCM600: Read from IED (VIEWER) y proyecto guardado con el TAG",
+     "crit": "IED sincronizado",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "Contadores MMS / GOOSE; edición IEC 61850; confRev vs SCD maestro",
+     "crit": "Coincide",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Audit trail: anotaciones “Firmware change” no autorizadas",
+     "crit": "Ninguna",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "A",
+     "txt": "NO se usó Import, Write to IED, Borrar ni cambios de ajuste",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 15,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 16,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-SIE",
+   "anexo": "9.7",
+   "tipo": "B",
+   "marca": "SIE",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "SIEMENS REYROLLE – Reydisp Manager 2 (7SR5) / Reydisp Evolution (7SR1x/2x). Referencia: Manual 7SR51 V2.40, cap. 1 y 3.1; Argus [VALIDAR]",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Controladores USB instalados; conexión USB (7SR5: 192.168.2.1) o serial/Ethernet",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Reydisp conectado; usuario de solo lectura",
+     "crit": "En línea",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Información del equipo: MLFB, serie, firmware, versión de configuración",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Registro de eventos: descarga y revisión (últimos 30)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Registro de faltas: descarga",
+     "crit": "Coherente",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Registro de forma de onda: guardado COMTRADE (.cfg + .dat)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Registro de seguridad (accesos al equipo)",
+     "crit": "Sin accesos no autorizados [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "Configuración del equipo: archivo guardado",
+     "crit": "Archivo en servidor SICM [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Fecha / hora / sincronía",
+     "crit": "Desviación < 1 s (< 1 ms GOOSE)",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "A",
+     "txt": "Comunicaciones: contadores, IEC 61850, GOOSE",
+     "crit": "Sin pérdidas",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "A",
+     "txt": "NO se escribieron ajustes ni se ejecutaron órdenes de control",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 12,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 13,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 14,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  },
+  {
+   "id": "B-SCH",
+   "anexo": "9.8",
+   "tipo": "B",
+   "marca": "SCH",
+   "titulo": "INSPECCIÓN TIPO B (POR SOFTWARE, CONEXIÓN DIRECTA O POR RED IEC 61850)",
+   "modelos": "SCHNEIDER ELECTRIC – MiCOM S1 Studio / Easergy Studio. Referencia: Pasos heredados de la versión 1 [VALIDAR]",
+   "secs": {
+    "A": "Conexión, lectura y descargas",
+    "B": "Cierre"
+   },
+   "items": [
+    {
+     "n": 1,
+     "sec": "A",
+     "txt": "Device Model (DM) instalado; conexión serial (cable Kitz) o Ethernet",
+     "crit": "Conexión establecida",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 2,
+     "sec": "A",
+     "txt": "Modo Online Read Only; modelo y firmware",
+     "crit": "Coincide con hoja de ajustes",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 3,
+     "sec": "A",
+     "txt": "Event Records → Read from IED (512 / 1 024 eventos)",
+     "crit": "Sin eventos inexplicables",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 4,
+     "sec": "A",
+     "txt": "Disturbance Records → Download Record (COMTRADE)",
+     "crit": "Pareja de archivos",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 5,
+     "sec": "A",
+     "txt": "Configuración: archivo guardado",
+     "crit": "Archivo en servidor SICM [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 6,
+     "sec": "A",
+     "txt": "Fecha / hora / sincronía",
+     "crit": "Desviación < 1 s",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 7,
+     "sec": "A",
+     "txt": "Comunicaciones / IEC 61850",
+     "crit": "Sin pérdidas [VALIDAR]",
+     "critico": false,
+     "validar": true
+    },
+    {
+     "n": 8,
+     "sec": "A",
+     "txt": "NO se escribieron ajustes",
+     "crit": "Cumplido",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 9,
+     "sec": "A",
+     "txt": "Nomenclatura TAG_MARCA_MODELO_AAAAMMDD y respaldo en servidor",
+     "crit": "Archivos respaldados",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 10,
+     "sec": "B",
+     "txt": "Laptop desconectada; relevador en servicio sin alarmas nuevas",
+     "crit": "IN SERVICE / READY / HEALTHY",
+     "critico": false,
+     "validar": false
+    },
+    {
+     "n": 11,
+     "sec": "B",
+     "txt": "Hallazgos registrados y aviso SAP IW21 generado",
+     "crit": "Registrado",
+     "critico": false,
+     "validar": false
+    }
+   ]
+  }
+ ]
+}
