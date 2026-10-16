@@ -222,3 +222,165 @@ Al aplicar el motor a las 600 mediciones sintéticas: 439 normales, 161 en alert
 ## Rama y estado
 
 Trabajado en la rama `claude/sicm-mantenimiento-predictivo-syd9ui`. Fases 1, 2, extensión (subestaciones + 16 actividades), Fase 3 y Fase 4 entregadas.
+
+---
+
+## Dashboard térmico de activos críticos (`app/sicm-termico.html`)
+
+Archivo **único y autocontenido** (2 MB; sin CDN ni peticiones de red, CSP `connect-src 'none'`; lector PDF `pdf.js` 3.11 incrustado) para monitoreo de salud, confiabilidad y análisis predictivo de **transformadores, tableros y motores/arrancadores**: semáforo de criticidad, tendencias con zoom y dT/dt, correlación T–carga–ambiente, bitácora de inspecciones con ΔT (NETA MTS 100.18) y galería, y Weibull (β, η, F(t), R(t), h(t), RUL).
+
+**Base real incluida:** 94 reportes PDF de termografía (Drive «json de temperatura 08102026», 20-jul → 8-oct-2026) → 1,118 activos, ~9,800 lecturas válidas y 1,214 inspecciones. Se omiten lecturas imposibles (<12 °C o >250/300 °C) por error de captura del reporte; las >150 °C en conexiones se marcan «verificar lectura». La mayoría de los equipos tiene **una sola visita**: las tendencias aparecen conforme se agregan datos.
+
+**Corriente y tensión por fase:** además de la temperatura, cada recorrido guarda la corriente (L1/L2/L3; transformadores: primaria/secundaria) y la tensión por fase (solo tableros; los demás formatos traen únicamente la nominal de placa). Se muestran en tarjetas, ficha (con desbalance de I y V, NEMA MG-1), historial de lecturas, gráficas de tendencia ligadas al zoom (con banda ±10 % NMX-J-098) y como eje derecho de la gráfica de temperatura.
+
+**Calidad de datos:** al importar, las celdas en blanco y los valores imposibles por error de tecleo se detectan y se registran (pestaña «Datos y carga» → «Calidad de datos», con exportación a CSV). Reglas: temperatura 12–250 °C (300 °C trafos); tensión 100–15,000 V y cercana a un nivel estándar, y dentro de ±25 % de las otras fases; corriente 0–20,000 A y sin desviarse >4× / <0.25× de la mediana de sus fases; 0 V se descarta si circula corriente (campo sin capturar) y se conserva marcado «revisar» si tampoco hay corriente (barra desenergizada); >150 °C en conexiones se conserva marcado «verificar lectura».
+
+**Actualizar la base día a día** (pestaña «Datos y carga»):
+- Arrastrar **PDF** de termografía (tableros ANSI C37.20, transformadores secos NMX-J-351, arrancadores POE-009) o **JSON** → vista previa con «equipos / total del resumen», lecturas nuevas y duplicadas → «Agregar a la base». Re-subir un reporte no duplica datos (llave TAG + fecha + punto).
+- **Captura diaria manual** por activo (o activo nuevo) con T ambiente, corriente, temperaturas por punto y observaciones; clasifica severidad y crea la inspección.
+- Persistencia en IndexedDB **de ese navegador/equipo**: usar «Exportar base» periódicamente como respaldo o para pasarla a otro equipo.
+
+**Regenerar:** `python3 scripts/build_termico_real.py <dir con TBL_*.jsonl TRAN_*.jsonl TMO_*.jsonl>` → `data/termico/seed_real.json`; luego `python3 scripts/build_termico.py` (plantilla `app/sicm-termico.template.html` + `vendor/pdfjs`). Los datos de `data/termico/demo_simulado_*.json` son **simulados** (monitoreo continuo) y sirven solo para probar la carga de JSON y las gráficas de dT/dt. Las poblaciones Weibull incluidas también son simuladas.
+
+## Suite modular: arquitectura compartida y módulo SFI (`app/sicm-sfi.html`)
+
+Cada módulo es **un solo `.html` autocontenido** (sin CDN; CSP `connect-src 'none'`) y comparten núcleo para ensamblarse después en una sola app:
+
+| Pieza | Archivo | Contenido |
+|---|---|---|
+| Núcleo compartido | `app/shared/core.js`, `core.css` | utilidades, IndexedDB (`Store.open(nombre)`), motor de gráficas Canvas, Weibull, lector PDF, menú de módulos (`SUITE`) |
+| Módulo térmico | `app/sicm-termico.template.html` → `scripts/build_termico.py` | transformadores, tableros, motores |
+| Módulo SFI | `app/sfi/{template.html,model.js,ingest.js,views.js,init.js}` → `scripts/build_sfi.py` | SFI/UPS, cargadores y bancos de baterías |
+| Datos | `data/sfi/seed_real_sfi.json` ← `scripts/build_sfi_real.py <dir JSONL>` | 152 inspecciones / 136 TAG (PDF jul–oct 2026) |
+
+Cada módulo guarda su base por separado (`sicm_termico`, `sicm_sfi`) y exporta con la misma envolvente JSON (`schema`, `activos[]`, `poblaciones[]`).
+
+**SFI — qué hace:** (1) ejecutivo y censo con filtros Sector/SE/Planta/Marca/Servicio/Tipo/Condición, semáforo SICM, alertas y mapa GPS; (2) expediente por equipo (placa, mediciones, protecciones, alarmas, LEDs, verificación física incl. extractor/H₂, matriz de celdas, diagnóstico ISO 14224, línea de tiempo, impresión); (3) tendencias (V de flotación vs placa ±1/±2 %, corrientes, temperatura 30/35 °C, celda por celda, comparativo de flota); (4) confiabilidad (SoH, Arrhenius, Weibull por modo de falla con R/F/h/RUL, matriz prioridad × condición); (5) carga de PDF/JSON por lotes con vista previa, captura manual, calidad de datos, exportación JSON/CSV.
+
+**Limitaciones declaradas:** los PDF llegan **sin diagnóstico** (veredicto vacío) → la condición se **calcula por reglas** (criterios institucionales editables en `model.js`/pestaña 3); casi todos los equipos tienen **una sola visita**, así que las tendencias maduran al cargar más recorridos; el SoH requiere capturar la **edad** del banco; las poblaciones Weibull son **simuladas** (`origen:"simulado"`) hasta cargar fallas reales; los códigos ISO 14224 son **sugeridos**.
+
+### Puntos Vibrio · FASIT · pronóstico (pestañas 5–7 del módulo Motores)
+
+Importa la carpeta histórica del colector (**Sector › Planta › Equipo › Punto › Parámetro › CSV**) arrastrándola (o su ZIP, sin descomprimir) a «7 · Datos y carga». Reconoce `Vel/Acc/Demod/Disp` × `FFT/Time/RMS/PICO/PP`, `Temp` y `FASIT`; omite lo repetido y alarga las series con cada carga nueva.
+
+| Pieza | Archivo |
+|---|---|
+| Parser Vibrio, ZIP/carpeta, jerarquía | `app/motores/vibrio.js` |
+| Tendencia con banda de predicción, tiempo a umbral, Weibull con censura, P-F, RPN | `app/motores/reli.js` |
+| Base de puntos, importación por lotes, evaluación | `app/motores/vmodel.js` |
+| Vistas 5 (FASIT, históricos, FFT/onda, cascada) y 6 (pronóstico) | `app/motores/vviews.js` |
+| Semilla real (muestra cosechada de Drive) | `data/motores/seed_vibrio.json` ← `node scripts/build_vibrio_seed.js <dir con json>` |
+
+**Supuestos editables:** ISO 20816-3 clase 2/rígida por defecto; aceleración, demodulación y desplazamiento con umbral relativo (2× / 4× la línea base de las 3 primeras lecturas); FASIT vigilar 31 %, atención 62 %, crítico 100 %. Los FASIT no traen fecha (se tendencian por n.º de registro). El pronóstico exige ≥ 4 lecturas y ≥ 14 días de ventana; el Weibull de flota usa como «evento» el primer cruce de zona D, no una falla confirmada.
+
+### Carga masiva en Térmico
+
+En «Datos y carga» del módulo Térmico puedes **arrastrar una carpeta completa** (con subcarpetas), un **.zip** o PDF/JSON sueltos; también hay botones para elegir carpeta, ZIP o archivos. Se leen todos los PDF, se muestra el resumen (archivos, equipos, lecturas nuevas, duplicadas, avisos; primero los archivos con problemas) y al confirmar se agregan a la base sin duplicar (mismo TAG, fecha y punto). El lector de carpeta/ZIP es común a la suite: `bulkCollect()` en `app/shared/core.js`.
+
+## Módulo Desbalance de tensión en CCM 480 V (`app/sicm-desbalance.html`)
+
+Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anexos 6.4 / 6.5; folio `ROLM-SCM-SICM-S##-ELE-DBL-…`) y los vuelve trazables: cada medición conserva folio, archivo, hoja, N° SAP, orden SAP, transformador, fecha y GPS de captura, responsables y la lista de verificación de 19 puntos. Se agregan reportes nuevos arrastrando los PDF (lo repetido se omite por folio + CCM) y se forma el histórico y la tendencia por bus.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (columnas ajustadas por hoja) | `app/desbalance/parse.js` |
+| Cálculo, criterios, calidad de datos | `app/desbalance/model.js` |
+| Ingesta, captura manual, exportaciones | `app/desbalance/ingest.js` |
+| Vistas y arranque | `app/desbalance/views.js`, `init.js`, `template.html` |
+| Datos incluidos (7 PDF, 48 hojas, 65 buses) | `data/desbalance/seed_real_dbl.json` ← `node scripts/extract_desbalance.js <dir con PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_desbalance.py` |
+
+**Cálculo:** % desbalance = desviación máxima respecto al promedio ÷ promedio (NEMA MG-1), recalculado en fase-neutro y en línea-línea y comparado con lo reportado. Estado por bus: ≤ 3 % satisfactoria, 3–5 % condicionada, > 5 % deficiente (límites editables; 3 % = ANSI C84.1 / IEEE 1159, 5 % = NEMA MG-1). Voltajes en cero = «sin medición» (no 0 %). Fase-neutro desbalanceada con línea-línea equilibrada se marca como condicionada (neutro, cargas monofásicas o medidor). Los criterios son una propuesta: el formato no trae criterio de aceptación.
+
+**Criterio vigente (delta sin neutro):** el módulo busca fases o líneas a tierra con los voltajes fase-tierra del conmutador F-T. Desbalance fase-tierra < 50 % = sin indicios de fase a tierra (satisfactoria); ≥ 50 % = condicionada (posible fase a tierra de alta impedancia); ≥ 90 % = deficiente (fase a tierra franca: una fase ≈ 0 V y las otras ≈ tensión de línea). Se identifica la fase afectada y se verifica que las tensiones de línea sigan equilibradas; con solo tensiones de línea no se puede descartar una fase a tierra y queda condicionada. Los límites son editables.
+
+## Módulo Estado aparente (`app/sicm-estado.html`)
+
+Exclusivo de **subestaciones eléctricas**. Lee los reportes PDF de inspección visual PO-002-6 (`…-ELE-SUB-…`, mensual de 58 puntos C/NC/N/A y semestral de 121 puntos Sí/No), pondera cada punto en un **índice de deficiencia (IC, 0–100)** y lo integra con el **mapeo de estado** de la presentación «Mapeo de estado de subestaciones eléctricas» (Refinería Olmeca, 29.12.2025). Los reportes de soloaires se omiten al cargar.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría | `app/estado/parse.js` |
+| Ponderación, IC, estados, reincidencia, calidad | `app/estado/model.js` |
+| Ingesta (PDF/carpeta/ZIP/JSON), exportaciones | `app/estado/ingest.js` |
+| Mapeo de estado (distribución, tableros, presentación) | `app/estado/mapeo.js` |
+| Vistas y arranque | `app/estado/views.js`, `init.js`, `template.html` |
+| Recorridos incluidos (88 PDF de subestaciones, 98 inspecciones) | `data/estado/seed_real_sub.json` ← `node scripts/extract_estado.js <dir SUB> --pdfjs <pdf.js legacy>` |
+| Mapeo base (42 subestaciones, 1,451 elementos) | `data/estado/mapeo_deck.json` (extraído de la presentación .pptx) |
+| Ensamble | `python3 scripts/build_estado.py` |
+
+**Mapeo de estado (pestaña 2):** distribución eléctrica simplificada (generación, bahía GIS 115 kV, SEP-01/SEP-02 y sus subestaciones coloreadas), relación de subestaciones, criterio de llenado y tablero por subestación con elementos `[X / Y]` en verde/amarillo/rojo (X en anomalía o falla de Y totales). El color final es el peor entre el mapeo (editable, con historial) y los recorridos (no conformidad → amarillo; ≥ N críticos → rojo; configurable). «⬇ Presentación (.html)» genera la presentación completa (portada, introducción, distribución, relación, criterio y un tablero por subestación) lista para imprimir a PDF.  Cada tablero conserva la posición, el tamaño y los valores `[X / Y]` tal como están en la presentación (algunas subestaciones capturaron [operativos / totales] y otras [anomalías / totales]; se respetan sin convertir). Las observaciones y comentarios que se muestran bajo el tablero son los del último recorrido SICM (mensual y semestral), con acceso a su expediente.
+
+**Ponderación (propuesta editable, pestaña 5):** peso 1–5 por concepto y marca de crítico; el IC de la subestación pondera 7 secciones (interior 25, baterías 20, exterior/HVAC 15, tierras/LOTO 10, hermeticidad 5). IC ≥ 8 → condicionada, ≥ 20 → deficiente; un crítico en NC fuerza al menos condicionada y 3 fuerzan deficiente. El PDF no define pesos: son criterio del autor, a validar.
+
+**Límites:** en semestral el formato no distingue «No» de «No aplica»; formatos en borrador se marcan «Sin evaluar»; solo 20 de los ~35 elementos del mapeo tienen concepto equivalente en el recorrido (el resto se captura solo en el mapeo).
+
+## Módulo Desaladora (`app/sicm-desaladora.html`)
+
+Monitoreo de las 8 unidades de potencia (transformadores) de las desaladoras FA-11101/11102 (UDC1) y FA-11201/11202 (UDC2) a partir de los reportes «Monitoreo de transformadores de desaladora»: Bus corriente, Bus voltaje, voltaje positivo y negativo (mín/máx) y SLATE, más proceso anotado en observaciones (temperatura de crudo, flujo, carga).
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (formato «Power Unit A y B» y formato de una unidad mín/máx) | `app/desaladora/parse.js` |
+| Limpieza, línea base propia, estado suave, tendencias, causa común, recomendaciones | `app/desaladora/model.js` |
+| Ingesta (PDF/carpeta/ZIP/JSON), captura manual, exportaciones | `app/desaladora/ingest.js` |
+| Vistas y arranque | `app/desaladora/views.js`, `init.js`, `template.html` |
+| Datos incluidos (232 PDF, 944 hojas, 2,645 lecturas por unidad) | `data/desaladora/seed_real_dsl.json` ← `node scripts/extract_desaladora.js <dir PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_desaladora.py` |
+
+**Estado suave:** cada lectura se compara con la mediana y MAD de la propia unidad (por paso SLATE); NORMAL / OBSERVAR / ATENDER, y «Atender» solo con persistencia (k de n lecturas) o dos señales a la vez. Señales: corriente de bus alta, relación V campo / V bus baja, asimetría positivo/negativo, variación dentro de la lectura, lectura congelada y tendencia. Si ambas unidades de una desaladora muestran lo mismo se avisa como causa común (proceso). Los umbrales no vienen del manual del fabricante; son editables en «Criterios».
+
+**Bitácora de intervenciones** (panorama, panel derecho): captura o importa (CSV/JSON, con plantilla) cambios de aceite dieléctrico, reparación de electrodos, bushings, pruebas, libranzas, etc. por unidad, desaladora o todas; se marcan en las gráficas del expediente y se mide el efecto (mediana de Bus I, asimetría y V campo/V bus 30 días antes vs después).
+
+## Módulo Motores (`app/sicm-motores.html`)
+
+Monitoreo de motores con **reportes «Monitoreo de motores (con variador)»** y **«Vibraciones de motores (4.16 kV / 480 V)»** (ISO 20816-3) más **espectros FFT y ondas en el tiempo cargados desde .csv**.
+
+| Pieza | Archivo |
+|---|---|
+| Lector PDF por geometría (mismo código en la app y en Node) | `app/motores/parse.js` |
+| CSV, FFT, indicadores y reglas de diagnóstico | `app/motores/dsp.js` |
+| Modelo, limpieza y reglas (ISO 20816-3, IEEE 841/API 541, NEMA MG-1, ISO 14224) | `app/motores/model.js` |
+| Ingesta (PDF/JSON/CSV), captura manual, exportaciones | `app/motores/ingest.js` |
+| Vistas y arranque | `app/motores/views.js`, `init.js`, `template.html` |
+| Datos incluidos (313 PDF jul–oct 2026) | `data/motores/seed_real_mot.json` ← `node scripts/extract_motores.js <dirs con PDF> --pdfjs <pdf.js legacy>` |
+| Ensamble | `python3 scripts/build_motores.py` |
+
+**Pestañas:** 1 ejecutivo y censo (zonas ISO, ranking, alertas) · 2 expediente por motor (placa, última vibración con zonas, variador, espectros, diagnóstico, línea de tiempo; genera **.json** con espectros, **.csv** de tendencia y **.html** imprimible por equipo) · 3 tendencias (velocidad por punto/eje con zonas, gE, temperaturas, eléctricos, y del variador T1–T10, kW, par, RPM) · 4 espectros FFT y ondas (superposición de fechas, marcadores 1×–3×, rodamiento, 2×LF, bandas laterales; indicadores, picos, indicios y tendencia de indicadores espectrales) · 5 datos y carga (PDF/JSON/CSV por lote con vista previa y asignación de motor/punto/eje, captura manual, calidad de datos).
+
+**Formatos CSV:** onda (`Tiempo, Amplitud`) o FFT (`Frecuencia, Amplitud`), una o varias columnas; separador `, ; tab` o espacio, coma decimal, líneas previas `Clave: valor` (Tag, Punto, Eje, Sample Rate, RPM, Fecha); unidades mm/s, g, in/s, µm, m/s². El botón «CSV de ejemplo» baja un par de muestra.
+
+**Limitaciones declaradas:** los PDF llegan sin diagnóstico (la condición se calcula por reglas editables); casi todos los motores con vibración tienen una o dos visitas; los PDF no traen espectros (solo valores globales), por eso los FFT/ondas dependen de los .csv que se carguen; las frecuencias de rodamiento usan multiplicadores aproximados (0.4·n, 0.6·n) hasta capturar la geometría exacta; cimentación rígida y grupo ISO por potencia (o por nivel de tensión si falta la placa) son supuestos editables.
+
+**Estado aparente de soloaires (pestaña 7):** anexo con las inspecciones visuales de soloaires (disponibilidad, banda, trinquete, guarda, motor, mantto., mediciones en CCM y observaciones). Cada soloaire se enlaza con su motor por TAG o N.º SAP (109 de 379 coinciden con motores de vibración/variador); el expediente del motor muestra una tarjeta con su estado aparente y hay un cruce de atención combinada. Datos: `data/motores/seed_soloaires.json` ← `node scripts/extract_estado.js <dir EAS> --fmt EAS --pdfjs <pdf.js legacy> --out data/motores/seed_soloaires.json`; el lector es `app/estado/parse.js` (se aísla en el ensamble) y la lógica `app/motores/soloaires.js`. También se cargan PDF de soloaires desde «Datos y carga».
+
+## Módulo Transformadores en aceite (`app/sicm-aceite.html`)
+
+Inspección visual (Anexo 9.5 / 4128-11422-IT-001) + análisis del aceite. Fuente: `app/aceite/{parse,model,ingest,views,init}.js` + `template.html`, ensamblado con `scripts/build_aceite.py`; semilla `data/aceite/seed_real_tra.json` (9 PDF → 62 hojas, 38 inspecciones únicas de 25 transformadores tras omitir las copias «(1)») generada con `scripts/extract_aceite.js` (mismo lector que la app).
+
+- **Dos formas de evaluar el aceite** (selector en las pestañas 1, 2 y 4): **Ventana operativa** (tabla única editable) y **Catálogo ASTM / IEEE para aceite en servicio** por tipo de fluido — mineral (D3487 / C57.106 / IEC 60422, por clase de tensión), éster natural (D6871 / C57.147), éster sintético (IEC 61099 / 60963), silicona (D4652 / C57.111) e hidrocarburo de alto punto de ignición (D5222 / C57.121). DGA con IEEE C57.104 (condiciones 1–4, TDCG y tasa ppm/día).
+- Cada parámetro tiene límite OK y límite deficiente (semáforo satisfactoria / condicionada / deficiente). El tipo de aceite y la clase de tensión se deducen de la placa y se pueden fijar por transformador.
+- **Límite de la información** [Seguro]: los PDF son inspección visual; no traen resultados de laboratorio. Los análisis se capturan en la pestaña 3 o se importan por CSV/JSON (plantilla descargable). **La carpeta «ventana operativa» y las tablas de aceites no venían en el ZIP**: la ventana precargada es **provisional** (límites de aceite mineral 69–230 kV) y los límites del catálogo son valores de referencia de memoria que deben validarse con la edición vigente de cada norma. Se pueden sustituir en la pestaña 5 o importando un JSON `{"win":{"agua":[20,25],…},"nota":"fuente"}`.
+- Inspección: hallazgos ponderados (críticos → deficiente) por concepto (fugas, nivel, Buchholz, sobrepresión, boquillas, tierras, alarmas, temperaturas del indicador con umbrales editables), recomendaciones con acción y norma, historial, tendencias de temperatura y de cada parámetro de aceite, y pestaña de calidad de datos (SAP repetido, tensión primaria inconsistente, termómetros en 0 °C, resumen del PDF vs evaluación, capacidad «kva» normalizada a MVA).
+
+## Módulo Relevadores de protección (`app/sicm-relevadores.html`)
+
+Basado en el procedimiento **4128-11422-SICM-PEO-003** (2.ª edición): fuente `app/relevadores/{parse,model,ingest,views,init}.js` + `template.html`; ensamblado con `scripts/build_relevadores.py`; catálogo de formatos `data/relevadores/formatos.json` (anexos 9.1–9.8: 4 listas Tipo A por HMI y 4 Tipo B por software —GE Serie 8, ABB Relion 615, Siemens Reyrolle, Schneider—, extraídas del PDF con coordenadas, conceptos críticos marcados según 7.3.6 y puntos «validar»).
+
+- **Programa**: Tipo A (visual y HMI) cada 6 meses y Tipo B (software, descarga de eventos/oscilografías/configuración y conexión) cada 12 meses; intervalos y umbrales editables (pestaña 6). Semáforo al corriente / por vencer / vencida / sin registro, agenda y hallazgos críticos abiertos.
+- **Captura** de la inspección con la lista del anexo de la marca (OK / NO OK / N/A, valor leído, observaciones), mediciones con criterio (gabinete < 55 °C, alimentación auxiliar ±10 %, corrientes < 5 %, tensiones < 2 %, 60 ± 0.1 Hz, reloj, ambiente), dictamen automático (sin hallazgos / con hallazgos IW21 / CRÍTICO) y formato imprimible con la estructura de los anexos (en blanco o llenado).
+- **Repositorio técnico independiente** de las inspecciones: ajustes, oscilografías COMTRADE (.cfg + .dat ASCII/binario, visor de forma de onda con RMS y señales digitales), eventos/logs (búsqueda y conteo por tipo) y comparación de respaldos de ajustes; archivos guardados en IndexedDB, nombre `TAG_MARCA_MODELO_AAAAMMDD` para asignación automática.
+- **Hallazgos** con seguimiento (aviso SAP IW21, estado, cierre), censo importable por CSV y demostración retirable.
+- **Límites** [Seguro]: no se conecta a los relevadores (CSP sin red); los conceptos «validar» del procedimiento siguen pendientes de confirmarse contra manual; el visor COMTRADE no cubre todas las variantes del estándar (se probó con ASCII/binario de 16 bits y datos sintéticos, no con registros reales).
+
+### Censo de relevadores precargado (módulo Relevadores)
+`scripts/extract_relevadores_censo.py` genera `data/relevadores/censo_sap.json` desde el censo SAP PM (`data/normalized/equipos.json`, familia *relevador*): **1 947 relevadores** con planta, sector, subestación y tablero (de la ubicación técnica), marca, modelo, función, alimentación auxiliar y puerto de comunicación. Marca y modelo se normalizan (ABB 806 · GE 404 · SEL 344 · Siemens 282 · Schneider 38 · otras 22 · 51 sin marca en SAP). Alcance: protección digital, protección de arco (ABB REA) y medición (multimedidores, **fuera del programa por omisión** [Suposición], editable por equipo). Las marcas sin anexo propio en el PEO-003 (SEL, REA, otras) usan los formatos genéricos A-GEN / B-GEN (`scripts/gen_formatos_genericos.py`), marcados «validar». El censo se carga solo si la base está vacía; el botón de la pestaña 7 lo completa sin pisar lo editado.
+
+## Módulo Ultrasonido (`app/sicm-ultrasonido.html`)
+
+Basado en **4128-11422-SICM-PEO-006**: ultrasonido aerotransportado en equipo eléctrico (UP15000 + SCM 40 kHz) y de contacto en equipo dinámico (STM 38 kHz). Fuente `app/ultrasonido/{parse,model,ingest,views,init}.js` + `template.html`; ensamblado con `scripts/build_ultrasonido.py`; censo SAP PM (2 728 equipos) con `scripts/extract_ultrasonido_censo.py` → `data/ultrasonido/censo_sap.json`.
+
+- **Formatos y listas del procedimiento**: reporte anexo 9.3 (eléctrico) y 9.8 (dinámico) con encabezado, tabla de hallazgos, análisis espectral, correlación, lubricación guiada, comparación con la inspección anterior, diagnóstico y acción; RCT del anexo 9.5 (Cumple / No cumple, 16 + 15 conceptos); distancias NFPA 70E y PPE (anexo 9.6); impresión del formato llenado o en blanco.
+- **Niveles**: dinámico por Δ dB sobre línea base (promedio de ≥ 3 mediciones) Normal < +8, Alerta +8, Alarma +12, Crítico +16 (aviso SAP 3/2/1); eléctrico por firma acústica (sin umbral de dB).
+- **Pestaña 4 · Análisis de señal (.csv)**: forma de onda, FFT, espectro de la envolvente, fase de pulsos respecto a 60 Hz, marcadores (60/120 Hz y armónicas; BPFO/BPFI/BSF/FTF y 1× rpm) y propuesta de firma (13 eléctricas, condiciones dinámicas) que el inspector confirma.
+- **Límites** [Seguro]: el sonido con audífonos es el diagnóstico primario según el procedimiento; la clasificación automática es asistida y sus umbrales (cresta, curtosis, pendiente, bandas) son valores iniciales [Suposición] validados solo con señales sintéticas, no con registros de campo. Sin regla automática para «conexión caliente + humedad», corrientes en rodamiento (VFD) ni chumaceras.

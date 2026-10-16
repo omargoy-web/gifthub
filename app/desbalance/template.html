@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Desbalance · Desbalance de tensión en CCM 480 V</title>
+<style>
+/*__CORE_CSS__*/
+/* ---- Identidad del módulo Desbalance (mismo semáforo del formato SICM) ---- */
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED;--zA:#2E7D32;--zB:#7CB342;--zC:#F57F17;--zD:#C62828}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16);--zA:#5BD07A;--zB:#A7D86B;--zC:#FFB04D;--zD:#FF7B7B}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px}
+.chk div{border:1px solid var(--line);border-left:5px solid var(--gris);border-radius:8px;padding:7px 10px;background:var(--surface);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.chk .ok{border-left-color:var(--ok)}.chk .bad{border-left-color:var(--crit)}.chk .wr{border-left-color:var(--warn-fill)}.chk .na{border-left-color:var(--line);color:var(--muted)}
+.chk b{white-space:nowrap}
+.alertbar{display:flex;gap:10px;align-items:flex-start;border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:13px;border:1px solid}
+.alertbar.crit{background:var(--crit-bg);border-color:var(--crit)}.alertbar.warn{background:var(--warn-bg);border-color:var(--warn-fill)}.alertbar.oos{background:var(--oos-bg);border-color:var(--oos)}.alertbar.info{background:var(--surface2);border-color:var(--line)}
+.tlitem{border-left:3px solid var(--line);padding:2px 0 10px 14px;position:relative}
+.tlitem:before{content:"";position:absolute;left:-7px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--gris)}
+.tlitem.c0:before{background:var(--ok)}.tlitem.c1:before{background:var(--warn-fill)}.tlitem.c2:before{background:var(--crit)}.tlitem.c3:before{background:var(--oos)}
+.mx3{display:grid;grid-template-columns:repeat(3,auto 1fr);gap:4px 10px;font-size:12px}
+.mx3 b{font-variant-numeric:tabular-nums;font-size:13px}.mx3 span{color:var(--muted)}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.capgrid label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.capgrid input,.capgrid select{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{background:color-mix(in srgb,var(--zB) 22%,transparent)}td.zC,.zC{background:color-mix(in srgb,var(--zC) 30%,transparent)}td.zD,.zD{background:color-mix(in srgb,var(--zD) 30%,transparent);font-weight:700}
+.zbar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}.zbar i{display:block;font-style:normal;font-size:11px;color:#fff;text-align:center;line-height:22px;min-width:0;overflow:hidden}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:4px 0 8px}.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.vtab{width:100%;border-collapse:collapse;font-size:13px}.vtab td,.vtab th{padding:5px 8px;border:1px solid var(--line);text-align:center}.vtab th{background:var(--surface2);font-size:11.5px}
+.sel-inline{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mk{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;align-items:center}.mk label{display:flex;gap:4px;align-items:center;flex-direction:row;color:var(--text)}
+.stg select,.stg input{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:2px 4px;font-size:12px;max-width:140px}
+@media print{header.top,.tabs,.bar,.statusbar,#btnPrint,.zb,.btn{display:none!important}.view{display:none!important}#v-exp{display:block!important}body{background:#fff;color:#000}}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px;align-items:start}.grid3 .panel{margin-bottom:0}
+table.kv{width:100%}table.kv td{padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}#busTable td,#histTable td,#qTable td{white-space:nowrap}
+td.bad{color:var(--crit);font-weight:700}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Desbalance · Desbalance de tensión en tableros de baja tensión (CCM 480 V)</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · 4128-11422-IT-001 (Anexos 6.4 / 6.5) · delta sin neutro · detección de fase a tierra · ISO 14224</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnLoad">⬆ Cargar reportes PDF / JSON</button>
+  <button class="btn ghost" id="btnExport">⬇ Exportar base</button>
+  <button class="btn ghost" id="btnHist">⬇ Histórico CSV</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="exec" aria-selected="true">1 · Ejecutivo y censo</button>
+  <button role="tab" data-view="exp" aria-selected="false">2 · Expediente por CCM / bus</button>
+  <button role="tab" data-view="trend" aria-selected="false">3 · Tendencias e histórico</button>
+  <button role="tab" data-view="cal" aria-selected="false">4 · Calidad y trazabilidad</button>
+  <button role="tab" data-view="data" aria-selected="false">5 · Datos y carga</button>
+</nav>
+<main>
+<!-- ============ 1 · EJECUTIVO ============ -->
+<section id="v-exec" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar">
+    <label>Sector<select id="fSector"></select></label>
+    <label>Subestación<select id="fSub"></select></label>
+    <label>Estado<select id="fEst"></select></label>
+    <label>Folio (reporte)<select id="fFolio"></select></label>
+    <label>Buscar CCM / transformador<input type="text" id="fQ" placeholder="CCM-12-02, Tr-12-05…"></label>
+    <span class="sp"></span><span class="small muted" id="fCount"></span>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="panel"><h2>Desbalance de tensión por bus (%) — última medición, ordenado</h2><div class="legend" id="zLegend"></div>
+        <div class="chartbox" style="height:260px;margin:0"><canvas id="cRank"></canvas><div class="tip"></div></div><div class="small muted" id="rankNote"></div></div>
+      <div class="panel"><h2>Buses medidos · clic para abrir el expediente</h2><div class="tw" style="max-height:520px"><table id="busTable"></table></div></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Distribución por banda de desbalance fase-tierra</h2><div id="bandDist"></div></div>
+      <div class="panel"><h2>Alertas y hallazgos prioritarios</h2><ul class="alerts" id="alerts"></ul></div>
+      <div class="panel"><h2>Censo por subestación</h2><div class="tw" style="max-height:260px"><table id="subTable"></table></div></div>
+      <div class="panel small"><h3>Cómo se interpreta</h3><div style="display:flex;flex-direction:column;gap:5px">
+        <div><span class="chip c0">● SATISFACTORIA</span> desbalance fase-tierra menor al límite (sin indicios de fase a tierra) y medición completa</div>
+        <div><span class="chip c1">▲ CONDICIONADA</span> posible fase a tierra de alta impedancia (≥ 50 %), o medición parcial / dato dudoso</div>
+        <div><span class="chip c2">■ DEFICIENTE</span> fase a tierra franca (≈ 100 %): una fase cerca de 0 V y las otras hacia la tensión de línea</div>
+        <div><span class="chip c3">◆ SIN MEDICIÓN</span> voltajes en 0 (instrumento fuera de operación): no es 0 % de desbalance</div></div>
+        <p>Sistema delta sin neutro: se evalúan los voltajes <b>fase-tierra</b> (conmutador F-T). % desbalance = desviación máxima respecto al promedio ÷ promedio. Los límites son editables en «4 · Calidad y trazabilidad».</p></div>
+    </div>
+  </div>
+</section>
+<!-- ============ 2 · EXPEDIENTE ============ -->
+<section id="v-exp" class="view" hidden>
+  <div class="bar"><label>Subestación · CCM · bus<select class="selAsset" id="expSel"></select></label><span class="sp"></span>
+    <button class="btn sm" id="btnExpJson">⬇ Expediente (.json)</button><button class="btn sm" id="btnExpCsv">⬇ Histórico del bus (.csv)</button><button class="btn sm" id="btnExpHtml">⬇ Reporte (.html)</button><button class="btn sm" id="btnPrint">🖶 Imprimir</button></div>
+  <div id="expBody"></div>
+</section>
+<!-- ============ 3 · TENDENCIAS ============ -->
+<section id="v-trend" class="view" hidden>
+  <div class="bar"><label>Bus<select class="selAsset" id="trSel"></select></label></div>
+  <div class="stats" id="trStats"></div>
+  <div class="chartbox tall"><div class="ttl">Desbalance del bus seleccionado (%) · recalculado vs reportado · rueda = zoom · arrastrar = paneo</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cPct"></canvas><div class="tip"></div></div>
+  <div class="chartbox"><div class="ttl">Voltajes del bus seleccionado (V fase-tierra) y promedio de línea</div><canvas id="cVolt"></canvas><div class="tip"></div></div>
+  <div class="infobox">Cada recorrido cubre sectores distintos en fechas distintas: la gráfica de campaña es una <b>foto de cada recorrido</b>, no la evolución de un mismo tablero. La tendencia real de un bus aparece cuando se repite su medición (≥ 3 puntos para la pendiente).</div>
+  <div class="chartbox"><div class="ttl">Campañas: máximo, percentil 90 y mediana del desbalance por recorrido (folio)</div><canvas id="cFleet"></canvas><div class="tip"></div></div>
+  <div class="panel"><h2>Recorridos (folios)</h2><div class="tw" style="max-height:240px"><table id="campTable"></table></div></div>
+  <div class="panel"><h2>Histórico de mediciones <span class="small muted" id="hCount"></span></h2>
+    <div class="bar"><label>Buscar<input type="text" id="hQ" placeholder="CCM, subestación, transformador o folio"></label><span class="sp"></span><button class="btn sm" id="btnHistCsv">⬇ CSV (con cálculos y trazabilidad)</button></div>
+    <div class="tw" style="max-height:420px"><table id="histTable"></table></div></div>
+</section>
+<!-- ============ 4 · CALIDAD ============ -->
+<section id="v-cal" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="panel"><h2>Criterios (editables)</h2>
+        <div class="capgrid"><label>Fase-tierra: condicionada desde (%)<input type="number" step="0.1" id="cUw"></label><label>Fase-tierra: deficiente desde (%)<input type="number" step="0.1" id="cUc"></label><label>Nivel de tensión: advertencia (± %)<input type="number" step="0.5" id="cVw"></label><label>Nivel de tensión: crítico (± %)<input type="number" step="0.5" id="cVc"></label><label>Tensión nominal de línea (V)<input type="number" id="cNom"></label></div>
+        <p class="small muted">Sistema delta sin neutro: el objetivo es detectar fases o líneas a tierra. Con una fase franca a tierra, esa fase mide ≈ 0 V y las otras dos ≈ la tensión de línea, lo que equivale a ≈ 100 % de desbalance fase-tierra, mientras que las tensiones de línea permanecen equilibradas. Por debajo del límite de condicionada (50 %) el equipo se considera sin indicios de fase a tierra. El límite de deficiente (90 %) es mi propuesta para distinguir la falla franca de una fuga de alta impedancia; ajústalo a tu criterio. El formato del PDF no define un criterio de aceptación.</p>
+        <button class="btn pri" id="btnApplyCfg">Aplicar criterios</button></div>
+      <div class="panel"><h2>Reconciliación con el resumen de cada PDF</h2><div class="tw" style="max-height:300px"><table id="recTable"></table></div>
+        <p class="small muted">El resumen del PDF clasifica por el veredicto capturado en campo; aquí se compara contra el recálculo de los voltajes.</p></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Lista de verificación · respuestas «Sí» por folio</h2><div class="tw" style="max-height:480px"><table id="chkTable" class="vtab"></table></div><p class="small muted">Verde = todas las hojas con «Sí»; los puntos 12 y 14–18 son informativos o de hallazgo (sin color).</p></div>
+    </div>
+  </div>
+  <div class="panel"><h2>Avisos de calidad de datos <span class="small muted" id="qCount"></span></h2>
+    <p class="small muted">Se conserva el dato tal como se capturó; lo dudoso se marca y se excluye del cálculo del estado cuando corresponde. Clic en una fila para abrir el expediente.</p>
+    <div id="qSum" class="stats"></div>
+    <div class="bar"><label>Tipo<select id="qTipo"></select></label><span class="sp"></span><button class="btn sm" id="btnQCsv">⬇ CSV</button></div>
+    <div class="tw" style="max-height:420px"><table id="qTable"></table></div></div>
+</section>
+<!-- ============ 5 · DATOS ============ -->
+<section id="v-data" class="view" hidden>
+  <div class="grid2">
+    <div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Zona de carga de archivos">
+        <b>Actualizar la base: arrastra reportes PDF «Desbalance CCM 480 V» o archivos .json</b><br>
+        <span class="muted">Se agregan sin borrar lo anterior (por folio y CCM) · cada medición nueva alimenta el histórico y las tendencias · se guardan en este navegador</span></div>
+      <input type="file" id="fileIn" accept=".pdf,.json,application/pdf,application/json" multiple hidden>
+      <div class="panel" id="stage" hidden style="margin-top:12px"><h2>Vista previa de importación <span class="small muted" id="stBusy"></span></h2>
+        <div class="tw stg" style="max-height:340px"><table id="stTable"></table></div><p class="small muted" id="stSummary"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" id="stCommit">Agregar a la base</button><button class="btn" id="stCancel">Descartar</button></div>
+        <p class="small muted">Verifica que «hojas CCM / total del PDF» coincida: el lector avisa cuando el PDF indica más CCM de los que pudo leer.</p></div>
+      <div class="panel" style="margin-top:12px"><h2>Captura manual de una medición</h2><div id="capForm"></div></div>
+      <div class="panel"><h2>Bitácora de cargas</h2><div class="log" id="log"></div></div>
+      <div class="panel"><h2>Esquema JSON <code>sicm-desbalance/v1</code></h2><pre class="code" id="schema"></pre></div>
+    </div>
+    <div>
+      <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" id="btnExport2">⬇ Exportar base (.json)</button><button class="btn" id="btnCsv2">⬇ Resumen por bus (.csv)</button><button class="btn" id="btnHist2">⬇ Histórico (.csv)</button>
+          <button class="btn" id="btnReseed">↺ Restablecer datos incluidos</button><button class="btn" id="btnWipe">🗑 Vaciar base</button></div></div>
+      <div class="panel small"><h3>Trazabilidad</h3>Cada medición conserva su folio, archivo fuente, hoja, N° SAP, orden SAP, transformador, fecha y GPS de captura y responsables. Los valores calculados (desbalance, estado, nivel de tensión) se derivan de lo capturado y se muestran junto a lo reportado en el formato.</div>
+      <div class="panel small"><h3>Seguridad y modularidad</h3>Archivo autocontenido: sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). Comparte núcleo (estilos, almacenamiento, gráficas, lector PDF) con los módulos Térmico, SFI y Motores para ensamblarse después en una sola app; cada módulo guarda su base por separado.</div>
+    </div>
+  </div>
+</section>
+</main>
+<div class="statusbar" id="statusbar"></div>
+<div id="dropOverlay">Suelta los archivos para cargarlos</div>
+<script>/*__PDFJS__*/</script>
+<script>/*__PDFWORKER__*/</script>
+<script id="seed" type="application/json">/*__SEED__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>
