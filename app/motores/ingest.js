@@ -22,7 +22,7 @@ function addQ(rep,seenD,k,tag,ts,it,fuente){const key=k+'|'+ts+'|'+it.campo;if(s
 /* ---------- Ingesta de recorridos extraídos, JSON de la suite y exportaciones propias ---------- */
 function ingest(obj,fname){
   const rep={file:fname,warn:[],act:0,vib:0,mot:0,sp:0,dup:0,skip:0,ts:Date.now()};
-  const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,act:rep.act,vib:rep.vib,mot:rep.mot,sp:rep.sp,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,40)};
+  const pushLog=()=>{DB.archivos.unshift({nombre:fname,ts:rep.ts,act:rep.act,vib:rep.vib,mot:rep.mot,sp:rep.sp,sa:rep.sa||0,dup:rep.dup,skip:rep.skip,warn:rep.warn.slice(0,6)});DB.archivos=DB.archivos.slice(0,40)};
   if(!obj||typeof obj!=='object'){rep.warn.push('El archivo no contiene un objeto JSON válido.');pushLog();return rep}
   const recs=Array.isArray(obj.recorridos)?obj.recorridos:null,acts=Array.isArray(obj.activos)?obj.activos:null;
   if(!recs&&!acts){rep.warn.push('Sin "recorridos" ni "activos": estructura no reconocida (ver esquema en esta pestaña).');pushLog();return rep}
@@ -36,8 +36,10 @@ function ingest(obj,fname){
     if(rd.raw){const{o,iss}=cleanMotReading(rd.raw);rd.c=o;iss.forEach(it=>addQ(rep,seenD,rd.k,rd.tag,it.unico?0:rd.ts,it,rd.folio));delete rd.raw}
     const kk=rd.k+'|'+rd.ts+'|'+(rd.c&&rd.c.n);if(seenM.has(kk)){rep.dup++;return}seenM.add(kk);
     DB.mot.push(rd);rep.mot++;upsertAsset(rd.tag,rd.k,{sector:rd.sector,area:rd.area,sap:rd.sap,servicio:rd.servicio,gps:rd.gps,kw:rd.c&&rd.c.kw,hp:rd.c&&rd.c.hp,fuente:'MOT'})};
+  const easRecs=[];
   for(const r of (recs||[])){
-    if(r.fmt==='VME')addVib(recToVib(r),true);else if(r.fmt==='MOT')recToMot(r).forEach(rd=>addMot(rd));else rep.skip++}
+    if(r.fmt==='VME')addVib(recToVib(r),true);else if(r.fmt==='MOT')recToMot(r).forEach(rd=>addMot(rd));else if(r.fmt==='EAS')easRecs.push(r);else rep.skip++}
+  if(easRecs.length){saIngest(easRecs,rep);if(rep.sa)rep.warn.push(`ℹ ${rep.sa} inspección(es) de soloaires (estado aparente) agregadas.`)}
   for(const a of (acts||[])){
     const tag=nTag(a.tag||a.TAG),k=keyOf(tag);if(!k){rep.skip++;continue}
     upsertAsset(tag,k,{sector:a.sector,area:a.area,sap:a.sap,servicio:a.servicio,gps:a.gps,nivel_v:a.nivel_v,rpm:a.rpm,rod:a.rod,hp:a.hp,vn:a.vn,kw:a.kw_max,fuente:null});
@@ -56,7 +58,10 @@ function ingest(obj,fname){
 
 /* ---------- PDF ---------- */
 async function parsePdf(file){
-  const pages=await pdfPages(file),res=parseMotoresDoc(pages);
+  const pages=await pdfPages(file),f0=flatOf(pages[0]||[]);
+  if(/SOLOAIRES/i.test(f0)&&/RESUMEN EJECUTIVO/i.test(f0)){const sa=parseEstadoDocSA(pages,file.name);for(const r of sa.recs)r.archivo=file.name;
+    return{recs:sa.recs,info:{paginas:sa.paginas,folio:sa.folio,total:sa.total,formato:'EAS',warn:sa.warn}}}
+  const res=parseMotoresDoc(pages);
   for(const r of res.recs){r.archivo=file.name}
   return{recs:res.recs,info:{paginas:res.paginas,folio:res.folio,total:res.total,formato:res.fmt,warn:res.warn}}}
 
@@ -117,11 +122,11 @@ const dlTags=()=>`<datalist id="dlTags">${assets().map(a=>`<option value="${esc(
 function renderStage(){
   const st=$('#stage');if(!STAGE.length){st.hidden=true;return}st.hidden=false;
   const pdfs=STAGE.filter(s=>s.kind!=='CSV'),csvs=STAGE.filter(s=>s.kind==='CSV');
-  const newI=pdfs.reduce((s,x)=>s+(x.rep?x.rep.vib+x.rep.mot:0),0),nCsv=csvs.reduce((s,x)=>s+(x.csv?x.csv.length:0),0);
+  const newI=pdfs.reduce((s,x)=>s+(x.rep?x.rep.vib+x.rep.mot+(x.rep.sa||0):0),0),nCsv=csvs.reduce((s,x)=>s+(x.csv?x.csv.length:0),0);
   let html='';
   if(pdfs.length)html+='<tr><th>Archivo</th><th>Tipo</th><th>Folio</th><th class="n">Págs.</th><th class="n">Motores / total</th><th class="n">Vibr. nuevas</th><th class="n">Variador nuevas</th><th class="n">Duplicadas</th><th>Avisos</th></tr>'+pdfs.map(s=>{const i=s.info,r=s.rep||{};
     const warn=[...(i.error?['⛔ '+i.error]:[]),...(i.warn||[]),...(r.warn||[])];
-    return`<tr><td><b>${esc(s.name)}</b></td><td>${s.kind}${i.formato?' · '+(i.formato==='MOT'?'Variador':'Vibraciones'):''}</td><td class="small">${esc(i.folio||'—')}</td><td class="n">${i.paginas??'—'}</td><td class="n">${s.obj&&s.obj.recorridos?`${s.obj.recorridos.length} / ${i.total??'?'}`:r.act!=null?r.act+' equipos':'—'}</td><td class="n">${r.vib??'—'}</td><td class="n">${r.mot??'—'}</td><td class="n">${r.dup??'—'}</td><td class="small">${warn.map(w=>`<div style="color:${w.startsWith('⛔')?'var(--crit)':'var(--warn)'}">${esc(w)}</div>`).join('')||'<span class="muted">sin avisos</span>'}</td></tr>`}).join('');
+    return`<tr><td><b>${esc(s.name)}</b></td><td>${s.kind}${i.formato?' · '+(i.formato==='MOT'?'Variador':i.formato==='EAS'?'Soloaires':'Vibraciones'):''}</td><td class="small">${esc(i.folio||'—')}</td><td class="n">${i.paginas??'—'}</td><td class="n">${s.obj&&s.obj.recorridos?`${s.obj.recorridos.length} / ${i.total??'?'}`:r.act!=null?r.act+' equipos':'—'}</td><td class="n">${r.vib??'—'}</td><td class="n">${r.mot??'—'}</td><td class="n">${r.dup??'—'}</td><td class="small">${warn.map(w=>`<div style="color:${w.startsWith('⛔')?'var(--crit)':'var(--warn)'}">${esc(w)}</div>`).join('')||'<span class="muted">sin avisos</span>'}</td></tr>`}).join('');
   if(csvs.length){html+='<tr><th>Archivo CSV</th><th>Canal</th><th>Detectado</th><th>Motor (TAG)</th><th>Punto</th><th>Eje</th><th>Tipo</th><th>Unidad</th><th>Amplitud</th><th>RPM</th><th>Fs (Hz)</th><th>Fecha y hora</th></tr>';
     csvs.forEach(s=>{const si=STAGE.indexOf(s);if(!s.csv){html+=`<tr><td><b>${esc(s.name)}</b></td><td colspan="11" style="color:var(--crit)">⛔ ${esc(s.info.error)}</td></tr>`;return}
       s.csv.forEach((it,ci)=>{const a=it.a,ch=it.ch,d=`data-s="${si}" data-c="${ci}"`;
@@ -142,7 +147,7 @@ async function commitStage(){
     else if(s.kind==='CSV'&&s.csv){let ok=0;for(const it of s.csv){try{if(await commitSpectrum(it,$('#spWin').value))ok++}catch(e){errs.push(`${s.name}: ${e.message}`)}}sp+=ok;DB.archivos.unshift({nombre:s.name,ts:Date.now(),act:0,vib:0,mot:0,sp:ok,dup:s.csv.length-ok,skip:0,warn:errs.slice(0,3)})}
     else DB.archivos.unshift({nombre:s.name,ts:Date.now(),act:0,vib:0,mot:0,sp:0,dup:0,skip:0,warn:[s.info.error||'error']})}
   STAGE=[];rebuild();save();refreshAll();renderStage();toast(`${n} archivo(s) PDF/JSON y ${sp} medición(es) CSV agregados${errs.length?' · '+errs.length+' con error':''}`)}
-async function loadSeed(){ingest(JSON.parse($('#seed').textContent),'seed_real_motores.json (reportes PDF jul–oct 2026)')}
+async function loadSeed(){ingest(JSON.parse($('#seed').textContent),'seed_real_motores.json (reportes PDF jul–oct 2026)');try{await saLoadSeed()}catch(e){console.error('semilla soloaires',e)}}
 
 /* ---------- Captura manual ---------- */
 const CAP_VIB=[['vel.ll.v','LL · velocidad V (mm/s)'],['vel.ll.h','LL · velocidad H'],['vel.ll.a','LL · velocidad A'],['vel.lc.v','LC · velocidad V'],['vel.lc.h','LC · velocidad H'],['vel.lc.a','LC · velocidad A'],['ge.ll','gE lado libre'],['ge.lc','gE lado cople'],['temp.lc','T lado cople (°C)'],['temp.cu','T cuerpo (°C)'],['temp.lv','T lado libre (°C)'],

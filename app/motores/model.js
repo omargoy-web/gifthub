@@ -13,7 +13,7 @@ const ISO_LIM={1:{rigid:[2.3,4.5,7.1],flex:[3.5,7.1,11.0]},2:{rigid:[1.4,2.8,4.5
 const ZONES=['A','B','C','D'];
 const ZSEV=[0,0,1,2];
 
-const emptyDB=()=>({v:1,activos:{},vib:[],mot:[],espectros:[],descartes:[],archivos:[],vpts:{},vser:[],vfas:[],vsp:[]});
+const emptyDB=()=>({v:1,activos:{},vib:[],mot:[],espectros:[],descartes:[],archivos:[],vpts:{},vser:[],vfas:[],vsp:[],eas:[]});
 let DB=emptyDB(),IX={vib:new Map(),mot:new Map(),sp:new Map(),ev:new Map(),cur:new Map(),mday:new Map()};
 let saveT=null;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>Store.put('kv','db',DB).catch(e=>toast('Error al guardar: '+e)),200)}
@@ -192,6 +192,7 @@ function rebuild(){
         prioridad:top?top.prio:'Rutina',modo:top?top.modo:null,iso:top?top.iso:null}}
     IX.cur.set(k,cur)}
   if(typeof vRebuild==='function')vRebuild();
+  if(typeof saRebuild==='function')saRebuild();
 }
 const assets=()=>Object.values(DB.activos).sort((a,b)=>a.tag.localeCompare(b.tag,'es',{numeric:true}));
 const lastVib=k=>{const a=IX.vib.get(k);return a&&a[a.length-1]};

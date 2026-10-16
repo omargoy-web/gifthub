@@ -143,6 +143,7 @@ function renderExp(){
   $$('#expBody [data-ins]').forEach(l=>l.addEventListener('click',ev=>{ev.preventDefault();S.insId=l.dataset.ins;renderExp()}));
   $$('#expBody [data-sp]').forEach(b=>b.addEventListener('click',()=>{S.sp.id=b.dataset.sp;switchView('spec')}));
   $$('#expBody [data-spg]').forEach(b=>b.addEventListener('click',()=>{S.sp.id=b.dataset.spg;switchView('spec')}));spThumbs()
+  if(typeof saExpCard==='function')saExpCard();
 }
 
 /* ---------------------------------------------------------------- 3 · TENDENCIAS */
@@ -337,8 +338,8 @@ function fillAssetSelects(){
 function refreshAll(){
   if(!S.sel||!DB.activos[S.sel])S.sel=assets()[0]&&assets()[0].k||null;
   fillAssetSelects();renderExec();
-  if(S.view==='exp')renderExp();if(S.view==='trend')renderTrend(true);if(S.view==='spec')renderSpec();if(S.view==='data')renderData();if(S.view==='vib')renderVib();if(S.view==='rel'){fillVSelects();renderRel()}
+  if(S.view==='exp')renderExp();if(S.view==='sa')renderSA();if(S.view==='trend')renderTrend(true);if(S.view==='spec')renderSpec();if(S.view==='data')renderData();if(S.view==='vib')renderVib();if(S.view==='rel'){fillVSelects();renderRel()}
   const ts=refTs();$('#statusbar').innerHTML=`<span>${Object.keys(DB.activos).length} motores · ${pesos(DB.vib.length)} inspecciones de vibración · ${pesos(DB.mot.length)} tomas de variador · ${DB.espectros.length} espectros · ${pesos(VIX.pts.size)} puntos Vibrio (${pesos(DB.vsp.length)} FFT/ondas)</span><span>Último registro: ${DB.vib.length+DB.mot.length?fDT(ts):'—'} (hora de Tabasco)</span><span>Almacenamiento: ${esc(Store.mode())}</span>`}
 function switchView(v){
   S.view=v;$$('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.view===v)));$$('.view').forEach(x=>x.hidden=x.id!=='v-'+v);
-  requestAnimationFrame(()=>{if(v==='exec')renderExec();if(v==='exp')renderExp();if(v==='trend')renderTrend(true);if(v==='spec')renderSpec();if(v==='data')renderData();if(v==='vib')renderVib();if(v==='rel'){fillVSelects();renderRel()}window.scrollTo(0,0)})}
+  requestAnimationFrame(()=>{if(v==='exec')renderExec();if(v==='exp')renderExp();if(v==='sa')renderSA();if(v==='trend')renderTrend(true);if(v==='spec')renderSpec();if(v==='data')renderData();if(v==='vib')renderVib();if(v==='rel'){fillVSelects();renderRel()}window.scrollTo(0,0)})}

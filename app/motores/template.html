@@ -55,7 +55,8 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
   <button role="tab" data-view="spec" aria-selected="false">4 · Espectros FFT y ondas</button>
   <button role="tab" data-view="vib" aria-selected="false">5 · Puntos Vibrio · FASIT</button>
   <button role="tab" data-view="rel" aria-selected="false">6 · Confiabilidad y pronóstico</button>
-  <button role="tab" data-view="data" aria-selected="false">7 · Datos y carga</button>
+  <button role="tab" data-view="sa" aria-selected="false">7 · Estado aparente · soloaires</button>
+  <button role="tab" data-view="data" aria-selected="false">8 · Datos y carga</button>
 </nav>
 
 <main>
@@ -208,6 +209,14 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
 </section>
 
 <!-- ============ 7 · DATOS ============ -->
+<section id="v-sa" class="view" hidden>
+  <div class="kpis" id="saKpi"></div>
+  <div class="infobox">Anexo del estado aparente de los <b>soloaires</b> (recorridos de inspección visual): disponibilidad, banda, trinquete, guarda, motor, mediciones en CCM y observaciones de campo. Cada soloaire se enlaza con su motor por <b>TAG del motor</b> (o por N.º SAP) para completar lo que no muestran las vibraciones ni el variador. El estado aparente se pondera con criterio propio (editable en el código): sin guarda o sin motor = crítico; sin banda, desbalances de tensión/corriente y sobrecorriente suman puntos.</div>
+  <div class="bar"><label>Sector<select id="saSector"></select></label><label>Planta<select id="saPlanta"></select></label><label>Estado<select id="saEst"></select></label><label>Vínculo<select id="saVinc"></select></label><label>Buscar TAG / motor / SAP<input type="text" id="saQ" placeholder="EC-11013, ECM-…"></label><span class="sp"></span><span class="small muted" id="saCount"></span><button class="btn sm" id="btnSaCsv">⬇ CSV</button></div>
+  <div style="display:grid;grid-template-columns:minmax(0,2.1fr) minmax(340px,1fr);gap:14px;align-items:start"><div class="panel"><h2>Soloaires · clic para ver el expediente</h2><div class="tw" style="max-height:640px"><table id="saTable"></table></div><button class="btn" id="saMore" hidden style="margin-top:8px"></button></div>
+    <div class="panel" id="saDetail"></div></div>
+  <div class="panel"><h2>Cruce con vibraciones y variador · motores con atención en alguna de las dos fuentes</h2><div class="tw" style="max-height:420px"><table id="saCross"></table></div><p class="small muted">Se listan los motores enlazados que tienen condición de vibración/variador distinta de satisfactoria, o estado aparente condicionado/deficiente, o una inconsistencia entre fuentes (p. ej. soloaire «fuera de operación» con vibración reciente).</p></div>
+</section>
 <section id="v-data" class="view" hidden>
   <div class="panel" id="vLoader"><h2>Cargar mediciones Vibrio · carpeta, ZIP o CSV</h2>
     <div class="drop" id="vDrop" tabindex="0" role="button" aria-label="Zona de carga de carpeta Vibrio"><b>Arrastra aquí la carpeta de mediciones (o un .zip, o varios .csv)</b><br><span class="muted">Vel / Acc / Demod · FFT, onda, RMS, pico · Temp · FASIT. La jerarquía Sector › Planta › Equipo › Punto se toma de las carpetas. Se agrega sin borrar lo anterior; lo repetido se omite.</span></div>
@@ -261,6 +270,7 @@ td.zA,.zA{background:color-mix(in srgb,var(--zA) 22%,transparent)}td.zB,.zB{back
 <script>/*__PDFJS__*/</script>
 <script>/*__PDFWORKER__*/</script>
 <script id="seed" type="application/json">/*__SEED__*/</script>
+<script id="seedSA" type="application/json">/*__SEEDSA__*/</script>
 <script id="seedv" type="application/json">/*__SEEDV__*/</script>
 <script>
 'use strict';

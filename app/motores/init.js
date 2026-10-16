@@ -10,6 +10,7 @@ async function init(){
   if(saved&&saved.activos&&Object.keys(saved.activos).length)DB={...emptyDB(),...saved};
   else{DB=emptyDB();await loadSeed();save()}
   if(!Object.keys(DB.vpts||{}).length){try{if(await vLoadSeed())save()}catch(e){console.error('semilla Vibrio',e)}}
+  if(!(DB.eas&&DB.eas.length)){try{if(await saLoadSeed())save()}catch(e){console.error('semilla soloaires',e)}}
   rebuild();
   for(const [k,id] of [['R','cRank'],['Vel','cVel'],['Ge','cGe'],['Tmp','cTmp'],['El','cEl'],['V1','cV1'],['V2','cV2'],['V3','cV3'],['FFT','cFFT'],['Wave','cWave'],['Feat','cFeat'],['Fm','cFm'],['Ff','cFf'],['Hv','cHv'],['Ha','cHa'],['Ht','cHt'],['He','cHe'],['Sp','cSp'],['Sw','cSw'],['Sf','cSf'],['Rf','cRf'],['Rw','cRw']])(['Fm','Ff','Hv','Ha','Ht','He','Sp','Sw','Sf','Rf','Rw'].includes(k)?VCH:CH)[k]=new Chart($('#'+id));
   $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
@@ -30,6 +31,7 @@ async function init(){
   $('#fQ').addEventListener('input',e=>{S.f.q=e.target.value;S.limit=60;renderExec()});
   $$('.selAsset').forEach(s=>s.addEventListener('change',e=>{S.sel=e.target.value;S.insId=null;S.sp.id=null;S.sp.cmp.clear();fillAssetSelects();if(S.view==='exp')renderExp();if(S.view==='trend')renderTrend(true);if(S.view==='spec')renderSpec()}));
   $('#btnPrint').addEventListener('click',()=>window.print());
+  [['saSector','sector'],['saPlanta','planta'],['saEst','est'],['saVinc','vinc']].forEach(([id,k])=>$('#'+id).addEventListener('change',e=>{SAS.f[k]=e.target.value;SAS.limit=100;renderSA()}));$('#saQ').addEventListener('input',e=>{SAS.f.q=e.target.value;SAS.limit=100;renderSA()});$('#saMore').addEventListener('click',()=>{SAS.limit+=200;renderSA()});$('#btnSaCsv').addEventListener('click',exportSA);
   $('#btnExpJson').addEventListener('click',()=>S.sel&&exportMotorJson(S.sel));$('#btnExpCsv').addEventListener('click',()=>S.sel&&exportMotorCsv(S.sel));
   $('#btnExpHtml').addEventListener('click',async()=>{if(!S.sel)return;download(`reporte-${S.sel}-${new Date().toISOString().slice(0,10)}.html`,await reportHtml(S.sel),'text/html;charset=utf-8')});
   // tendencias y criterios
