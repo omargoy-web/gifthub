@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>SICM-Ultrasonido · PEO-006</title>
+<style>
+/*__CORE_CSS__*/
+:root{--ok:#2E7D32;--ok-bg:#E4F2E5;--warn:#9A4A00;--warn-bg:#FFEBD2;--warn-fill:#F57F17;--crit:#C62828;--crit-bg:#FBE3E3;--oos:#455A64;--oos-bg:#E3E9ED}
+:root[data-theme="dark"]{--ok:#5BD07A;--ok-bg:rgba(91,208,122,.14);--warn:#FFB04D;--warn-bg:rgba(245,127,23,.18);--warn-fill:#F57F17;--crit:#FF7B7B;--crit-bg:rgba(255,123,123,.16);--oos:#8FA9B8;--oos-bg:rgba(143,169,184,.16)}
+body{font-family:Inter,"Segoe UI",Roboto,system-ui,-apple-system,Arial,sans-serif}
+.grid2e{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);gap:14px;align-items:start}@media(max-width:1000px){.grid2e{grid-template-columns:1fr}}
+.tw table td{vertical-align:top}tr.hrow{cursor:pointer}tr.hrow:hover{background:var(--surface2)}b.bad,.bad{color:var(--crit)}b.link{cursor:pointer;color:var(--dorado);text-decoration:underline}
+.seg{display:inline-flex}.seg button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:5px 14px;font-size:12.5px;cursor:pointer}.seg button:first-child{border-radius:6px 0 0 6px}.seg button:last-child{border-radius:0 6px 6px 0}.seg button.on{background:var(--dorado);color:#000;font-weight:700}
+.stat.s-warn b{color:var(--warn)}.stat.s-crit b{color:var(--crit)}
+.seg3{display:inline-flex}.seg3 button{background:var(--surface2);border:1px solid var(--line);color:var(--text);padding:3px 9px;font-size:12px;cursor:pointer}.seg3 button:first-child{border-radius:6px 0 0 6px}.seg3 button:last-child{border-radius:0 6px 6px 0}.seg3 button.on.OK{background:var(--ok);color:#fff}.seg3 button.on.NO{background:var(--crit);color:#fff}.seg3 button.on.NA{background:var(--oos);color:#fff}
+table.chkl td{padding:4px 6px}table.chkl tr.sec td,table tr.sec td{background:var(--surface2);font-weight:700;color:var(--dorado)}tr.critrow td:first-child{border-left:4px solid var(--crit)}table.chkl tr.st-NO td{background:var(--crit-bg)}table.chkl tr.st-OK td:first-child{border-left:4px solid var(--ok)}
+.capgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}.capgrid label{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--muted)}
+.capgrid label.chk,label.chk{flex-direction:row!important;align-items:center;gap:6px;color:var(--text)}
+.capgrid input,.capgrid select,table input,table select,textarea,.bar input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
+table.kv{width:100%}table.kv td{padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}
+tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{background:var(--crit-bg)}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start}.grid3 .panel{margin-bottom:0}
+.sbar{display:grid;grid-template-columns:150px 1fr 40px;gap:8px;align-items:center;padding:3px 0;font-size:12.5px;cursor:pointer}.sbar:hover{background:var(--surface2)}.sbar .v{text-align:right;font-variant-numeric:tabular-nums}
+.tr{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}.fl{height:100%;border-radius:6px}
+@media print{header.top,.tabs,.bar,.statusbar,.btn{display:none!important}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top">
+  <nav id="suiteNav" class="suite" aria-label="Módulos de la suite"></nav>
+  <div class="grow">
+    <h1>SICM-Ultrasonido · PEO-006 · aerotransportado (eléctrico) y de contacto (dinámico)</h1>
+    <div class="sub">Refinería Olmeca · SICM Eléctrico · procedimiento 4128-11422-SICM-PEO-006 · UP15000 + SCM 40 kHz (corona, tracking, PD, arcing, SF₆) y STM 38 kHz (rodamientos) · Δ dB sobre línea base · FFT, forma de onda y envolvente · NFPA 70B / 70E</div>
+  </div>
+  <button class="btn ghost" id="btnTheme" title="Alternar modo claro / oscuro">◐ Tema</button>
+  <button class="btn ghost" id="btnSummary">⬇ Resumen (.csv)</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Módulos">
+  <button role="tab" data-view="pan" aria-selected="true">1 · Panorama</button>
+  <button role="tab" data-view="eq" aria-selected="false">2 · Equipo</button>
+  <button role="tab" data-view="cap" aria-selected="false">3 · Inspección (anexos 9.3 / 9.8 · RCT 9.5)</button>
+  <button role="tab" data-view="an" aria-selected="false">4 · Análisis de señal (CSV · FFT · onda)</button>
+  <button role="tab" data-view="sig" aria-selected="false">5 · Firmas de falla (9.4 / 9.9)</button>
+  <button role="tab" data-view="cfg" aria-selected="false">6 · Criterios y formatos</button>
+  <button role="tab" data-view="data" aria-selected="false">7 · Datos</button>
+</nav>
+<main>
+<section id="v-pan" class="view">
+  <div class="kpis" id="kpis"></div>
+  <div class="bar"><label>Tipo<select id="fKind"></select></label><label>Planta<select id="fPlanta"></select></label><label>Estado<select id="fEst"></select></label><label>Buscar<input type="text" id="fQ" size="18" placeholder="TAG, familia, SAP…"></label><span class="sp"></span><button class="btn sm" id="btnFClr">Limpiar filtros</button><button class="btn sm" id="btnSum2">⬇ Resumen (.csv)</button></div>
+  <div class="small muted" id="fCount" style="margin:-6px 0 10px"></div>
+  <div class="grid3" id="dist" style="margin-bottom:14px"></div>
+  <div class="panel"><h2>Equipos · clic abre el expediente</h2><div class="tw" style="max-height:560px"><table id="tblPan"></table></div></div>
+  <div class="panel"><h2>Equipos en atención o críticos</h2><div class="tw" style="max-height:340px"><table id="tblAl"></table></div></div>
+</section>
+<section id="v-eq" class="view" hidden>
+  <div class="bar"><label>Buscar<input type="text" id="eqQ" size="16" placeholder="TAG, planta…"></label><label>Equipo<select id="eqSel"></select></label><button class="btn pri sm" id="btnNewEq">＋ Nuevo equipo</button></div>
+  <div id="eqBody"></div>
+  <dialog id="dlgEq"><h2 id="dlgEqT"></h2><div class="form" id="dlgEqF"></div><div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" id="dlgEqOk">Guardar</button><button class="btn" id="dlgEqNo">Cancelar</button></div></dialog>
+</section>
+<section id="v-cap" class="view" hidden>
+  <div class="infobox"><b>Reporte de inspección + revisión de ciclo de trabajo (RCT).</b> Formatos conforme a los anexos <b>9.3</b> (aerotransportado, equipo eléctrico), <b>9.8</b> (contacto, equipo dinámico) y <b>9.5</b> (RCT: Cumple / No cumple) del PEO-006. <b>Regla de seguridad #1:</b> gabinetes cerrados y asegurados; nunca insertes la sonda en una abertura. <b>Regla #2:</b> contacto solo en carcasas, tapas y chumaceras estáticas; sin retirar guardas ni tocar partes giratorias. Niveles por Δ dB sobre la línea base (promedio de ≥ 3 mediciones buenas): Normal &lt; +8 · Alerta +8 · Alarma +12 · Crítico +16.</div>
+  <div class="panel"><div class="bar" style="margin-bottom:6px"><label>Buscar<input type="text" id="cpQ" size="14" placeholder="TAG, planta…"></label><label>Equipo<select id="cpEq"></select></label><span class="seg" id="cpKind"><button data-k="elec">Eléctrico · aerotransportado</button><button data-k="rod">Dinámico · contacto</button></span><span class="sp"></span><button class="btn sm" id="btnBlank">🖶 Formato en blanco</button></div>
+    <div class="small" id="cpFmt" style="margin-bottom:8px"></div>
+    <div class="capgrid"><label>Fecha y hora<input type="datetime-local" id="cpFecha"></label><label>Orden SAP PM01<input id="cpOt"></label><label>Inspector<input id="cpEj"></label><label>Revisó (Ing. Especialista)<input id="cpRev"></label></div>
+    <div id="cpHdr" style="margin-top:8px"></div></div>
+  <div class="panel"><h2>Tabla de hallazgos</h2><p class="small muted" id="cpPtNote"></p><div class="tw" style="max-height:none"><table id="tblPts"></table></div><button class="btn sm" id="btnAddPt" style="margin-top:8px">＋ Agregar punto</button></div>
+  <div class="panel"><h2>Análisis espectral (Spectralyzer) y cierre del reporte</h2><p class="small muted">Los análisis guardados en la pestaña 4 para este equipo (± 7 días de la fecha) se imprimen como renglones del análisis espectral del reporte. <button class="btn sm" id="btnGoAn">∿ Ir al análisis de señal</button></p><div id="cpCierre"></div></div>
+  <div class="panel"><h2>Revisión de ciclo de trabajo (RCT · anexo 9.5)</h2><p class="small muted">La evalúa el supervisor sobre el cumplimiento del procedimiento en campo; no determina la condición del equipo.</p><div class="capgrid" id="cpRctH" style="margin-bottom:8px"></div><div style="display:flex;gap:8px;margin-bottom:8px"><button class="btn sm" id="btnAllOk">Marcar todo «Cumple»</button><button class="btn sm" id="btnClr">Limpiar</button></div><div id="cpBody"></div></div>
+  <div class="panel"><h2>Dictamen y registro</h2><div id="cpDict" style="margin-bottom:8px"></div><div class="capgrid"><label>Aviso SAP IW21 N.º<input id="cpIw"></label><label style="grid-column:1/-1">Observaciones generales<input id="cpObs"></label></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="btnCapSave">Guardar inspección</button><button class="btn" id="btnCapPrint">🖶 Formato llenado (.html)</button></div></div>
+</section>
+<section id="v-an" class="view" hidden>
+  <div class="infobox">Carga el <b>.csv</b> exportado del instrumento: <b>forma de onda</b> (columnas de tiempo y amplitud; un solo canal también sirve si indicas la frecuencia de muestreo) o <b>espectro</b> (frecuencia y amplitud). El módulo calcula nivel (dBµV), pico, factor de cresta y curtosis; muestra la <b>forma de onda</b> en el tiempo, el <b>espectro FFT</b> y el espectro de la <b>envolvente</b> con marcadores de falla (60 / 120 Hz y armónicas para las firmas eléctricas del anexo 9.4; BPFO / BPFI / BSF / FTF y 1× rpm para rodamientos, anexo 9.9) y propone la firma. <b>El sonido con audífonos es el diagnóstico primario; la FFT lo confirma</b>: confirma o corrige la firma al guardar.</div>
+  <div class="grid2e"><div>
+    <div class="panel"><h2>Archivo y parámetros</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" style="padding:12px"><b>Arrastra el .csv aquí o haz clic</b><br><span class="muted">Hasta ~1 M de muestras (se analizan las primeras 1 048 576)</span></div>
+      <input type="file" id="anFile" accept=".csv,.txt,text/csv" hidden>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn sm" id="btnAnTpl">⬇ Plantilla CSV</button><span class="small muted" style="align-self:center">o genera una señal <b>simulada</b>:</span></div><div id="aSyn" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div class="capgrid"><label>Buscar equipo<input id="aEqQ" placeholder="TAG, planta…"></label><label>Equipo (opcional)<select id="aEq"></select></label><label>Punto<input id="aPunto" placeholder="LA vertical…"></label><label>Tipo de análisis<select id="aKind"></select></label>
+        <label>Unidad de la amplitud<select id="aUnit"></select></label><label>Factor µV por unidad<input id="aFactor" value="1"></label><label>Frecuencia de muestreo (Hz)<input id="aFs"></label><label>Pasa-altas (Hz, 0 = no)<input id="aHp" value="0"></label><label>Frecuencia de línea (Hz)<input id="aLine" value="60"></label><label id="aBaseL">Línea base del punto (dBµV)<input id="aBase"><span class="small muted" id="aBaseN"></span></label><label>Familia del equipo<select id="aFamEq"></select></label><label id="aSf6L" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="aSf6"> Equipo con SF₆ (GIS)</label></div>
+      <div id="aRodBox" style="margin-top:8px"><div class="capgrid"><label>Velocidad (rpm)<input id="aRpm"></label><label>Elementos rodantes<input id="aNb"></label><label>Bd (mm)<input id="aBd"></label><label>Pd (mm)<input id="aPd"></label><label>Ángulo de contacto (°)<input id="aBeta" value="0"></label><label>Rodamiento típico<select id="aPre"></select></label></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn pri" id="btnAnRun">Analizar</button></div><p class="small muted" id="aMsg" style="margin-top:8px"></p></div>
+  </div><div>
+    <div class="panel small"><h3>Cómo leer la señal (anexos 9.4 y 9.9)</h3><b>Eléctrico:</b> corona = banda ancha continua y plana, sin picos ni impactos; fuga de gas (SF₆) = banda ancha con pendiente ascendente (más energía arriba de 500 Hz), sin picos a 60/120 Hz; descarga parcial = pulsos periódicos equiespaciados a 60/120 Hz con armónicas; tracking = ráfagas intermitentes con silencios; arcing = impactos discretos aleatorios de alta energía; conexión floja = pico dominante a 120 Hz con armónicas (240, 360, 480); magnetostricción = 120 Hz con armónicas pares. <b>Dinámico:</b> Δ dB sobre la línea base del mismo punto (Alerta +8, Alarma +12, Crítico +16); impactos periódicos + BPFO/BPFI/BSF/FTF = daño localizado; piso elevado sin impactos = lubricación; picos a 1× rpm = desalineación o rozamiento. <b>Si el instrumento exporta la señal ultrasónica directa (≥ 80 kHz)</b>, usa un pasa-altas de 2 000 Hz para rodamientos; si exporta la señal heterodinada (audible), pasa-altas 0.</div>
+  </div></div>
+  <div id="aOut" hidden>
+    <div class="stats" id="aKpi" style="margin-top:12px"></div>
+    <div class="bar"><label>Ventana inicio (ms)<input id="aW0" value="0" size="6"></label><label>Duración (ms)<input id="aWl" value="100" size="6"></label><label><input type="checkbox" id="aCyc" checked> ciclos de línea</label><label>Fmáx señal (Hz)<input id="aFmR" value="" size="6"></label><label>Fmáx envolvente (Hz)<input id="aFmE" value="600" size="6"></label><label><input type="checkbox" id="aLin"> escala lineal</label><label><input type="checkbox" id="aMk" checked> marcadores</label><label><input type="checkbox" id="aBand"> bandas 20–300 / 100–800 Hz</label><button class="btn sm" id="btnAnRedraw">Actualizar</button></div>
+    <div class="chartbox" id="cWbox"><div class="ttl">Forma de onda en el tiempo · líneas grises = ciclos de la onda de línea</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cW"></canvas><div class="tip"></div></div>
+    <div class="chartbox"><div class="ttl">Espectro FFT de la señal</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cS"></canvas><div class="tip"></div></div>
+    <div class="chartbox" id="cEbox"><div class="ttl">Espectro de la envolvente (demodulación) · marcadores de falla</div><div class="zb"><button class="btn sm" data-z="in">＋</button><button class="btn sm" data-z="out">－</button><button class="btn sm" data-z="reset">⟲</button></div><canvas id="cE"></canvas><div class="tip"></div></div>
+    <div class="grid2e"><div><div class="panel"><h2>Firmas de falla identificadas</h2><div id="aFam"></div></div></div><div><div class="panel"><h2>Fase de los pulsos respecto a la onda de línea</h2><div id="aPhase"></div></div><div class="panel"><h2>Picos espectrales</h2><div class="tw" style="max-height:340px"><table id="aPeaks"></table></div></div></div></div>
+    <div class="panel"><h2>Guardar en el expediente</h2><div class="capgrid"><label>Clasificación definitiva (inspector)<select id="aConf"></select></label><label>¿Coincide con el audio de campo?<select id="aCoin"><option value="">—</option><option value="1">Sí</option><option value="0">No (re-inspeccionar el punto)</option></select></label><label style="grid-column:1/-1">Nota<input id="aNota"></label></div><label style="display:block;margin:8px 0"><input type="checkbox" id="aSetBase"> Contar este nivel como medición buena de la línea base del punto (promedio de ≥ 3; solo equipo dinámico)</label><button class="btn pri" id="aSave">Guardar análisis</button> <span class="small muted">Se guarda el CSV completo en este navegador para reabrirlo desde el expediente.</span></div>
+  </div>
+</section>
+<section id="v-sig" class="view" hidden>
+  <div class="infobox"><b>Guía rápida de campo</b> tomada de los anexos 9.4 (equipo eléctrico), 9.7 y 9.9 (equipo dinámico) del PEO-006. La calidad del sonido escuchada con los audífonos es la herramienta diagnóstica <b>primaria</b>; el FFT en Spectralyzer <b>confirma</b>. Las reglas automáticas de la pestaña 4 aplican estas firmas; sus umbrales numéricos (cresta, curtosis, pendiente) son valores iniciales por validar con casos reales de la refinería.</div><div class="panel"><h2>Sonido que se escucha → firma que sugiere</h2><div class="tw" style="max-height:420px"><table id="sigSon"></table></div></div>
+  <h2 style="margin:14px 0 8px">Equipo eléctrico · aerotransportado (SCM 40 kHz)</h2><div class="grid3" id="sigElec"></div>
+  <h2 style="margin:14px 0 8px">Equipo dinámico · contacto (STM 38 kHz)</h2><div class="grid3" id="sigRod"></div>
+  <div class="panel" style="margin-top:14px"><h2>Calculadora de frecuencias de rodamiento</h2><div class="capgrid"><label>Velocidad (rpm)<input id="bRpm"></label><label>Elementos rodantes<input id="bNb"></label><label>Bd (mm)<input id="bBd"></label><label>Pd (mm)<input id="bPd"></label><label>Ángulo de contacto (°)<input id="bBeta" value="0"></label><label>Rodamiento típico<select id="bPre"></select></label></div><div class="tw" style="margin-top:8px"><table id="bOut"></table></div><button class="btn sm" id="bUse" style="margin-top:8px">Usar en el análisis (pestaña 4)</button><p class="small muted">Valores de rodamientos típicos = nominales de catálogo; usa los del fabricante del rodamiento instalado. BPFO = (n/2)·f·(1 − Bd/Pd·cosβ) · BPFI = (n/2)·f·(1 + Bd/Pd·cosβ) · BSF = (Pd/2Bd)·f·[1 − (Bd/Pd·cosβ)²] · FTF = (f/2)·(1 − Bd/Pd·cosβ).</p></div>
+</section>
+<section id="v-cfg" class="view" hidden>
+  <div class="warnbox"><b>Criterios del PEO-006.</b> Dinámico: Δ +8 / +12 / +16 dB sobre la línea base = Alerta / Alarma / Crítico (7.10.5; aviso SAP prioridad 3 / 2 / 1). Eléctrico: sin umbral de dB; se diagnostica por sonido, FFT y forma de onda. Los umbrales de <b>factor de cresta, curtosis, pendiente y fracciones de banda</b> que usa la clasificación automática son valores iniciales <b>[Suposición]</b>: el procedimiento no los fija. Ajústalos con casos reales.</div>
+  <div class="panel"><h2>Criterios numéricos e intervalos</h2><div class="capgrid" id="cfgF"></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri" id="btnApplyCfg">Aplicar</button><button class="btn" id="btnResetCfg">↺ Valores de referencia</button></div></div>
+  <div class="panel"><h2>Distancias de aproximación NFPA 70E / NOM-029-STPS (anexo 9.6 · tabla A)</h2><div class="tw" style="max-height:none"><table id="tblDist"></table></div><h2 style="margin-top:14px">PPE Category por energía incidente (anexo 9.6 · tabla B)</h2><div class="tw" style="max-height:none"><table id="tblPpe"></table></div><p class="small muted">Documento de consulta. El PPE se define con la etiqueta de arco del equipo (IEEE 1584). Con más de 40 cal/cm² no se inspecciona a esa distancia: solo LRM fuera del límite de arco.</p></div>
+  <div class="panel"><h2>Revisión de ciclo de trabajo (RCT · anexo 9.5) — editable</h2><p class="small muted">Cargada con los 16 + 15 aspectos del anexo 9.5 del PEO-006. Si el procedimiento se revisa, edita los conceptos o importa un JSON con el formato <code>[{"id":"ELEC|ROD","titulo":"…","secs":{"A":"…"},"items":[{"n":1,"sec":"A","txt":"…","crit":"Cumple","critico":false}]}]</code>.</p>
+    <div class="bar"><label>Lista<select id="cfFmt"></select></label><label>Título<input id="cfTitulo" size="60"></label><button class="btn sm" id="btnAddItem">＋ Concepto</button><button class="btn sm" id="btnExpFmt">⬇ Exportar (.json)</button><button class="btn sm" id="btnImpFmt">⬆ Importar (.json)</button><button class="btn sm" id="btnResetFmt">↺ Anexo 9.5 original</button></div><input type="file" id="fmtIn" accept=".json" hidden>
+    <div class="tw" style="max-height:520px"><table id="tblFmt"></table></div></div>
+</section>
+<section id="v-data" class="view" hidden>
+  <div class="grid2e"><div>
+    <div class="panel"><h2>Censo SAP PM incluido</h2><p class="small">2 728 equipos: 1 758 motores (rodamientos; 1 214 con velocidad) y equipo eléctrico (286 tableros, 219 CCM, 431 transformadores, 34 subestaciones). Datos de rodamiento (modelo, elementos, diámetros) no vienen en SAP: se capturan en la ficha del equipo.</p><button class="btn" id="btnCenso">↻ Cargar / completar censo SAP PM</button></div>
+    <div class="panel"><h2>Exportaciones</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="btnSum3">⬇ Resumen de equipos</button><button class="btn" id="btnPuntosCsv">⬇ Puntos de medición</button><button class="btn" id="btnAnCsv">⬇ Análisis de señal</button></div></div>
+    <div class="panel"><h2>Demostración</h2><p class="small">Carga 3 equipos de ejemplo (un motor con línea base de 3 mediciones y deterioro creciente, un tablero con «bacon frying» y un transformador). Se retiran con un clic.</p><div style="display:flex;gap:8px"><button class="btn" id="btnDemo">Cargar demostración</button><button class="btn" id="btnNoDemo">Quitar demostración</button></div></div>
+    <div class="panel"><h2>Bitácora</h2><div class="log" id="log"></div></div>
+  </div><div>
+    <div class="panel"><h2>Base de datos local</h2><div id="dbStats"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" id="btnExport">⬇ Exportar base (.json)</button><button class="btn" id="btnImport">⬆ Importar base (.json)</button><button class="btn" id="btnWipe">🗑 Vaciar base y análisis</button></div><input type="file" id="jsonIn" accept=".json" hidden></div>
+    <div class="panel small"><h3>Seguridad y modularidad</h3>Archivo autocontenido sin CDN ni peticiones de red (CSP <code>connect-src 'none'</code>). El análisis se hace en el navegador; los CSV guardados quedan solo en este equipo.</div>
+  </div></div>
+</section>
+</main>
+<div class="statusbar" id="statusbar"></div>
+<script id="censo" type="application/json">/*__CENSO__*/</script>
+<script>
+'use strict';
+/*__CORE_JS__*/
+/*__MODULE_JS__*/
+</script>
+</body>
+</html>
