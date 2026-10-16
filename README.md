@@ -292,6 +292,8 @@ Lee los reportes PDF «Medición de desbalance de tensión — CCM 480 V» (Anex
 
 **Cálculo:** % desbalance = desviación máxima respecto al promedio ÷ promedio (NEMA MG-1), recalculado en fase-neutro y en línea-línea y comparado con lo reportado. Estado por bus: ≤ 3 % satisfactoria, 3–5 % condicionada, > 5 % deficiente (límites editables; 3 % = ANSI C84.1 / IEEE 1159, 5 % = NEMA MG-1). Voltajes en cero = «sin medición» (no 0 %). Fase-neutro desbalanceada con línea-línea equilibrada se marca como condicionada (neutro, cargas monofásicas o medidor). Los criterios son una propuesta: el formato no trae criterio de aceptación.
 
+**Criterio vigente (delta sin neutro):** el módulo busca fases o líneas a tierra con los voltajes fase-tierra del conmutador F-T. Desbalance fase-tierra < 50 % = sin indicios de fase a tierra (satisfactoria); ≥ 50 % = condicionada (posible fase a tierra de alta impedancia); ≥ 90 % = deficiente (fase a tierra franca: una fase ≈ 0 V y las otras ≈ tensión de línea). Se identifica la fase afectada y se verifica que las tensiones de línea sigan equilibradas; con solo tensiones de línea no se puede descartar una fase a tierra y queda condicionada. Los límites son editables.
+
 ## Módulo Estado aparente (`app/sicm-estado.html`)
 
 Exclusivo de **subestaciones eléctricas**. Lee los reportes PDF de inspección visual PO-002-6 (`…-ELE-SUB-…`, mensual de 58 puntos C/NC/N/A y semestral de 121 puntos Sí/No), pondera cada punto en un **índice de deficiencia (IC, 0–100)** y lo integra con el **mapeo de estado** de la presentación «Mapeo de estado de subestaciones eléctricas» (Refinería Olmeca, 29.12.2025). Los reportes de soloaires se omiten al cargar.

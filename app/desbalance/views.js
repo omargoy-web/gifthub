@@ -46,7 +46,7 @@ function renderExec(){
   $('#alerts').innerHTML=al.length?al.slice(0,80).map(x=>`<li data-k="${esc(x.a.key)}"><span class="chip c${x.sev}">${COND[x.sev].i}</span><div><span class="t">${esc(aFull(x.a))}</span> ${x.a.last.e.pct!=null?`<b>${f1(x.a.last.e.pct,1)} %</b>`:''}<br><span class="muted">${esc(x.txt)}</span>${x.extra.map(t=>`<br><span class="small" style="color:var(--warn)">⚠ ${esc(t)}</span>`).join('')}<br><span class="small muted">${esc(x.a.last.e.prioridad)} · ${esc(fshort(x.a.last.folio))}</span></div></li>`).join(''):'<li class="muted">Sin alertas en el filtro actual.</li>';
   $$('#alerts li[data-k]').forEach(li=>li.addEventListener('click',()=>openExp(li.dataset.k)));
   // bandas
-  const bands=[['≤ 1 %',0,1],['1–3 %',1,3],['3–5 %',3,5],['> 5 %',5,1e9]],bc=bands.map(([l,lo,hi])=>pcts.filter(v=>v>lo&&v<=hi||(lo===0&&v===0)).length),tb=pcts.length;
+  const bands=[['< 5 %',0,5],['5–25 %',5,25],[`25–${CFG.unb.warn} %`,25,CFG.unb.warn],[`≥ ${CFG.unb.warn} % (posible fase a tierra)`,CFG.unb.warn,1e9]],bc=bands.map(([l,lo,hi])=>pcts.filter(v=>v>=lo&&v<hi).length),tb=pcts.length;
   const bcol=['--ok','--ok','--warn-fill','--crit'];
   $('#bandDist').innerHTML=tb?`<div class="zbar">${bc.map((v,i)=>v?`<i style="background:var(${bcol[i]});width:${v/tb*100}%" title="${bands[i][0]}: ${v}">${v}</i>`:'').join('')}</div><div class="legend">${bands.map((b,i)=>`<span><i style="background:var(${bcol[i]})"></i>${b[0]} · ${bc[i]}</span>`).join('')}</div><div class="small muted">${tb} buses con desbalance calculable de ${list.length}; ${list.length-tb} sin medición válida.</div>`:'<span class="muted">Sin datos.</span>';
   // subestaciones
@@ -55,9 +55,9 @@ function renderExec(){
   renderRank(list)}
 function renderRank(list){
   const L=list.filter(a=>a.last.e.pct!=null).map(a=>({a,v:a.last.e.pct,s:a.last.e.est})).sort((p,q)=>p.v-q.v),top=Math.max(8,...(L.length?[L[L.length-1].v*1.08]:[0]));
-  $('#zLegend').innerHTML=[0,1,2].map(i=>`<span><i style="background:var(${sevVar[i]})"></i>${COND[i].n}</span>`).join('')+`<span class="muted">Límites: ${CFG.unb.warn} % (ANSI C84.1 / IEEE 1159) · ${CFG.unb.crit} % (NEMA MG-1)</span>`;
+  $('#zLegend').innerHTML=[0,1,2].map(i=>`<span><i style="background:var(${sevVar[i]})"></i>${COND[i].n}</span>`).join('')+`<span class="muted">Fase a tierra: condicionada desde ${CFG.unb.warn} % · deficiente desde ${CFG.unb.crit} % de desbalance fase-tierra</span>`;
   CH.R.setData({xType:'lin',xFmt:v=>{const o=L[Math.round(v)-1];return o&&Number.isInteger(v)?o.a.ccm.replace(/^.*?CCM-?/,''):''},yFmt:v=>f1(v,0)+' %',y2Fmt:String,yLabel:'% de desbalance',xLabel:`${L.length} buses ordenados por desbalance`,xdom:[0,L.length+1],
-    series:L.length?[{name:'Desbalance',color:cssv('--dorado'),kind:'stem',width:3,pts:L.map((o,i)=>[i+1,o.v,{c:cssv(sevVar[o.s])}])}]:[],ydomL:[0,top],hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`NEMA ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`${CFG.unb.warn} %`},{y:1,color:cssv('--ok'),label:'1 %'}],hInclude:true,
+    series:L.length?[{name:'Desbalance',color:cssv('--dorado'),kind:'stem',width:3,pts:L.map((o,i)=>[i+1,o.v,{c:cssv(sevVar[o.s])}])}]:[],ydomL:[0,top],hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`Fase a tierra franca ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`Condicionada ${CFG.unb.warn} %`}],hInclude:true,
     tipExtra:x=>{const o=L[Math.round(x)-1];return o?`<span class="muted">${esc(aFull(o.a))} · ${f1(o.v,2)} % · ${COND[o.s].n}</span>`:''},noData:L.length?null:'Sin mediciones con desbalance calculable'},true);
   $('#rankNote').textContent=L.length?`${L.length} buses con desbalance calculable. Los buses sin medición válida (voltajes en cero) no se grafican: no equivalen a 0 %.`:''}
 function openExp(k){S.sel=k;S.medId=null;fillAssetSelects();switchView('exp')}
@@ -89,13 +89,13 @@ function triSvg(a,b,c){
 function calcSteps(e,row){
   const f=(t,s,vals)=>{if(!s)return`<tr><td>${t}</td><td colspan="2" class="muted">No calculable (faltan lecturas)</td></tr>`;
     return`<tr><td>${t}</td><td class="small">V̄ = (${vals.join(' + ')}) / 3 = <b>${f1(s.avg,1)} V</b><br>Desviación máx. = máx|Vᵢ − V̄| = <b>${f1(s.dev,1)} V</b></td><td class="n"><b>${f1(s.pct,2)} %</b></td></tr>`};
-  return`<table><tr><th>Terna</th><th>Cálculo (NEMA MG-1: desviación máx. respecto al promedio ÷ promedio)</th><th class="n">% desb.</th></tr>${f('Fase-neutro',e.pn,[row.va,row.vb,row.vc])}${f('Línea-línea',e.ll,[row.vab,row.vbc,row.vca])}
+  return`<table><tr><th>Terna</th><th>Cálculo (desviación máx. respecto al promedio ÷ promedio)</th><th class="n">% desb.</th></tr>${f('Fase-tierra',e.pn,[row.va,row.vb,row.vc])}${f('Línea-línea',e.ll,[row.vab,row.vbc,row.vca])}
   <tr><td>Reportado en el formato</td><td class="small">Prom. ${row.prom??'—'} V · dif. máx. ${row.dif??'—'} V</td><td class="n"><b>${row.pct!=null?f1(row.pct,1)+' %':'—'}</b>${e.sinMed?' <span class="small muted">(sin medición)</span>':''}${e.repOk===true?' <span class="chip c0" style="padding:0 5px">coincide</span>':e.repOk===false?' <span class="chip c1" style="padding:0 5px">no coincide</span>':''}</td></tr></table>`}
 function interpHtml(m){
   const e=m.e,out=[];
   out.push(`<div class="alertbar ${e.est>=2?'crit':e.est===1?'warn':e.est===3?'oos':'info'}"><div><b>${COND[e.est].n}</b>${e.pct!=null?` · ${f1(e.pct,2)} % (${e.base})`:''}<br>${esc(e.dx)}</div></div>`);
   if(e.dv!=null)out.push(`<div class="alertbar ${e.nivel>=2?'crit':e.nivel===1?'warn':'info'}"><div><b>Nivel de tensión:</b> ${f1(e.vl,0)} V de línea promedio (${e.dv>0?'+':''}${f1(e.dv,1)} % del nominal ${CFG.nom} V)${e.nivel>=1?` — fuera de ±${CFG.vlev.warn} %: revisar derivación (tap) del transformador, caída en alimentadores o medidor.`:'.'}</div></div>`);
-  if(e.imb.der!=null&&e.pct!=null){const d=e.imb.der;out.push(`<div class="alertbar info"><div><b>Efecto en motores (estimación, NEMA MG-1 §14.36):</b> ${d===0?'desbalance > 5 %: <b>no operar motores</b> en esta condición.':`factor de reducción de potencia ≈ <b>${f1(d,2)}</b> (${f1((1-d)*100,0)} % menos de potencia útil).`} La corriente de fase puede desbalancearse ≈ ${f1(e.imb.cur[0],0)}–${f1(e.imb.cur[1],0)} % (6 a 10 × el desbalance de tensión) y el calentamiento del devanado aumentar ≈ ${f1(e.imb.tr,0)} % (≈ 2 × VU²). Son órdenes de magnitud; confirmar con mediciones de corriente.</div></div>`)}
+  if(e.imb.der!=null&&e.pct!=null){const d=e.imb.der;out.push(`<div class="alertbar info"><div><b>Efecto de la alimentación en motores (línea-línea; estimación NEMA MG-1 §14.36):</b> ${d===0?'desbalance > 5 %: <b>no operar motores</b> en esta condición.':`factor de reducción de potencia ≈ <b>${f1(d,2)}</b> (${f1((1-d)*100,0)} % menos de potencia útil).`} La corriente de fase puede desbalancearse ≈ ${f1(e.imb.cur[0],0)}–${f1(e.imb.cur[1],0)} % (6 a 10 × el desbalance de tensión) y el calentamiento del devanado aumentar ≈ ${f1(e.imb.tr,0)} % (≈ 2 × VU²). Son órdenes de magnitud; confirmar con mediciones de corriente.</div></div>`)}
   for(const f of e.flags)out.push(`<div class="alertbar ${f.sev>=1?'warn':'info'}"><div>${f.sev>=1?'⚠ ':'ℹ '}${esc(f.t)}</div></div>`);
   return out.join('')}
 function chkGrid(h){
@@ -112,8 +112,8 @@ function renderExp(){
   <div class="panel s${e.est}" style="border-left:6px solid var(${sevVar[e.est]})"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><h2 style="margin:0">${esc(aFull(a))}</h2><div class="small muted">${esc(a.planta||'')}${a.trf?' · Transformador '+esc(a.trf):''}</div></div><div>${chip(e.est)} <span class="small">Prioridad: <b>${esc(e.prioridad)}</b></span></div></div></div>
   <div class="grid3">
     <div class="panel"><h2>Trazabilidad del dato</h2><table class="kv">${rowKV('Folio',`<span style="font-family:monospace;font-size:12px">${esc(h.folio)}</span>`)}${rowKV('Archivo fuente',esc(h.archivo))}${rowKV('Hoja del reporte',h.manual?'captura manual':docIdx)}${rowKV('Sector',esc(h.sector??'—'))}${rowKV('Subestación',esc(h.sub_id))}${rowKV('Planta',esc(h.planta))}${rowKV('CCM (como en la hoja)',esc(h.ccm))}${rowKV('Bus',e.bus?`${esc(e.bus)} <span class="small muted">(según ${esc(e.busFuente)})</span>`:'—')}${rowKV('Transformador',esc(m.trf))}${rowKV('N° SAP',esc(h.sap))}${rowKV('Orden SAP',esc(h.orden_sap))}${rowKV('Capturado',h.capturado?fDT(m.ts):esc(h.fecha_doc))}${rowKV('GPS',esc(gps))}${rowKV('Realizó (campo)',esc(h.operario))}${rowKV('Ing. de sector',esc(h.ing_sector))}${rowKV('Resp. operativo',esc(h.resp_operativo))}${rowKV('Lámparas / voltímetro',esc([m.lamp,m.volt].filter(Boolean).join(' / ')))}${rowKV('Evidencia fotográfica',h.evidencia_foto?'Adjunta en el PDF':'—')}</table></div>
-    <div class="panel"><h2>Voltajes medidos</h2><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"><div><div class="small muted">Fase-neutro (V)</div>${barsSvg([r.va,r.vb,r.vc],['VA','VB','VC'],{avg:e.pn?e.pn.avg:null,bandPct:CFG.unb.warn,ref:CFG.nom/Math.sqrt(3)})}</div><div><div class="small muted">Línea-línea (V)</div>${barsSvg(e.llSusp?[r.vab,r.vbc,r.vca]:[r.vab,r.vbc,r.vca],['VAB','VBC','VCA'],{avg:e.ll?e.ll.avg:null,bandPct:CFG.unb.warn,ref:CFG.nom})}</div></div>
-      <div class="small muted">Banda verde: ± ${CFG.unb.warn} % del promedio. Barras en naranja/rojo: fase que se aleja más de ${CFG.unb.warn} % / ${CFG.unb.crit} %.</div>
+    <div class="panel"><h2>Voltajes medidos</h2><div class="grid2" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"><div><div class="small muted">Fase-tierra (V)</div>${barsSvg([r.va,r.vb,r.vc],['VA','VB','VC'],{avg:e.pn?e.pn.avg:null,bandPct:CFG.unb.warn,ref:CFG.nom/Math.sqrt(3)})}</div><div><div class="small muted">Línea-línea (V)</div>${barsSvg(e.llSusp?[r.vab,r.vbc,r.vca]:[r.vab,r.vbc,r.vca],['VAB','VBC','VCA'],{avg:e.ll?e.ll.avg:null,bandPct:CFG.unb.warn,ref:CFG.nom})}</div></div>
+      <div class="small muted">Barras en naranja/rojo: fase que se aleja ${CFG.unb.warn} % / ${CFG.unb.crit} % o más del promedio (fase a tierra).</div>
       <div style="margin-top:8px"><div class="small muted">Triángulo de tensiones de línea (reconstruido con las magnitudes; el ángulo no se midió; línea punteada = sistema equilibrado)</div>${triSvg(r.vab,r.vbc,r.vca)}</div></div>
     <div class="panel"><h2>Cálculo e interpretación</h2>${calcSteps(e,r)}<div style="margin-top:8px">${interpHtml(m)}</div></div>
   </div>
@@ -129,11 +129,11 @@ function renderTrend(reset){
   const T=(f,n,c,extra={})=>({name:n,color:c,pts:a.meds.filter(m=>f(m)!=null).map(m=>[m.ts,f(m)]),kind:'line',markers:true,...extra});
   const tip=ts=>{const m=a.meds.find(x=>x.ts===ts);return m?`<span class="muted">${esc(fshort(m.folio))}</span>`:''};
   CH.P.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,1)+' %',y2Fmt:String,yLabel:'% de desbalance',yMin0:true,hInclude:true,tipExtra:tip,
-    series:[T(m=>m.e.pn&&m.e.pn.pct,'Fase-neutro (recalculado)','#C9557C'),T(m=>m.e.ll&&m.e.ll.pct,'Línea-línea (recalculado)','#4C8BD6'),T(m=>m.row.pct,'Reportado en el formato','#BC955C',{dash:[5,3]})].filter(s=>s.pts.length),
-    hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`NEMA ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`${CFG.unb.warn} %`},{y:1,color:cssv('--ok'),label:'1 %'}],noData:a.meds.some(m=>m.e.pct!=null)?null:'Sin desbalance calculable (sin medición válida)'},reset);
-  CH.V.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,0)+' V',y2Fmt:v=>f1(v,0)+' V',yLabel:'V fase-neutro',yMin0:false,hInclude:false,tipExtra:tip,
+    series:[T(m=>m.e.pn&&m.e.pn.pct,'Fase-tierra (recalculado)','#C9557C'),T(m=>m.e.ll&&m.e.ll.pct,'Línea-línea (recalculado)','#4C8BD6'),T(m=>m.row.pct,'Reportado en el formato','#BC955C',{dash:[5,3]})].filter(s=>s.pts.length),
+    hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`Fase a tierra franca ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`Condicionada ${CFG.unb.warn} %`}],noData:a.meds.some(m=>m.e.pct!=null)?null:'Sin desbalance calculable (sin medición válida)'},reset);
+  CH.V.setData({xType:'time',xFmt:fDT,yFmt:v=>f1(v,0)+' V',y2Fmt:v=>f1(v,0)+' V',yLabel:'V fase-tierra',yMin0:false,hInclude:false,tipExtra:tip,
     series:[T(m=>okV(m.row.va)?m.row.va:null,'VA','#4C8BD6'),T(m=>okV(m.row.vb)?m.row.vb:null,'VB','#E07A45'),T(m=>okV(m.row.vc)?m.row.vc:null,'VC','#2F9E8F'),T(m=>m.e.vl,'V línea prom. (der.)','#9A6BC4',{axis:'r',dash:[5,3]})].filter(s=>s.pts.length),
-    hlines:[{y:CFG.nom/Math.sqrt(3),color:cssv('--muted'),label:'Nominal fase-neutro'}],noData:a.meds.some(m=>okV(m.row.va))?null:'Sin voltajes de fase-neutro válidos'},reset);
+    hlines:[{y:CFG.nom/Math.sqrt(3),color:cssv('--muted'),label:'Nominal fase-tierra'}],noData:a.meds.some(m=>okV(m.row.va))?null:'Sin voltajes de fase-tierra válidos'},reset);
   CH.P.group=CH.V.group=[CH.P,CH.V];
   const t=trendOf(a.meds),last=a.last.e,first=a.meds[0].e;
   $('#trStats').innerHTML=[['Mediciones',a.meds.length,a.meds.length>1?`${fDate(a.meds[0].ts)} → ${fDate(a.last.ts)}`:'una sola toma'],['Último desbalance',pc(last.pct,2),COND[last.est].n],['Variación total',a.meds.length>1&&first.pct!=null&&last.pct!=null?(last.pct-first.pct>=0?'+':'')+f1(last.pct-first.pct,2)+' puntos':'—','primera → última'],['Pendiente',t?(t.slope>=0?'+':'')+f1(t.slope,2)+' pts/mes':'—',t?`R² ${f1(t.r2,2)} · ${t.n} puntos`:'requiere ≥ 3 mediciones'],['Nivel de tensión',last.dv!=null?(last.dv>0?'+':'')+f1(last.dv,1)+' %':'—',last.vl?f1(last.vl,0)+' V línea':'']].map(([l,v,s])=>`<div class="stat"><span>${esc(l)}</span><b>${esc(v)}</b><small>${esc(s)}</small></div>`).join('');
@@ -142,7 +142,7 @@ function renderTrend(reset){
   const cpt=f=>camp.filter(c=>f(c)!=null).map(c=>[c.ts,f(c)]);
   CH.F.setData({xType:'time',xFmt:fDate,yFmt:v=>f1(v,0)+' %',y2Fmt:String,yLabel:'% de desbalance',yMin0:true,hInclude:true,tipExtra:ts=>{const c=camp.find(x=>x.ts===ts);return c?`<span class="muted">${esc(fshort(c.d.folio))} · ${c.n} buses</span>`:''},
     series:[{name:'Máximo',color:'#C9557C',pts:cpt(c=>c.mx),kind:'line',markers:true},{name:'Percentil 90',color:'#E07A45',pts:cpt(c=>c.p90),kind:'line',markers:true},{name:'Mediana',color:'#4C8BD6',pts:cpt(c=>c.md),kind:'line',markers:true}],
-    hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`NEMA ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`${CFG.unb.warn} %`}],noData:camp.length?null:'Sin recorridos'},reset);
+    hlines:[{y:CFG.unb.crit,color:cssv('--crit'),label:`Franca ${CFG.unb.crit} %`},{y:CFG.unb.warn,color:cssv('--warn-fill'),label:`Condicionada ${CFG.unb.warn} %`}],noData:camp.length?null:'Sin recorridos'},reset);
   $('#campTable').innerHTML='<tr><th>Fecha</th><th>Folio</th><th>Sector</th><th class="n">Hojas</th><th class="n">Buses</th><th class="n">●</th><th class="n">▲</th><th class="n">■</th><th class="n">◆</th><th class="n">Máx. %</th><th class="n">Mediana %</th></tr>'+camp.map(c=>`<tr><td>${fDate(c.ts)}</td><td class="small">${esc(fshort(c.d.folio))}</td><td>${esc(c.d.sector??'—')}</td><td class="n">${c.d.hojas.length}</td><td class="n">${c.n}</td>${c.d.cond.map(x=>`<td class="n">${x||''}</td>`).join('')}<td class="n">${c.mx!=null?f1(c.mx,1):'—'}</td><td class="n">${c.md!=null?f1(c.md,1):'—'}</td></tr>`).join('');
   // histórico
   const hs=IX.meds.filter(m=>(!S.f.sector&&true)).slice().reverse(),hq=($('#hQ').value||'').toLowerCase(),H=hs.filter(m=>!hq||(m.ccm+' '+m.sub_id+' '+(m.trf||'')+' '+m.folio).toLowerCase().includes(hq));
@@ -151,7 +151,7 @@ function renderTrend(reset){
   $$('#histTable tr[data-k]').forEach(tr=>tr.addEventListener('click',()=>{S.sel=tr.dataset.k;S.medId=tr.dataset.med;fillAssetSelects();switchView('exp')}))}
 
 /* ---------------------------------------------------------------- 4 · CALIDAD Y TRAZABILIDAD */
-const qTipo=t=>/Sin medici/.test(t)?'Sin medición (ceros)':/Falta lectura|faltan lecturas|Sin voltaje fase-neutro|Lectura de línea/.test(t)?'Lectura incompleta o en cero':/reporte indica/.test(t)?'Reporte ≠ recálculo':/dudoso/.test(t)?'Posible error de captura':/Lámparas/.test(t)?'Lámparas de desbalance deficientes':/Bus del rengl/.test(t)?'Bus incoherente':/Lista de verificación/.test(t)?'Lista de verificación':'Otro';
+const qTipo=t=>/Sin medici/.test(t)?'Sin medición (ceros)':/Falta lectura|faltan lecturas|Sin voltaje fase-tierra|Lectura de línea/.test(t)?'Lectura incompleta o en cero':/reporte indica/.test(t)?'Reporte ≠ recálculo':/dudoso/.test(t)?'Posible error de captura':/Lámparas/.test(t)?'Lámparas de desbalance deficientes':/Bus del rengl/.test(t)?'Bus incoherente':/Lista de verificación/.test(t)?'Lista de verificación':'Otro';
 function qRows(){
   const out=[];
   for(const m of IX.meds){
@@ -159,7 +159,7 @@ function qRows(){
     for(const f of m.e.flags)out.push({sev:f.sev,tipo:qTipo(f.t),m,t:f.t})}
   for(const h of DB.hojas){const c=h.chk||{};const m=IX.meds.find(x=>x.hid===h.id);if(!m)continue;
     for(const k of CHK_EXPECT)if(c[k]===false)out.push({sev:0,tipo:'Lista de verificación',m,t:`Lista de verificación: «${chkName(k)}» = No`});
-    if(c[14]===false&&IX.meds.filter(x=>x.hid===h.id).some(x=>x.e.est>=1&&x.e.pct!=null&&x.e.pct>CFG.unb.warn))out.push({sev:1,tipo:'Lista de verificación',m,t:'Desbalance sobre el límite pero el punto 14 «Desbalance significativo» está en No'})}
+    if(c[14]===false&&IX.meds.filter(x=>x.hid===h.id).some(x=>x.e.est>=1&&x.e.pct!=null&&x.e.pct>=CFG.unb.warn))out.push({sev:1,tipo:'Lista de verificación',m,t:'Posible fase a tierra (desbalance fase-tierra sobre el límite) pero el punto 14 «Desbalance significativo» está en No'})}
   return out}
 function renderQuality(){
   const rows=qRows(),tipos=uniq(rows.map(r=>r.tipo)).sort();
@@ -211,7 +211,7 @@ async function assetReport(key){
   <h2>Trazabilidad</h2><table>${[['Folio',h.folio],['Archivo',h.archivo],['Subestación',h.sub_id],['Planta',h.planta],['CCM',h.ccm],['Bus',e.bus],['Transformador',m.trf],['N° SAP',h.sap],['Orden SAP',h.orden_sap],['Capturado',h.capturado?fDT(m.ts):h.fecha_doc],['GPS',h.gps?h.gps.join(', ')+(h.gps_prec_m?` (±${h.gps_prec_m} m)`:''):null],['Realizó',h.operario],['Ing. de sector',h.ing_sector],['Resp. operativo',h.resp_operativo]].map(([l,v])=>`<tr><th style="width:180px">${l}</th>${td(v)}</tr>`).join('')}</table>
   <h2>Mediciones (${a.meds.length})</h2><table><tr><th>Fecha</th><th>Folio</th><th>VA</th><th>VB</th><th>VC</th><th>VAB</th><th>VBC</th><th>VCA</th><th>% reportado</th><th>% recalculado</th><th>Estado</th></tr>${a.meds.slice().reverse().map(x=>`<tr>${td(fDT(x.ts))}${td(x.folio)}${[x.row.va,x.row.vb,x.row.vc,x.row.vab,x.row.vbc,x.row.vca].map(td).join('')}${td(x.row.pct!=null?f1(x.row.pct,1):null)}${td(x.e.pct!=null?f1(x.e.pct,2):null)}<td class="c${x.e.est}">${COND[x.e.est].n}</td></tr>`).join('')}</table>
   <h2>Observaciones</h2><p>${esc(h.obs||'—')}</p>
-  <p style="font-size:11px;color:#555;margin-top:24px">Criterios: % desbalance = desviación máxima respecto al promedio ÷ promedio (NEMA MG-1 §14.36); límites configurados ${CFG.unb.warn} % y ${CFG.unb.crit} %; nominal ${CFG.nom} V. La reducción de potencia y la corriente estimada son órdenes de magnitud.</p></html>`}
+  <p style="font-size:11px;color:#555;margin-top:24px">Criterios (delta sin neutro): % desbalance fase-tierra = desviación máxima respecto al promedio ÷ promedio; condicionada desde ${CFG.unb.warn} % (posible fase a tierra de alta impedancia) y deficiente desde ${CFG.unb.crit} % (fase a tierra franca); nominal ${CFG.nom} V. Una fase a tierra no desequilibra las tensiones de línea.</p></html>`}
 
 /* ---------------------------------------------------------------- NAVEGACIÓN */
 function fillAssetSelects(){

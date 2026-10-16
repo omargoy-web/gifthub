@@ -8,10 +8,13 @@ const chip=(c,extra='')=>`<span class="chip c${c}">${COND[c].i} ${COND[c].n}${ex
 const PRIO=['Inmediata','Próximo paro','Programar','Rutina'];
 // Criterios EDITABLES (pestaña 4)
 const CFG={nom:480,
-  unb:{warn:3,crit:5},        // % de desbalance: >3 % supera ANSI C84.1 / IEEE 1159 (servicio); >5 % límite NEMA MG-1 §14.36 (no operar motores)
+  // Sistema DELTA SIN NEUTRO: el objetivo es detectar fases / líneas a tierra con las tensiones fase-tierra (conmutador F-T).
+  // Una fase franca a tierra da ≈ 0 V en esa fase y ≈ tensión de línea en las otras dos → desbalance ≈ 100 %.
+  unb:{warn:50,crit:90},      // % de desbalance fase-tierra: < 50 % = OK · ≥ 50 % = CONDICIONADA (posible fase a tierra de alta impedancia) · ≥ 90 % = DEFICIENTE (fase a tierra franca)
+  llBal:5,                    // % de desbalance línea-línea hasta el cual se considera equilibrada (una fase a tierra NO desequilibra las tensiones de línea)
   vlev:{warn:5,crit:10},      // % de desviación del voltaje nominal (promedio de las tres fases)
   pnTol:0.15,                 // tolerancia al comparar el % del reporte con el recalculado (redondeo del formato)
-  susp:8};                    // % de desbalance de línea para sospechar error de captura si fase-neutro está equilibrada
+  susp:8};                    // % de desbalance de línea para sospechar error de captura si fase-tierra está equilibrada
 // Curva de reducción de potencia de motores por desbalance de tensión (NEMA MG-1 Fig. 14-1, lectura aproximada)
 const DERATE=[[0,1],[1,1],[2,.95],[3,.88],[4,.82],[5,.75]];
 const derateAt=p=>{if(p==null)return null;if(p>5)return 0;for(let i=1;i<DERATE.length;i++)if(p<=DERATE[i][0]){const a=DERATE[i-1],b=DERATE[i];return a[1]+(b[1]-a[1])*(p-a[0])/(b[0]-a[0])}return .75};
@@ -51,11 +54,11 @@ function evalRow(h,row,i,n){
   let pn=unb3(...pnAll),ll=unb3(...llAll),llSusp=false;
   const sinMed=pnAll.every(v=>!v)&&llAll.every(v=>!v);
   // línea con una fase en cero o con un valor muy distinto (p. ej. 483, 483, 403): se marca y se excluye del cálculo
-  if(ll&&pn&&ll.pct>CFG.susp&&pn.pct<CFG.unb.warn){llSusp=true;set(1,`Voltaje de línea dudoso (${llAll.join(' / ')} V): ${f1(ll.pct,1)} % contra ${f1(pn.pct,1)} % fase-neutro; posible error de captura`)}
+  if(ll&&pn&&ll.pct>CFG.susp&&pn.pct<3){llSusp=true;set(1,`Voltaje de línea dudoso (${llAll.join(' / ')} V): ${f1(ll.pct,1)} % contra ${f1(pn.pct,1)} % fase-tierra; posible error de captura`)}
   if(ll&&llSusp)ll=null;
   if(!llSusp&&!ll&&llAll.some(v=>v>0)&&llZeros)set(1,`Lectura de línea en cero (${llAll.join(' / ')} V)`);
-  if(!sinMed&&!pn&&pnAll.some(v=>v>0)&&(pnZeros||pnNull))set(1,`Falta lectura fase-neutro (${pnAll.map(v=>v==null?'—':v).join(' / ')} V)`);
-  if(!sinMed&&!pn&&pnAll.every(v=>!v)&&ll)set(1,'Sin voltaje fase-neutro: el medidor solo muestra tensiones de línea');
+  if(!sinMed&&!pn&&pnAll.some(v=>v>0)&&(pnZeros||pnNull))set(1,`Falta lectura fase-tierra (${pnAll.map(v=>v==null?'—':v).join(' / ')} V)`);
+  if(!sinMed&&!pn&&pnAll.every(v=>!v)&&ll)set(1,'Sin voltaje fase-tierra: el medidor solo muestra tensiones de línea');
   // coherencia con lo reportado en el formato
   const rep={prom:row.prom,dif:row.dif,pct:row.pct};
   let repOk=null;
@@ -64,33 +67,31 @@ function evalRow(h,row,i,n){
   if(bo.incoh)set(0,`Bus del renglón («${row.bus}») distinto al del CCM («${bo.bus}»)`);
   if(row.lamp&&/defic/i.test(row.lamp))set(1,'Lámparas de desbalance «Deficiente»');
   // base de evaluación
-  const basis=pn?{k:'pn',v:pn,t:'fase-neutro'}:ll?{k:'ll',v:ll,t:'línea-línea'}:null;
+  const basis=pn?{k:'pn',v:pn,t:'fase-tierra'}:ll?{k:'ll',v:ll,t:'línea-línea'}:null;
   const pct=basis?basis.v.pct:null;
-  // nivel de tensión (promedio de fase-neutro ×√3 o línea)
-  const vl=pn?pn.avg*Math.sqrt(3):ll?ll.avg:null,dv=vl?(vl-CFG.nom)/CFG.nom*100:null;
+  // nivel de tensión (promedio de línea; si falta, fase-tierra × √3)
+  const vl=ll?ll.avg:pn?pn.avg*Math.sqrt(3):null,dv=vl?(vl-CFG.nom)/CFG.nom*100:null;
   let nivel=null;if(dv!=null){const a=Math.abs(dv);nivel=a>CFG.vlev.crit?2:a>CFG.vlev.warn?1:0}
-  // diagnóstico interpretado
-  let dx='',tipo='ok';
-  if(sinMed){tipo='sin';dx='Sin medición: todos los voltajes en 0 (instrumento fuera de operación o no medido). No equivale a 0 % de desbalance.'}
-  else if(!basis){tipo='inc';dx='Medición incompleta: no hay una terna completa de voltajes para calcular el desbalance.'}
-  else{
-    const hi=pct>CFG.unb.warn;
-    if(pn&&ll){const d=pn.pct-ll.pct;
-      if(hi&&ll.pct>CFG.unb.warn){tipo='real';dx='Desbalance real de la alimentación: aparece en fase-neutro y en línea-línea; revisar transformador, derivaciones (taps), conexiones y cargas monofásicas.'}
-      else if(hi&&ll.pct<=CFG.unb.warn){tipo='neutro';dx='Desbalance en fase-neutro con línea-línea equilibrada: los motores (conexión línea-línea) casi no lo resienten; revisar neutro flotante, cargas monofásicas o el medidor.'}
-      else dx=pct<=1?'Desbalance despreciable (≤ 1 %, sin reducción de potencia en motores NEMA).':'Desbalance dentro del límite de servicio; en motores se aplica la reducción de potencia NEMA.'}
-    else if(pn){if(hi){tipo='real';dx='Desbalance fase-neutro por encima del límite; falta el voltaje de línea para confirmar el efecto en motores.'}else dx=pct<=1?'Desbalance despreciable (≤ 1 %).':'Desbalance dentro del límite de servicio.'}
-    else{tipo='parcial';dx=`Medición parcial: solo hay tensiones de línea (desbalance ${f1(ll.pct,1)} %); el formato requiere también fase-neutro.`}}
+  // diagnóstico interpretado: ¿hay una fase / línea a tierra? (sistema delta sin neutro)
+  let dx='',tipo='ok',gf=null;
+  const llBal=ll?ll.pct<=CFG.llBal:null;
+  if(pn&&pn.pct>=CFG.unb.warn){const ph=[['A',row.va],['B',row.vb],['C',row.vc]].sort((x,y)=>x[1]-y[1])[0];gf={fase:ph[0],v:ph[1],franca:pn.pct>=CFG.unb.crit,llBal}}
+  if(sinMed){tipo='sin';dx='Sin medición: todos los voltajes en 0 (instrumento fuera de operación o no medido). No equivale a «sin falla a tierra».'}
+  else if(!basis){tipo='inc';dx='Medición incompleta: no hay una terna completa de voltajes fase-tierra para evaluar si existe una fase a tierra.'}
+  else if(pn){
+    if(gf&&gf.franca){tipo='tierra';dx=`Fase ${gf.fase} a tierra (franca): ${gf.fase} en ${gf.v} V contra un promedio de ${f1(pn.avg,0)} V; las otras fases se elevan hacia la tensión de línea. ${llBal===false?'Las tensiones de línea también están desequilibradas: confirmar con el medidor (también puede ser un desbalance de la alimentación).':'Las tensiones de línea siguen equilibradas, como corresponde a una falla a tierra en delta sin neutro.'} Localizar el alimentador o equipo con aislamiento a tierra degradado.`}
+    else if(gf){tipo='tierra_parcial';dx=`Posible fase a tierra de alta impedancia o aislamiento degradado en la fase ${gf.fase} (${gf.v} V; desbalance fase-tierra ${f1(pn.pct,0)} %). ${llBal===false?'Las tensiones de línea también están desequilibradas: puede ser un desbalance de la alimentación.':'Línea-línea equilibrada: es la firma de una fuga a tierra.'} Repetir la medición, localizar por apertura de alimentadores y medir resistencia de aislamiento.`}
+    else dx=`Sin indicios de fase a tierra: desbalance fase-tierra ${f1(pn.pct,1)} % (< ${CFG.unb.warn} %).${ll&&ll.pct>CFG.llBal?` Hay desbalance de línea-línea de ${f1(ll.pct,1)} %: no es una falla a tierra; revisar la alimentación (taps, conexiones, cargas).`:''}`}
+  else{tipo='parcial';dx=`Solo hay tensiones de línea (desbalance ${f1(ll.pct,1)} %). En un delta sin neutro una fase a tierra NO desequilibra las tensiones de línea, por lo que con esta medición no se puede descartar: se requiere la medición fase-tierra (conmutador F-T).`}
   // estado
   let est=3;
-  if(basis){est=pct>CFG.unb.crit?2:pct>CFG.unb.warn?1:0;if(basis.k==='ll'||tipo==='inc')est=Math.max(est,1)}
-  if(tipo==='neutro')est=Math.min(est,1);   // línea-línea equilibrada: los motores no lo resienten; queda en atención para revisar neutro / medidor
+  if(basis){est=basis.k==='pn'?(pn.pct>=CFG.unb.crit?2:pn.pct>=CFG.unb.warn?1:0):1;if(tipo==='inc')est=Math.max(est,1)}
   if(sinMed||!basis)est=3;
   if(basis&&est===0&&flags.some(x=>x.sev>=1))est=1; // datos dudosos o incompletos: no se certifica como satisfactoria
-  const prioridad=tipo==='neutro'?'Programar':est===2?(pct>10?'Inmediata':'Próximo paro'):est===1?'Programar':est===3?'Programar':'Rutina';
+  const prioridad=tipo==='tierra'?'Inmediata':tipo==='tierra_parcial'?'Próximo paro':est===1?'Programar':est===3?'Programar':'Rutina';
   const eff=ll&&!llSusp?ll.pct:pct;           // efecto en motores: línea-línea si existe
   const imb={cur:eff!=null?[eff*6,eff*10]:null,tr:eff!=null?2*eff*eff:null,der:derateAt(eff)};
-  return{bus:bo.bus,busFuente:bo.fuente,pn,ll,llSusp,pct,base:basis?basis.t:null,rep,repOk,vl,dv,nivel,tipo,dx,est,prioridad,flags,sinMed,imb}}
+  return{bus:bo.bus,busFuente:bo.fuente,gf,pn,ll,llSusp,pct,base:basis?basis.t:null,rep,repOk,vl,dv,nivel,tipo,dx,est,prioridad,flags,sinMed,imb}}
 
 /* ---------- Reconstrucción de índices ---------- */
 const parseTsD=(h)=>{if(h.capturado)return parseTs(h.capturado);const m=String(h.fecha_doc||'').match(/(\d\d)\/(\d\d)\/(\d\d)/);return m?Date.UTC(2000+ +m[3],+m[2]-1,+m[1],12)-MXOFF:null};

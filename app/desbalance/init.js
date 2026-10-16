@@ -32,7 +32,7 @@ async function init(){
   $('#btnExpJson').addEventListener('click',()=>S.sel&&exportAssetJson(S.sel));$('#btnExpCsv').addEventListener('click',()=>S.sel&&exportAssetCsv(S.sel));
   $('#btnExpHtml').addEventListener('click',async()=>{if(!S.sel)return;const a=IX.assets.get(S.sel);dl(`reporte-desbalance-${a.ccm}-${a.bus||'U'}-${stamp()}.html`.replace(/[^\w.\-]+/g,'_'),await assetReport(S.sel),'text/html;charset=utf-8')});
   $('#qTipo').addEventListener('change',e=>{S.q.tipo=e.target.value;renderQuality()});$('#btnQCsv').addEventListener('click',exportQuality);
-  $('#btnApplyCfg').addEventListener('click',()=>{CFG.unb.warn=+$('#cUw').value||3;CFG.unb.crit=+$('#cUc').value||5;CFG.vlev.warn=+$('#cVw').value||5;CFG.vlev.crit=+$('#cVc').value||10;CFG.nom=+$('#cNom').value||480;rebuild();refreshAll();toast('Criterios aplicados')});
+  $('#btnApplyCfg').addEventListener('click',()=>{CFG.unb.warn=+$('#cUw').value||50;CFG.unb.crit=Math.max(CFG.unb.warn,+$('#cUc').value||90);CFG.vlev.warn=+$('#cVw').value||5;CFG.vlev.crit=+$('#cVc').value||10;CFG.nom=+$('#cNom').value||480;rebuild();refreshAll();toast('Criterios aplicados')});
   $('#stCommit').addEventListener('click',commitStage);$('#stCancel').addEventListener('click',()=>{STAGE=[];renderStage()});
   refreshAll();
   window.__ready=true;
