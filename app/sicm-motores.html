@@ -703,7 +703,8 @@ const SUITE=[
   {id:'motores',file:'sicm-motores.html',nombre:'Motores',desc:'Vibraciones, variador y espectros FFT'},
   {id:'desbalance',file:'sicm-desbalance.html',nombre:'Desbalance CCM',desc:'Desbalance de voltaje en tableros de baja tensión'},
   {id:'estado',file:'sicm-estado.html',nombre:'Estado aparente',desc:'Inspección visual ponderada de subestaciones y soloaires'},
-  {id:'desaladora',file:'sicm-desaladora.html',nombre:'Desaladora',desc:'Transformadores (unidades de potencia) de desaladoras'}
+  {id:'desaladora',file:'sicm-desaladora.html',nombre:'Desaladora',desc:'Transformadores (unidades de potencia) de desaladoras'},
+  {id:'aceite',file:'sicm-aceite.html',nombre:'Trafos en aceite',desc:'Inspección de transformadores en aceite y análisis del aceite (ventana operativa / ASTM-IEEE)'}
 ];
 function renderSuiteNav(cur){const el=document.getElementById('suiteNav');if(!el)return;
   el.innerHTML=SUITE.map(m=>m.id===cur?`<span class="cur" aria-current="page" title="${esc(m.desc)}">${esc(m.nombre)}</span>`:`<a href="${esc(m.file)}" title="${esc(m.desc)}">${esc(m.nombre)}</a>`).join('')}
