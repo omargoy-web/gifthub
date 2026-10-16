@@ -7,6 +7,7 @@ esc = lambda t: t.replace('</script', '<\\/script').replace('</Script', '<\\/Scr
 module = '\n'.join(rd('app', 'relevadores', f) for f in ('parse.js', 'model.js', 'ingest.js', 'views.js', 'init.js'))
 out = (rd('app', 'relevadores', 'template.html')
        .replace('/*__CORE_CSS__*/', rd('app', 'shared', 'core.css'))
+       .replace('/*__CENSO__*/', esc(rd('data', 'relevadores', 'censo_sap.json')))
        .replace('/*__FORMATOS__*/', esc(rd('data', 'relevadores', 'formatos.json')))
        .replace('/*__CORE_JS__*/', rd('app', 'shared', 'core.js'))
        .replace('/*__MODULE_JS__*/', module.replace('</script', '<\\/script')))

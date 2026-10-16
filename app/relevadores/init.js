@@ -20,11 +20,16 @@ async function init(){
   await Store.open('sicm_relevadores');renderSuiteNav('relevadores');
   try{const c=await Store.get('kv','cfg');if(c&&c.int)CFG={...structuredClone(CFG0),...c,t:{...CFG0.t,...c.t},int:{...CFG0.int,...c.int}}}catch(e){}
   try{const s=await Store.get('kv','db');if(s&&s.rel)DB={...emptyDB(),...s}}catch(e){}
-  rebuild();
+  rebuild();if(!DB.rel.some(r=>!r.demo)){loadCenso();DB.bitacora=DB.bitacora||[]}
   $$('.tabs button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
   $('#btnTheme').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
   $('#btnSummary').addEventListener('click',exportResumen);$('#btnSum2').addEventListener('click',exportResumen);
-  $('#fSub').addEventListener('change',e=>{S.f.sub=e.target.value;renderPan()});$('#fEst').addEventListener('change',e=>{S.f.est=e.target.value;renderPan()});
+  for(const [id,k] of [['fSec','sec'],['fPlanta','planta'],['fMarca','marca'],['fAlc','alc'],['fEst','est']])$('#'+id).addEventListener('change',e=>{S.f[k]=e.target.value;S.f.lim=300;renderPan()});
+  $('#fQ').addEventListener('input',e=>{S.f.q=e.target.value;S.f.lim=300;clearTimeout(S.qT);S.qT=setTimeout(renderPan,200)});$('#btnFClr').addEventListener('click',()=>{S.f={sec:'',planta:'',marca:'',alc:'',est:'',q:'',lim:300};renderPan()});
+  $('#relQ').addEventListener('input',e=>{S.qRel=e.target.value;relOpts($('#relSel'),false,S.qRel);const o=$('#relSel').options[0];if(o&&!o.disabled){S.sel=o.value;renderRel();$('#relQ').focus()}});
+  $('#cpQ').addEventListener('input',e=>{S.qCap=e.target.value;relOpts($('#cpRel'),false,S.qCap);const o=$('#cpRel').options[0];if(o&&!o.disabled){S.sel=o.value;S.cap={id:null,tipo:S.cap.tipo,items:{},med:{}};renderCap();$('#cpQ').focus()}});
+  $('#rpRelQ').addEventListener('input',e=>{S.rp.relq=e.target.value;relOpts($('#upRel'),false,S.rp.relq);relOpts($('#rpRel'),true,S.rp.relq)});
+  $('#btnCenso').addEventListener('click',()=>{const n=loadCenso();refreshAll();toast(n+' relevador(es) agregado(s) del censo SAP PM')});
   // relevador
   $('#relSel').addEventListener('change',e=>{S.sel=e.target.value;renderRel()});$('#btnNewRel').addEventListener('click',()=>relDialog(null));$('#dlgRelOk').addEventListener('click',relDialogSave);$('#dlgRelNo').addEventListener('click',()=>$('#dlgRel').close());
   // captura

@@ -19,6 +19,9 @@ table.chkl td{padding:4px 6px}table.chkl tr.sec td,table tr.sec td{background:va
 .capgrid input,.capgrid select,table input,table select,textarea,.bar input{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 7px;color:var(--text)}
 table.kv{width:100%}table.kv td{padding:3px 6px;border-bottom:1px solid var(--line);font-size:12.5px}
 tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{background:var(--crit-bg)}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start}.grid3 .panel{margin-bottom:0}
+.sbar{display:grid;grid-template-columns:150px 1fr 40px;gap:8px;align-items:center;padding:3px 0;font-size:12.5px;cursor:pointer}.sbar:hover{background:var(--surface2)}.sbar .v{text-align:right;font-variant-numeric:tabular-nums}
+.tr{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}.fl{height:100%;border-radius:6px}
 @media print{header.top,.tabs,.bar,.statusbar,.btn{display:none!important}body{background:#fff;color:#000}}
 </style>
 </head>
@@ -44,19 +47,20 @@ tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{
 <main>
 <section id="v-pan" class="view">
   <div class="kpis" id="kpis"></div>
-  <div class="bar"><label>Subestación<select id="fSub"></select></label><label>Mostrar<select id="fEst"></select></label><span class="sp"></span><span class="small muted" id="fCount"></span><button class="btn sm" id="btnSum2">⬇ Resumen (.csv)</button></div>
+  <div class="bar"><label>Sector<select id="fSec"></select></label><label>Planta<select id="fPlanta"></select></label><label>Marca<select id="fMarca"></select></label><label>Alcance<select id="fAlc"></select></label><label>Estado<select id="fEst"></select></label><label>Buscar<input type="text" id="fQ" size="18" placeholder="TAG, modelo, SAP, tablero…"></label><span class="sp"></span><button class="btn sm" id="btnFClr">Limpiar filtros</button><button class="btn sm" id="btnSum2">⬇ Resumen (.csv)</button></div><div class="small muted" id="fCount" style="margin:-6px 0 10px"></div>
+  <div class="grid3" id="distCenso" style="margin-bottom:14px"></div>
   <div class="panel"><h2>Programa de inspección · clic abre el expediente</h2><div class="tw" style="max-height:560px"><table id="tblPan"></table></div></div>
   <div class="grid2e"><div class="panel"><h2>Agenda: inspecciones vencidas, por vencer o sin registro · clic abre la captura</h2><div class="tw" style="max-height:360px"><table id="tblAg"></table></div></div>
   <div class="panel"><h2>Hallazgos críticos abiertos</h2><ul class="alerts" id="alCrit"></ul></div></div>
 </section>
 <section id="v-rel" class="view" hidden>
-  <div class="bar"><label>Relevador<select id="relSel"></select></label><button class="btn pri sm" id="btnNewRel">＋ Nuevo relevador</button><span class="sp"></span></div>
+  <div class="bar"><label>Buscar<input type="text" id="relQ" size="16" placeholder="TAG, planta, modelo…"></label><label>Relevador<select id="relSel"></select></label><button class="btn pri sm" id="btnNewRel">＋ Nuevo relevador</button><span class="sp"></span></div>
   <div id="relBody"></div>
   <dialog id="dlgRel"><h2 id="dlgRelT"></h2><div class="form" id="dlgRelF"></div><datalist id="dlFunc"></datalist><div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" id="dlgRelOk">Guardar</button><button class="btn" id="dlgRelNo">Cancelar</button></div></dialog>
 </section>
 <section id="v-cap" class="view" hidden>
   <div class="infobox"><b>Tipo A</b> (cada 6 meses): inspección visual y navegación por el HMI del relevador, sin conectar equipo externo, solo lectura. <b>Tipo B</b> (cada 12 meses, y tras cualquier disparo): conexión con laptop para descargar eventos, oscilografías y configuración y verificar comunicaciones. La lista se genera con los conceptos y criterios de aceptación del anexo de la marca (9.1–9.8). Todo NO OK genera aviso SAP IW21; IRF / self-test, TCS en alarma o LED de servicio apagado son hallazgos <b>críticos</b>.</div>
-  <div class="panel"><div class="bar" style="margin-bottom:6px"><label>Relevador<select id="cpRel"></select></label><span class="seg" id="cpTipo"><button data-t="A">Tipo A · visual / HMI</button><button data-t="B">Tipo B · software</button></span><span class="sp"></span><button class="btn sm" id="btnBlank">🖶 Formato en blanco</button></div>
+  <div class="panel"><div class="bar" style="margin-bottom:6px"><label>Buscar<input type="text" id="cpQ" size="14" placeholder="TAG, planta, modelo…"></label><label>Relevador<select id="cpRel"></select></label><span class="seg" id="cpTipo"><button data-t="A">Tipo A · visual / HMI</button><button data-t="B">Tipo B · software</button></span><span class="sp"></span><button class="btn sm" id="btnBlank">🖶 Formato en blanco</button></div>
     <div class="small" id="cpFmtInfo" style="margin-bottom:8px"></div>
     <div class="capgrid"><label>Fecha y hora<input type="datetime-local" id="cpFecha"></label><label>OT SAP PM<input id="cpOt"></label><label>Ejecutó<input id="cpEj"></label><label>Revisó<input id="cpRev"></label><label>Firmware leído<input id="cpFw"></label><label>Inspección posterior a un disparo<select id="cpDisp"><option value="">No</option></select></label></div></div>
   <div class="panel"><h2>Lista de verificación</h2><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn sm" id="btnAllOk">Marcar todo OK</button><button class="btn sm" id="btnClr">Limpiar respuestas</button></div><div id="cpBody"></div></div>
@@ -67,7 +71,7 @@ tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{
 <section id="v-rep" class="view" hidden>
   <div class="infobox"><b>Repositorio técnico independiente de las inspecciones.</b> Respaldos de ajustes, oscilografías COMTRADE (.cfg + .dat), eventos / SOE y logs de cada relevador, con consulta propia. Convención del procedimiento: <code>TAG_MARCA_MODELO_AAAAMMDD.ext</code> (asigna relevador y fecha automáticamente). Los archivos se guardan en este navegador (IndexedDB); exporta periódicamente y respalda en el servidor SICM.</div>
   <div class="grid2e"><div>
-    <div class="panel"><h2>Cargar archivos</h2><div class="capgrid"><label>Relevador<select id="upRel"></select></label><label>Categoría<select id="upCat"></select></label><label>Firmware (opcional)<input id="upFw"></label><label>MOC / referencia (opcional)<input id="upMoc"></label><label style="grid-column:1/-1">Nota<input id="upNota"></label></div>
+    <div class="panel"><h2>Cargar archivos</h2><div class="capgrid"><label>Buscar relevador<input id="rpRelQ" placeholder="TAG, planta, modelo…"></label><label>Relevador<select id="upRel"></select></label><label>Categoría<select id="upCat"></select></label><label>Firmware (opcional)<input id="upFw"></label><label>MOC / referencia (opcional)<input id="upMoc"></label><label style="grid-column:1/-1">Nota<input id="upNota"></label></div>
       <div class="drop" id="drop" tabindex="0" role="button" style="margin-top:8px"><b>Arrastra archivos, una carpeta o un .zip</b><br><span class="muted">Ajustes (.txt .set .urs .cid …), oscilografías (.cfg + .dat), eventos (.csv .txt), logs · máx. 40 MB por archivo</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="btnUpF">📄 Archivos</button><button class="btn" id="btnUpD">📁 Carpeta</button><button class="btn" id="btnUpZ">🗜 ZIP</button></div>
       <input type="file" id="upFiles" multiple hidden><input type="file" id="upDir" webkitdirectory directory multiple hidden><input type="file" id="upZip" accept=".zip" multiple hidden></div>
@@ -89,6 +93,7 @@ tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{
   <div class="grid2e"><div>
     <div class="panel"><h2>Censo de relevadores</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="btnCensoIn">⬆ Importar censo (.csv)</button><button class="btn" id="btnCensoTpl">⬇ Plantilla del censo</button><button class="btn" id="btnInspCsv">⬇ Inspecciones (.csv)</button></div><input type="file" id="censoIn" accept=".csv,text/csv" hidden>
       <p class="small muted">Columnas: tag, sector, subestacion, tablero, interruptor, kv, funcion, marca (GE / ABB / SIE / SCH), modelo, serie, firmware, vcd, ip, observaciones. El TAG sigue la nomenclatura SAP PM.</p></div>
+    <div class="panel"><h2>Censo SAP PM incluido</h2><p class="small">1 947 relevadores del censo de equipos (SAP PM) con planta, sector, subestación, tablero, marca, modelo, función y alimentación auxiliar. Marca y modelo se normalizaron desde los campos de SAP (que vienen con variantes de captura); lo capturado o editado en el módulo no se pisa al recargar.</p><button class="btn" id="btnCenso">↻ Cargar / completar censo SAP PM</button></div>
     <div class="panel"><h2>Demostración</h2><p class="small">Carga 4 relevadores de ejemplo (GE 850, ABB REM615, Siemens 7SR5, Schneider P143) con inspecciones, ajustes, eventos y una oscilografía sintética para conocer el módulo. Todo queda marcado «demo» y se retira con un clic.</p><div style="display:flex;gap:8px"><button class="btn" id="btnDemo">Cargar demostración</button><button class="btn" id="btnNoDemo">Quitar demostración</button></div></div>
     <div class="panel"><h2>Bitácora</h2><div class="log" id="log"></div></div>
   </div><div>
@@ -99,6 +104,7 @@ tr.dfc td{background:var(--warn-bg)}tr.dfa td{background:var(--ok-bg)}tr.dfd td{
 </main>
 <div class="statusbar" id="statusbar"></div>
 <div id="dropOverlay">Suelta los archivos o la carpeta en el repositorio técnico</div>
+<script id="censo" type="application/json">/*__CENSO__*/</script>
 <script id="formatos" type="application/json">/*__FORMATOS__*/</script>
 <script>
 'use strict';

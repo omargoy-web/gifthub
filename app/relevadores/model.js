@@ -4,8 +4,9 @@
    Estados: 0 = OK · 1 = condicionado / por vencer · 2 = crítico / vencido · 3 = sin dato
    ===================================================================== */
 const STN=['Sin hallazgos','Con hallazgos','Hallazgo CRÍTICO','Sin evaluar'],STC=['ok','warn','crit','oos'];
-const PST=['Al corriente','Por vencer','Vencida','Sin registro'];                // estado del programa de inspección
-const MARCAS={GE:'GE Multilin',ABB:'ABB Relion',SIE:'Siemens Reyrolle',SCH:'Schneider'};
+const PST=['Al corriente','Por vencer','Vencida','Sin registro','Fuera de programa'];                // estado del programa de inspección
+const MARCAS={GE:'GE Multilin',ABB:'ABB Relion',SIE:'Siemens Reyrolle',SCH:'Schneider',SEL:'SEL (Schweitzer)',OTRA:'Otra marca',ND:'Sin marca en SAP'};
+const ALCANCE={proteccion:'Protección digital',arco:'Protección de arco',medicion:'Medición (multimedidor)'};
 const TIPOS={A:'Tipo A · visual y HMI',B:'Tipo B · software, eventos y conexión'};
 const CATS={ajustes:'Ajustes / configuración',oscilo:'Oscilografías (COMTRADE)',eventos:'Eventos / SOE',log:'Logs / bitácoras',otro:'Otros'};
 /* Conexión por marca · procedimiento 7.4.1 */
@@ -19,7 +20,7 @@ const VCD_NOM=[48,110,125,220,250];
 const CFG0={int:{A:6,B:12},alerta:30,t:{gab:55,vcd:10,i:5,v:2,fHz:0.1,reloj:1,clockGoose:0.001,amb:40,pres:25}};
 let CFG=structuredClone(CFG0);
 let FORMATOS=[];const fmtOf=id=>FORMATOS.find(f=>f.id===id);
-const fmtId=(tipo,marca)=>`${tipo}-${marca}`;
+const fmtId=(tipo,marca)=>fmtOf(`${tipo}-${marca}`)?`${tipo}-${marca}`:`${tipo}-GEN`;   // marcas sin anexo propio usan el formato genérico
 
 /* ---------- mediciones con criterio (7.5 del procedimiento) ---------- */
 const MEDMAP=[['gab',/Temperatura del gabinete/i],['vcd',/Alimentaci[oó]n auxiliar CD/i],['i',/Corrientes Ia, ?Ib, ?Ic vs/i],['v',/Tensiones Va, ?Vb, ?Vc vs/i],['f',/^Frecuencia$/i],['reloj',/(Status → Clock|Fecha, hora|Hora|Verificaci[oó]n de reloj)/i],['amb',/^Entorno:/i]];
@@ -58,10 +59,11 @@ function rebuild(){
   for(const a of DB.arch){const t=IX.rel.get(a.relId);if(t)t.arch.push(a)}
   for(const t of IX.rel.values()){
     t.A.sort((a,b)=>a.ts-b.ts);t.B.sort((a,b)=>a.ts-b.ts);t.lastA=t.A[t.A.length-1]||null;t.lastB=t.B[t.B.length-1]||null;
-    t.pA=prog(t.lastA,CFG.int.A,now);t.pB=prog(t.lastB,CFG.int.B,now);
+    t.enProg=t.prog!==false&&t.alcance!=='medicion'||t.prog===true;
+    t.pA=t.enProg?prog(t.lastA,CFG.int.A,now):{s:4,due:null,dias:null};t.pB=t.enProg?prog(t.lastB,CFG.int.B,now):{s:4,due:null,dias:null};
     t.last=[t.lastA,t.lastB].filter(Boolean).sort((a,b)=>b.ts-a.ts)[0]||null;
     t.cond=t.last?t.last.e.est:3;                         // condición según el último dictamen
-    const ps=[t.pA.s,t.pB.s];t.progWorst=ps.includes(2)?2:ps.includes(1)?1:ps.includes(3)?3:0;
+    const ps=[t.pA.s,t.pB.s];t.progWorst=!t.enProg?4:ps.includes(2)?2:ps.includes(1)?1:ps.includes(3)?3:0;
     t.nextDue=[t.pA.due,t.pB.due].filter(x=>x!=null).sort((a,b)=>a-b)[0]??null}
   for(const m of IX.insp)for(const x of m.e.no){const key=m.r.id+':'+x.n,h=(DB.hall[key])||{};IX.hall.push({key,m,item:x,rel:m.rel,estado:h.estado||'abierto',aviso:h.aviso||'',nota:h.nota||'',cierre:h.cierre||null})}
   IX.list=[...IX.rel.values()].sort((a,b)=>String(a.sub||'').localeCompare(String(b.sub||''),'es',{numeric:true})||a.tag.localeCompare(b.tag,'es',{numeric:true}))}
@@ -69,6 +71,7 @@ const openHall=()=>IX.hall.filter(h=>h.estado!=='cerrado');
 /* recomendaciones por relevador */
 function recsFor(t){
   const R=[],add=(p,x,ref)=>R.push({p,x,ref});
+  if(!t.enProg){add(0,'Equipo fuera del programa de inspección (multimedidor o marcado manualmente). Actívalo en la ficha si debe inspeccionarse.','Censo');return R}
   if(t.pA.s===3)add(1,`Sin inspección Tipo A registrada: programar la inspección visual y por HMI (cada ${CFG.int.A} meses).`,'PEO-003 7.1.4');
   else if(t.pA.s===2)add(2,`Inspección Tipo A vencida desde hace ${-t.pA.dias} días (intervalo ${CFG.int.A} meses).`,'PEO-003 7.1.4');
   else if(t.pA.s===1)add(1,`Inspección Tipo A vence en ${t.pA.dias} días.`,'PEO-003 7.1.4');
